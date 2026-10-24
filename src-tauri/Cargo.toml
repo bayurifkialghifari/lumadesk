@@ -1,0 +1,29 @@
+[package]
+name = "lumadesk"
+version.workspace = true
+description = "Local-first desktop animation library"
+authors = ["Bayu Rifki Alghifari and LumaDesk contributors"]
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+rust-version.workspace = true
+
+[lib]
+name = "lumadesk_lib"
+crate-type = ["staticlib", "cdylib", "rlib"]
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+lumadesk-core = { path = "../crates/lumadesk-core" }
+serde = { version = "1", features = ["derive"] }
+tauri = { version = "2", features = ["image-png", "tray-icon"] }
+tauri-plugin-autostart = "2"
+tauri-plugin-dialog = "2"
+tauri-plugin-opener = "2"
+tauri-plugin-single-instance = "2"
+thiserror = "2"
+
+[lints]
+workspace = true
