@@ -1,10 +1,34 @@
 import { z } from "zod";
 
+export const errorCodeSchema = z.enum([
+  "io",
+  "database",
+  "unsupported_media",
+  "invalid_media",
+  "invalid_input",
+  "invalid_data",
+  "not_found",
+  "schema_too_new",
+]);
+export type ErrorCode = z.infer<typeof errorCodeSchema>;
+
+export const commandErrorSchema = z.object({
+  code: errorCodeSchema,
+  message: z.string().min(1),
+});
+export type CommandErrorPayload = z.infer<typeof commandErrorSchema>;
+
+export const mediaIdSchema = z.string().uuid().brand<"MediaId">();
+export type MediaId = z.infer<typeof mediaIdSchema>;
+
+export const overlayIdSchema = z.string().uuid().brand<"OverlayId">();
+export type OverlayId = z.infer<typeof overlayIdSchema>;
+
 export const mediaKindSchema = z.enum(["gif", "apng", "webp", "png", "jpeg"]);
 export type MediaKind = z.infer<typeof mediaKindSchema>;
 
 export const mediaItemSchema = z.object({
-  id: z.string().uuid(),
+  id: mediaIdSchema,
   contentHash: z.string().regex(/^[a-f0-9]{64}$/),
   displayName: z.string(),
   managedPath: z.string(),
@@ -36,7 +60,7 @@ export const importReportSchema = z.object({
   failures: z.array(
     z.object({
       path: z.string(),
-      code: z.string(),
+      code: errorCodeSchema,
       message: z.string(),
     }),
   ),
@@ -44,8 +68,8 @@ export const importReportSchema = z.object({
 export type ImportReport = z.infer<typeof importReportSchema>;
 
 export const overlaySchema = z.object({
-  id: z.string().uuid(),
-  mediaId: z.string().uuid(),
+  id: overlayIdSchema,
+  mediaId: mediaIdSchema,
   monitorId: z.string().nullable(),
   x: z.number().finite(),
   y: z.number().finite(),
@@ -74,36 +98,36 @@ export const settingsSchema = z.object({
 export type AppSettings = z.infer<typeof settingsSchema>;
 
 export const deleteReportSchema = z.object({
-  mediaId: z.string().uuid(),
+  mediaId: mediaIdSchema,
   overlaysRemoved: z.number().int().nonnegative(),
 });
 export type DeleteReport = z.infer<typeof deleteReportSchema>;
 
 export interface LibraryQuery {
-  search?: string;
-  mediaKind?: MediaKind;
-  favoriteOnly?: boolean;
-  tag?: string;
-  limit?: number;
-  offset?: number;
+  readonly search?: string;
+  readonly mediaKind?: MediaKind;
+  readonly favoriteOnly?: boolean;
+  readonly tag?: string;
+  readonly limit?: number;
+  readonly offset?: number;
 }
 
 export interface NewOverlay {
-  mediaId: string;
-  monitorId: string | null;
-  x: number;
-  y: number;
+  readonly mediaId: MediaId;
+  readonly monitorId: string | null;
+  readonly x: number;
+  readonly y: number;
 }
 
 export interface OverlayPatch {
-  monitorId?: string | null;
-  x?: number;
-  y?: number;
-  width?: number;
-  opacity?: number;
-  speed?: number;
-  flipHorizontal?: boolean;
-  isPlaying?: boolean;
-  zOrder?: number;
-  isActive?: boolean;
+  readonly monitorId?: string | null;
+  readonly x?: number;
+  readonly y?: number;
+  readonly width?: number;
+  readonly opacity?: number;
+  readonly speed?: number;
+  readonly flipHorizontal?: boolean;
+  readonly isPlaying?: boolean;
+  readonly zOrder?: number;
+  readonly isActive?: boolean;
 }
