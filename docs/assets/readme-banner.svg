@@ -1,0 +1,48 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1440 460" role="img" aria-labelledby="title desc">
+  <title id="title">LumaDesk</title>
+  <desc id="desc">A dark blue banner with the LumaDesk mark and desktop animation frames.</desc>
+  <defs>
+    <linearGradient id="bg" x1="90" y1="20" x2="1320" y2="460" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#08111c"/>
+      <stop offset=".52" stop-color="#10253a"/>
+      <stop offset="1" stop-color="#0a1623"/>
+    </linearGradient>
+    <radialGradient id="halo" cx="0" cy="0" r="1" gradientTransform="translate(1050 230) rotate(180) scale(440 300)">
+      <stop stop-color="#39a8ff" stop-opacity=".30"/>
+      <stop offset="1" stop-color="#39a8ff" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="brand" x1="0" x2="1">
+      <stop stop-color="#72c5ff"/>
+      <stop offset="1" stop-color="#2a92f0"/>
+    </linearGradient>
+    <filter id="shadow" x="-30%" y="-30%" width="160%" height="160%">
+      <feDropShadow dx="0" dy="24" stdDeviation="24" flood-opacity=".34"/>
+    </filter>
+  </defs>
+  <rect width="1440" height="460" rx="24" fill="url(#bg)"/>
+  <rect width="1440" height="460" rx="24" fill="url(#halo)"/>
+  <g opacity=".12" stroke="#72c5ff">
+    <path d="M0 80h1440M0 160h1440M0 240h1440M0 320h1440M0 400h1440"/>
+    <path d="M80 0v460M160 0v460M240 0v460M320 0v460M400 0v460M480 0v460M560 0v460M640 0v460M720 0v460M800 0v460M880 0v460M960 0v460M1040 0v460M1120 0v460M1200 0v460M1280 0v460M1360 0v460"/>
+  </g>
+  <g transform="translate(128 116)">
+    <rect width="104" height="104" rx="24" fill="#122235" stroke="#29435f"/>
+    <path d="M23 27h43v35H23zM43 47h43v35H43z" fill="none" stroke="url(#brand)" stroke-width="7" stroke-linejoin="round"/>
+    <path d="m41 43 10 7-10 7zM61 63l10 7-10 7z" fill="#f4f8fc"/>
+  </g>
+  <text x="128" y="284" fill="#f4f8fc" font-family="system-ui, sans-serif" font-size="62" font-weight="720" letter-spacing="-2">LumaDesk</text>
+  <text x="130" y="329" fill="#b8c7d9" font-family="system-ui, sans-serif" font-size="22">Your animation library, alive on the desktop.</text>
+  <g transform="translate(840 69)" filter="url(#shadow)">
+    <rect x="0" y="34" width="430" height="274" rx="14" fill="#0d1826" stroke="#29435f" stroke-width="2"/>
+    <rect x="20" y="56" width="96" height="230" rx="8" fill="#122235"/>
+    <rect x="136" y="56" width="274" height="32" rx="7" fill="#172b41"/>
+    <rect x="136" y="108" width="126" height="114" rx="10" fill="#172b41"/>
+    <rect x="282" y="108" width="128" height="114" rx="10" fill="#172b41"/>
+    <rect x="136" y="242" width="274" height="44" rx="8" fill="#172b41"/>
+    <circle cx="199" cy="165" r="27" fill="#39a8ff" opacity=".38"/>
+    <path d="m190 151 24 15-24 15z" fill="#f4f8fc"/>
+    <path d="M40 82h54M40 118h42M40 154h50M40 238h38" stroke="#7890aa" stroke-width="8" stroke-linecap="round"/>
+    <circle cx="102" cy="33" r="26" fill="#42d392" opacity=".8"/>
+    <path d="m93 32 7 7 13-15" fill="none" stroke="#08111c" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+  </g>
+</svg>
