@@ -1,6 +1,13 @@
 //! Native application adapter for `LumaDesk`.
 
+mod command_error;
+mod commands;
+mod state;
+
+use lumadesk_core::Library;
 use tauri::Manager as _;
+
+use state::AppState;
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
@@ -20,6 +27,27 @@ pub fn run() {
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_autostart::Builder::new().build())
+        .setup(|application| {
+            let data_root = application.path().app_data_dir()?;
+            let library = Library::open(&data_root)?;
+            application.manage(AppState::new(library));
+            Ok(())
+        })
+        .invoke_handler(tauri::generate_handler![
+            commands::list_media,
+            commands::import_media,
+            commands::rename_media,
+            commands::set_favorite,
+            commands::replace_tags,
+            commands::delete_media,
+            commands::resolve_media_path,
+            commands::list_overlays,
+            commands::create_overlay,
+            commands::update_overlay,
+            commands::remove_overlay,
+            commands::get_settings,
+            commands::update_settings,
+        ])
         .run(tauri::generate_context!())
         .unwrap_or_else(|error| {
             eprintln!("LumaDesk failed to start: {error}");

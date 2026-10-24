@@ -1,0 +1,36 @@
+use std::sync::{Arc, Mutex};
+
+use lumadesk_core::{CoreError, Library};
+use tauri::State;
+
+use crate::command_error::CommandError;
+
+#[derive(Debug)]
+pub(crate) struct AppState {
+    library: Arc<Mutex<Library>>,
+}
+
+impl AppState {
+    pub(crate) fn new(library: Library) -> Self {
+        Self {
+            library: Arc::new(Mutex::new(library)),
+        }
+    }
+}
+
+pub(crate) async fn with_library<T, F>(
+    state: State<'_, AppState>,
+    operation: F,
+) -> Result<T, CommandError>
+where
+    T: Send + 'static,
+    F: FnOnce(&mut Library) -> Result<T, CoreError> + Send + 'static,
+{
+    let library = Arc::clone(&state.library);
+    tauri::async_runtime::spawn_blocking(move || {
+        let mut library = library.lock().map_err(|_| CommandError::unavailable())?;
+        operation(&mut library).map_err(CommandError::from)
+    })
+    .await
+    .map_err(|_| CommandError::unavailable())?
+}

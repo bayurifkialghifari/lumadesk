@@ -12,3 +12,4 @@ All notable changes to LumaDesk are documented here. The project follows Semanti
 - Local SQLite catalog with transactional schema migration, search, tags, favorites, typed settings, and persisted overlay records.
 - Managed media import for GIF, APNG, WebP, PNG, and JPEG with SHA-256 duplicate detection and bounded frame inspection.
 - Coordinated media deletion that removes related overlays and managed data while preserving the original source file.
+- Typed Tauri command bridge and validated TypeScript client for catalog, overlay, media-path, and settings operations.
