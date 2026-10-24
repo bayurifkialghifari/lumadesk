@@ -103,6 +103,23 @@ export const deleteReportSchema = z.object({
 });
 export type DeleteReport = z.infer<typeof deleteReportSchema>;
 
+export const frameAssetSchema = z.object({
+  index: z.number().int().nonnegative(),
+  durationMs: z.number().int().nonnegative(),
+  path: z.string().min(1),
+});
+export type FrameAsset = z.infer<typeof frameAssetSchema>;
+
+export const frameBatchSchema = z.object({
+  mediaId: mediaIdSchema,
+  width: z.number().int().positive(),
+  height: z.number().int().positive(),
+  totalFrames: z.number().int().positive(),
+  totalDurationMs: z.number().int().nonnegative(),
+  frames: z.array(frameAssetSchema).max(64),
+});
+export type FrameBatch = z.infer<typeof frameBatchSchema>;
+
 export interface LibraryQuery {
   readonly search?: string;
   readonly mediaKind?: MediaKind;

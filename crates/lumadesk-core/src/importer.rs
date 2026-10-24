@@ -8,11 +8,12 @@ use scopeguard::{ScopeGuard, guard};
 use sha2::{Digest, Sha256};
 
 use crate::{
-    ApiError, AppSettings, CoreError, DeleteReport, ImportFailure, ImportOutcome, ImportReport,
-    LibraryQuery, MediaId, MediaItem, MediaPage, NewOverlay, OverlayId, OverlayInstance,
-    OverlayPatch,
+    ApiError, AppSettings, CoreError, DeleteReport, FrameBatch, FrameBatchRequest, ImportFailure,
+    ImportOutcome, ImportReport, LibraryQuery, MediaId, MediaItem, MediaPage, NewOverlay,
+    OverlayId, OverlayInstance, OverlayPatch,
     database::Database,
     domain::{NewMediaItem, display_name},
+    frame_cache::FrameCache,
     media,
 };
 
@@ -21,6 +22,7 @@ pub struct Library {
     database: Database,
     data_root: PathBuf,
     media_root: PathBuf,
+    frame_cache: FrameCache,
 }
 
 impl Library {
@@ -33,12 +35,13 @@ impl Library {
         let media_root = data_root.join("media");
         fs::create_dir_all(&media_root)?;
         fs::create_dir_all(data_root.join("thumbnails"))?;
-        fs::create_dir_all(data_root.join("frames"))?;
+        let frame_cache = FrameCache::open(data_root.join("frames"))?;
         let database = Database::open(&data_root.join("lumadesk.sqlite3"))?;
         let library = Self {
             database,
             data_root,
             media_root,
+            frame_cache,
         };
         library.remove_stale_imports()?;
         Ok(library)
@@ -183,6 +186,20 @@ impl Library {
         self.resolve_managed_path(&item.managed_path)
     }
 
+    /// Decodes media into the persistent frame cache and returns one bounded frame batch.
+    ///
+    /// # Errors
+    /// Returns an error when media is missing, cache data cannot be written, or decoding fails.
+    pub fn frame_batch(
+        &mut self,
+        id: MediaId,
+        request: FrameBatchRequest,
+    ) -> Result<FrameBatch, CoreError> {
+        let item = self.database.media_by_id(id)?;
+        let source = self.resolve_managed_path(&item.managed_path)?;
+        self.frame_cache.batch(&item, &source, request)
+    }
+
     /// Lists every persisted desktop overlay.
     ///
     /// # Errors
@@ -245,13 +262,12 @@ impl Library {
         Ok(self.media_root.join(path))
     }
 
-    fn remove_cache_for(&self, id: MediaId) -> Result<(), CoreError> {
-        for root in ["thumbnails", "frames"] {
-            let path = self.data_root.join(root).join(id.to_string());
-            if path.exists() {
-                fs::remove_dir_all(path)?;
-            }
+    fn remove_cache_for(&mut self, id: MediaId) -> Result<(), CoreError> {
+        let thumbnail_path = self.data_root.join("thumbnails").join(id.to_string());
+        if thumbnail_path.exists() {
+            fs::remove_dir_all(thumbnail_path)?;
         }
+        self.frame_cache.remove(id)?;
         Ok(())
     }
 

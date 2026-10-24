@@ -1,8 +1,8 @@
 use std::path::PathBuf;
 
 use lumadesk_core::{
-    AppSettings, DeleteReport, ImportReport, LibraryQuery, MediaId, MediaItem, MediaPage,
-    NewOverlay, OverlayId, OverlayInstance, OverlayPatch,
+    AppSettings, DeleteReport, FrameBatch, FrameBatchRequest, ImportReport, LibraryQuery, MediaId,
+    MediaItem, MediaPage, NewOverlay, OverlayId, OverlayInstance, OverlayPatch,
 };
 use tauri::State;
 
@@ -104,6 +104,23 @@ pub(crate) async fn resolve_media_path(
             .managed_media_path(id)?
             .to_string_lossy()
             .into_owned())
+    })
+    .await
+}
+
+/// Returns a bounded batch of decoded frame assets from the local cache.
+///
+/// # Errors
+/// Returns a command error when media is missing, decoding fails, or the batch is invalid.
+#[tauri::command]
+pub(crate) async fn get_frame_batch(
+    state: State<'_, AppState>,
+    id: MediaId,
+    offset: u32,
+    limit: u32,
+) -> Result<FrameBatch, CommandError> {
+    with_library(state, move |library| {
+        library.frame_batch(id, FrameBatchRequest { offset, limit })
     })
     .await
 }

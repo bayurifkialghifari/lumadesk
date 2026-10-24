@@ -4,6 +4,10 @@ mod catalog;
 mod database;
 mod domain;
 mod error;
+mod frame_cache;
+mod frame_decoder;
+mod frame_manifest;
+mod frames;
 mod importer;
 mod media;
 mod overlays;
@@ -16,4 +20,5 @@ pub use domain::{
     MediaItem, MediaKind, MediaPage, NewOverlay, OverlayId, OverlayInstance, OverlayPatch,
 };
 pub use error::{ApiError, CoreError, ErrorCode};
+pub use frames::{FrameAsset, FrameBatch, FrameBatchRequest};
 pub use importer::Library;

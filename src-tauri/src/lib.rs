@@ -41,6 +41,7 @@ pub fn run() {
             commands::replace_tags,
             commands::delete_media,
             commands::resolve_media_path,
+            commands::get_frame_batch,
             commands::list_overlays,
             commands::create_overlay,
             commands::update_overlay,

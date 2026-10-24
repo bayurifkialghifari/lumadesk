@@ -1,7 +1,7 @@
 use std::{fs::File, io::BufReader, path::Path};
 
 use image::{
-    AnimationDecoder, Frame, ImageDecoder, ImageFormat, ImageReader,
+    AnimationDecoder, Delay, Frame, ImageDecoder, ImageFormat, ImageReader,
     codecs::{gif::GifDecoder, png::PngDecoder, webp::WebPDecoder},
 };
 
@@ -75,11 +75,7 @@ fn frame_metadata<'a>(
         count = count
             .checked_add(1)
             .ok_or_else(|| CoreError::InvalidMedia("Jumlah frame terlalu besar.".into()))?;
-        let (numerator, denominator) = frame.delay().numer_denom_ms();
-        if denominator == 0 {
-            return Err(CoreError::InvalidMedia("Durasi frame tidak valid.".into()));
-        }
-        let rounded = (u64::from(numerator) + u64::from(denominator) / 2) / u64::from(denominator);
+        let rounded = delay_ms(frame.delay())?;
         duration = duration
             .checked_add(rounded)
             .ok_or_else(|| CoreError::InvalidMedia("Durasi animasi terlalu panjang.".into()))?;
@@ -108,7 +104,15 @@ fn metadata(
     })
 }
 
-fn image_error(error: image::ImageError) -> CoreError {
+pub(crate) fn delay_ms(delay: Delay) -> Result<u64, CoreError> {
+    let (numerator, denominator) = delay.numer_denom_ms();
+    if denominator == 0 {
+        return Err(CoreError::InvalidMedia("Durasi frame tidak valid.".into()));
+    }
+    Ok((u64::from(numerator) + u64::from(denominator) / 2) / u64::from(denominator))
+}
+
+pub(crate) fn image_error(error: image::ImageError) -> CoreError {
     match error {
         image::ImageError::Unsupported(_) => CoreError::UnsupportedMedia,
         other => CoreError::InvalidMedia(other.to_string()),

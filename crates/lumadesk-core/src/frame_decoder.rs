@@ -1,0 +1,95 @@
+use std::{fs::File, io::BufReader, path::Path};
+
+use image::{
+    AnimationDecoder, ColorType, Frame, ImageFormat, ImageReader,
+    codecs::{gif::GifDecoder, png::PngDecoder, webp::WebPDecoder},
+    save_buffer_with_format,
+};
+
+use crate::{CoreError, MediaKind, media};
+
+#[derive(Debug)]
+pub(crate) struct DecodedFrames {
+    pub(crate) durations_ms: Vec<u64>,
+}
+
+pub(crate) fn decode_to(
+    source: &Path,
+    kind: MediaKind,
+    destination: &Path,
+) -> Result<DecodedFrames, CoreError> {
+    match kind {
+        MediaKind::Gif => decode_gif(source, destination),
+        MediaKind::Apng => decode_apng(source, destination),
+        MediaKind::Webp => decode_webp(source, destination),
+        MediaKind::Png | MediaKind::Jpeg => decode_static(source, destination),
+    }
+}
+
+fn decode_gif(source: &Path, destination: &Path) -> Result<DecodedFrames, CoreError> {
+    let decoder =
+        GifDecoder::new(BufReader::new(File::open(source)?)).map_err(media::image_error)?;
+    write_frames(decoder.into_frames(), destination)
+}
+
+fn decode_apng(source: &Path, destination: &Path) -> Result<DecodedFrames, CoreError> {
+    let decoder =
+        PngDecoder::new(BufReader::new(File::open(source)?)).map_err(media::image_error)?;
+    let decoder = decoder.apng().map_err(media::image_error)?;
+    write_frames(decoder.into_frames(), destination)
+}
+
+fn decode_webp(source: &Path, destination: &Path) -> Result<DecodedFrames, CoreError> {
+    let decoder =
+        WebPDecoder::new(BufReader::new(File::open(source)?)).map_err(media::image_error)?;
+    write_frames(decoder.into_frames(), destination)
+}
+
+fn decode_static(source: &Path, destination: &Path) -> Result<DecodedFrames, CoreError> {
+    let image = ImageReader::open(source)?
+        .with_guessed_format()?
+        .decode()
+        .map_err(media::image_error)?
+        .into_rgba8();
+    write_buffer(destination, 0, &image)?;
+    Ok(DecodedFrames {
+        durations_ms: vec![0],
+    })
+}
+
+fn write_frames<'a>(
+    frames: impl Iterator<Item = image::ImageResult<Frame>> + 'a,
+    destination: &Path,
+) -> Result<DecodedFrames, CoreError> {
+    let mut durations_ms = Vec::new();
+    for frame in frames {
+        let frame = frame.map_err(media::image_error)?;
+        let frame_delay_ms = media::delay_ms(frame.delay())?;
+        let index = u32::try_from(durations_ms.len())
+            .map_err(|_| CoreError::InvalidMedia("Jumlah frame terlalu besar.".into()))?;
+        write_buffer(destination, index, &frame.into_buffer())?;
+        durations_ms.push(frame_delay_ms);
+    }
+    if durations_ms.is_empty() {
+        return Err(CoreError::InvalidMedia(
+            "Animasi tidak memiliki frame.".into(),
+        ));
+    }
+    Ok(DecodedFrames { durations_ms })
+}
+
+fn write_buffer(
+    destination: &Path,
+    index: u32,
+    buffer: &image::RgbaImage,
+) -> Result<(), CoreError> {
+    save_buffer_with_format(
+        destination.join(format!("{index:08}.png")),
+        buffer.as_raw(),
+        buffer.width(),
+        buffer.height(),
+        ColorType::Rgba8,
+        ImageFormat::Png,
+    )
+    .map_err(media::image_error)
+}

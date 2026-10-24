@@ -6,6 +6,8 @@ import {
   commandErrorSchema,
   type DeleteReport,
   deleteReportSchema,
+  type FrameBatch,
+  frameBatchSchema,
   type ImportReport,
   importReportSchema,
   type LibraryQuery,
@@ -90,6 +92,18 @@ export function deleteMedia(id: MediaId): Promise<DeleteReport> {
 export async function mediaAssetUrl(id: MediaId): Promise<string> {
   const path = await invokeParsed("resolve_media_path", z.string(), { id });
   return convertFileSrc(path);
+}
+
+export async function getFrameBatch(
+  id: MediaId,
+  offset: number,
+  limit: number,
+): Promise<FrameBatch> {
+  const batch = await invokeParsed("get_frame_batch", frameBatchSchema, { id, offset, limit });
+  return {
+    ...batch,
+    frames: batch.frames.map((frame) => ({ ...frame, path: convertFileSrc(frame.path) })),
+  };
 }
 
 export function listOverlays(): Promise<OverlayInstance[]> {
