@@ -58,8 +58,8 @@ jobs:
         with:
           name: lumadesk-windows-x86_64
           path: |
-            src-tauri/target/x86_64-pc-windows-msvc/release/lumadesk.exe
-            src-tauri/target/x86_64-pc-windows-msvc/release/bundle/nsis/*.exe
+            target/x86_64-pc-windows-msvc/release/lumadesk.exe
+            target/x86_64-pc-windows-msvc/release/bundle/nsis/*.exe
           if-no-files-found: error
           compression-level: 0
 
