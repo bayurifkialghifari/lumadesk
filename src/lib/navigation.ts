@@ -1,7 +1,9 @@
 import { Images, Layers3, Settings2 } from "@lucide/svelte";
 
+export type NavigationId = "collection" | "desktop" | "settings";
+
 export const navigation = [
-  { label: "Koleksi", icon: Images, active: true },
-  { label: "Desktop", icon: Layers3, active: false },
-  { label: "Pengaturan", icon: Settings2, active: false },
+  { id: "collection", label: "Koleksi", icon: Images, enabled: true },
+  { id: "desktop", label: "Desktop", icon: Layers3, enabled: true },
+  { id: "settings", label: "Pengaturan", icon: Settings2, enabled: false },
 ] as const;

@@ -85,6 +85,12 @@ export const overlaySchema = z.object({
 });
 export type OverlayInstance = z.infer<typeof overlaySchema>;
 
+export const desktopOverlaySchema = z.object({
+  overlay: overlaySchema,
+  media: mediaItemSchema,
+});
+export type DesktopOverlay = z.infer<typeof desktopOverlaySchema>;
+
 export const settingsSchema = z.object({
   launchAtLogin: z.boolean(),
   restoreOverlays: z.boolean(),

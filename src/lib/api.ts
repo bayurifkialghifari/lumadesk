@@ -5,7 +5,9 @@ import {
   type CommandErrorPayload,
   commandErrorSchema,
   type DeleteReport,
+  type DesktopOverlay,
   deleteReportSchema,
+  desktopOverlaySchema,
   type FrameBatch,
   frameBatchSchema,
   type ImportReport,
@@ -110,6 +112,10 @@ export function listOverlays(): Promise<OverlayInstance[]> {
   return invokeParsed("list_overlays", z.array(overlaySchema));
 }
 
+export function listDesktopOverlays(): Promise<DesktopOverlay[]> {
+  return invokeParsed("list_desktop_overlays", z.array(desktopOverlaySchema));
+}
+
 export function createOverlay(input: NewOverlay): Promise<OverlayInstance> {
   return invokeParsed("create_overlay", overlaySchema, { input });
 }
@@ -122,8 +128,29 @@ export function updateOverlay(id: OverlayId, patch: OverlayPatch): Promise<Overl
   return invokeParsed("update_overlay", overlaySchema, { id, patch });
 }
 
+export function moveOverlay(
+  id: OverlayId,
+  monitorId: string | null,
+  x: number,
+  y: number,
+): Promise<OverlayInstance> {
+  return invokeParsed("move_overlay", overlaySchema, { id, monitorId, x, y });
+}
+
+export function duplicateOverlay(id: OverlayId): Promise<OverlayInstance> {
+  return invokeParsed("duplicate_overlay", overlaySchema, { id });
+}
+
 export async function removeOverlay(id: OverlayId): Promise<void> {
   await invokeParsed("remove_overlay", z.null(), { id });
+}
+
+export function getOverlayEditMode(): Promise<boolean> {
+  return invokeParsed("get_overlay_edit_mode", z.boolean());
+}
+
+export function setOverlayEditMode(enabled: boolean): Promise<boolean> {
+  return invokeParsed("set_overlay_edit_mode", z.boolean(), { enabled });
 }
 
 export function getSettings(): Promise<AppSettings> {

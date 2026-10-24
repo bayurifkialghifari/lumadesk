@@ -1,81 +1,168 @@
 <script lang="ts">
 import { listen, type UnlistenFn } from "@tauri-apps/api/event";
+import { currentMonitor, getCurrentWindow, type PhysicalPosition } from "@tauri-apps/api/window";
 import { onMount } from "svelte";
-import { getFrameBatch, listOverlays } from "../api";
-import { type FrameAsset, type OverlayId, type OverlayInstance, overlaySchema } from "../contracts";
 import {
-  appendBufferedBatch,
-  type BufferedFrameBatch,
+  duplicateOverlay,
+  getOverlayEditMode,
+  listOverlays,
+  moveOverlay,
+  removeOverlay,
+  updateOverlay,
+} from "../api";
+import { type OverlayId, type OverlayInstance, overlaySchema } from "../contracts";
+import { OverlayFrameBuffer, OverlayPlaybackError } from "../overlay-frame-buffer";
+import {
   batchOffsetForFrame,
-  FRAME_BATCH_SIZE,
-  findBufferedFrame,
   frameDelayMs,
   nextFrameIndex,
   prefetchBatchOffset,
   shouldSchedulePlayback,
 } from "../overlay-player";
+import { LatestPositionSaver } from "../overlay-position-saver";
+import { userErrorMessage } from "../presentation";
+import OverlayStage from "./OverlayStage.svelte";
 
 const OVERLAY_STATE_EVENT = "overlay:state";
-
-interface LoadedFrame extends FrameAsset {
-  readonly image: HTMLImageElement;
-}
-
-class OverlayPlaybackError extends Error {
-  public constructor(message: string, options?: ErrorOptions) {
-    super(message, options);
-    this.name = "OverlayPlaybackError";
-  }
-}
-
+const OVERLAY_EDIT_MODE_EVENT = "overlay:edit-mode";
 export let overlayId: OverlayId;
 
 let canvas: HTMLCanvasElement;
 let overlay: OverlayInstance | null = null;
-let buffer: readonly BufferedFrameBatch<LoadedFrame>[] = [];
-let totalFrames = 0;
+let frameBuffer: OverlayFrameBuffer | null = null;
 let currentIndex = 0;
 let timer: number | undefined;
-let unlisten: UnlistenFn | undefined;
+let unlisten: readonly UnlistenFn[] = [];
 let disposed = false;
 let failed = false;
-const loading = new Map<number, Promise<BufferedFrameBatch<LoadedFrame>>>();
+let editMode = false;
+let overlayRevision = 0;
+let editModeRevision = 0;
+let actionBusy = false;
+let actionError: string | null = null;
+const nativeWindow = getCurrentWindow();
+const positionSaver = new LatestPositionSaver<PhysicalPosition>(
+  async (position) => {
+    const scaleFactor = await nativeWindow.scaleFactor();
+    const logical = position.toLogical(scaleFactor);
+    const monitor = await currentMonitor();
+    await moveOverlay(overlayId, monitor?.name ?? null, logical.x, logical.y);
+  },
+  (error) => showActionError(error, "Posisi overlay tidak dapat disimpan."),
+);
 
-$: opacity = overlay?.opacity ?? 0;
-$: transform = overlay?.flipHorizontal ? "scaleX(-1)" : "scaleX(1)";
+$: mediaOpacity = overlay?.opacity ?? 0;
+$: mediaTransform = overlay?.flipHorizontal ? "scaleX(-1)" : "scaleX(1)";
 
 onMount(() => {
+  frameBuffer = new OverlayFrameBuffer(canvas);
   void initialize().catch(handlePlaybackError);
   return () => {
     disposed = true;
     clearTimer();
-    unlisten?.();
-    loading.clear();
-    buffer = [];
+    positionSaver.dispose();
+    for (const cleanup of unlisten) cleanup();
+    frameBuffer?.clear();
+    frameBuffer = null;
   };
 });
 
 async function initialize(): Promise<void> {
-  const cleanup = await listen<unknown>(OVERLAY_STATE_EVENT, (event) => {
-    const parsed = overlaySchema.safeParse(event.payload);
-    if (parsed.success && parsed.data.id === overlayId) applyOverlay(parsed.data);
-  });
+  const cleanups = await Promise.all([
+    listen<unknown>(OVERLAY_STATE_EVENT, (event) => {
+      const parsed = overlaySchema.safeParse(event.payload);
+      if (parsed.success && parsed.data.id === overlayId) {
+        overlayRevision += 1;
+        applyOverlay(parsed.data);
+      }
+    }),
+    listen<unknown>(OVERLAY_EDIT_MODE_EVENT, (event) => {
+      if (typeof event.payload === "boolean") {
+        editModeRevision += 1;
+        editMode = event.payload;
+      }
+    }),
+    nativeWindow.onMoved((event) => {
+      if (!editMode || disposed) return;
+      positionSaver.schedule(event.payload);
+    }),
+  ]);
   if (disposed) {
-    cleanup();
+    for (const cleanup of cleanups) cleanup();
     return;
   }
-  unlisten = cleanup;
+  unlisten = cleanups;
 
-  const overlays = await listOverlays();
+  const overlayRevisionAtRequest = overlayRevision;
+  const editModeRevisionAtRequest = editModeRevision;
+  const [overlays, initialEditMode] = await Promise.all([listOverlays(), getOverlayEditMode()]);
+  if (disposed) return;
   const initial = overlays.find((candidate) => candidate.id === overlayId);
-  if (initial === undefined) {
+  if (overlayRevision === overlayRevisionAtRequest && initial !== undefined) overlay = initial;
+  if (editModeRevision === editModeRevisionAtRequest) editMode = initialEditMode;
+  if (overlay === null) {
     throw new OverlayPlaybackError("Data overlay tidak ditemukan.");
   }
-  overlay = initial;
-  await ensureBatch(0);
-  drawCurrentFrame();
+  const frames = requireFrameBuffer();
+  await frames.ensure(overlay.mediaId, 0);
+  frames.draw(currentIndex);
   prefetch();
   scheduleNextFrame();
+}
+
+async function startDrag(event: MouseEvent): Promise<void> {
+  if (event.button !== 0 || actionBusy) return;
+  event.preventDefault();
+  try {
+    await nativeWindow.startDragging();
+  } catch (error) {
+    showActionError(error, "Overlay tidak dapat digeser.");
+  }
+}
+
+async function patchOverlay(patch: Parameters<typeof updateOverlay>[1]): Promise<void> {
+  const current = overlay;
+  if (current === null || actionBusy) return;
+  actionBusy = true;
+  actionError = null;
+  try {
+    overlay = await updateOverlay(current.id, patch);
+  } catch (error) {
+    showActionError(error, "Kontrol overlay tidak dapat diperbarui.");
+  } finally {
+    actionBusy = false;
+  }
+}
+
+async function duplicateCurrent(): Promise<void> {
+  const current = overlay;
+  if (current === null || actionBusy) return;
+  actionBusy = true;
+  actionError = null;
+  try {
+    await duplicateOverlay(current.id);
+  } catch (error) {
+    showActionError(error, "Overlay tidak dapat diduplikasi.");
+  } finally {
+    actionBusy = false;
+  }
+}
+
+async function closeCurrent(): Promise<void> {
+  const current = overlay;
+  if (current === null || actionBusy) return;
+  actionBusy = true;
+  actionError = null;
+  try {
+    await removeOverlay(current.id);
+  } catch (error) {
+    actionBusy = false;
+    showActionError(error, "Overlay tidak dapat ditutup.");
+  }
+}
+
+function showActionError(error: unknown, fallback: string): void {
+  actionError = error instanceof Error ? userErrorMessage(error, fallback) : fallback;
 }
 
 function applyOverlay(next: OverlayInstance): void {
@@ -87,64 +174,18 @@ function applyOverlay(next: OverlayInstance): void {
   scheduleNextFrame();
 }
 
-async function ensureBatch(offset: number): Promise<BufferedFrameBatch<LoadedFrame>> {
-  const existing = buffer.find((batch) => batch.offset === offset);
-  if (existing !== undefined) return existing;
-  const inFlight = loading.get(offset);
-  if (inFlight !== undefined) return inFlight;
-
-  const request = loadBatch(offset);
-  loading.set(offset, request);
-  try {
-    const loaded = await request;
-    if (!disposed) buffer = appendBufferedBatch(buffer, loaded);
-    return loaded;
-  } finally {
-    loading.delete(offset);
-  }
-}
-
-async function loadBatch(offset: number): Promise<BufferedFrameBatch<LoadedFrame>> {
-  const current = overlay;
-  if (current === null) throw new OverlayPlaybackError("Overlay belum siap.");
-  const batch = await getFrameBatch(current.mediaId, offset, FRAME_BATCH_SIZE);
-  if (batch.frames.length === 0) {
-    throw new OverlayPlaybackError("Batch frame kosong.");
-  }
-  totalFrames = batch.totalFrames;
-  canvas.width = batch.width;
-  canvas.height = batch.height;
-  const frames = await Promise.all(batch.frames.map(loadFrame));
-  return { offset, frames };
-}
-
-function loadFrame(frame: FrameAsset): Promise<LoadedFrame> {
-  return new Promise((resolve, reject) => {
-    const image = new Image();
-    image.decoding = "async";
-    image.onload = () => resolve({ ...frame, image });
-    image.onerror = () =>
-      reject(new OverlayPlaybackError(`Frame ${frame.index + 1} tidak dapat dimuat.`));
-    image.src = frame.path;
-  });
-}
-
-function drawCurrentFrame(): void {
-  const frame = findBufferedFrame(buffer, currentIndex);
-  if (frame === undefined) {
-    throw new OverlayPlaybackError(`Frame ${currentIndex + 1} belum tersedia.`);
-  }
-  const context = canvas.getContext("2d", { alpha: true });
-  if (context === null) throw new OverlayPlaybackError("Canvas overlay tidak tersedia.");
-  context.clearRect(0, 0, canvas.width, canvas.height);
-  context.drawImage(frame.image, 0, 0, canvas.width, canvas.height);
-}
-
 function scheduleNextFrame(): void {
   clearTimer();
   const current = overlay;
-  if (current === null || !shouldSchedulePlayback(current.isPlaying, totalFrames) || failed) return;
-  const frame = findBufferedFrame(buffer, currentIndex);
+  const frames = frameBuffer;
+  if (
+    current === null ||
+    frames === null ||
+    !shouldSchedulePlayback(current.isPlaying, frames.totalFrames) ||
+    failed
+  )
+    return;
+  const frame = frames.frame(currentIndex);
   if (frame === undefined) return;
   timer = window.setTimeout(
     () => {
@@ -157,19 +198,33 @@ function scheduleNextFrame(): void {
 
 async function advanceFrame(): Promise<void> {
   const current = overlay;
-  if (current === null || !shouldSchedulePlayback(current.isPlaying, totalFrames)) return;
-  const next = nextFrameIndex(currentIndex, totalFrames);
-  await ensureBatch(batchOffsetForFrame(next));
+  const frames = frameBuffer;
+  if (
+    current === null ||
+    frames === null ||
+    !shouldSchedulePlayback(current.isPlaying, frames.totalFrames)
+  )
+    return;
+  const next = nextFrameIndex(currentIndex, frames.totalFrames);
+  await frames.ensure(current.mediaId, batchOffsetForFrame(next));
   if (disposed || overlay?.isPlaying !== true) return;
   currentIndex = next;
-  drawCurrentFrame();
+  frames.draw(currentIndex);
   prefetch();
   scheduleNextFrame();
 }
 
 function prefetch(): void {
-  const offset = prefetchBatchOffset(currentIndex, totalFrames);
-  if (offset !== null) void ensureBatch(offset).catch(handlePlaybackError);
+  const current = overlay;
+  const frames = frameBuffer;
+  if (current === null || frames === null) return;
+  const offset = prefetchBatchOffset(currentIndex, frames.totalFrames);
+  if (offset !== null) void frames.ensure(current.mediaId, offset).catch(handlePlaybackError);
+}
+
+function requireFrameBuffer(): OverlayFrameBuffer {
+  if (frameBuffer === null) throw new OverlayPlaybackError("Buffer overlay belum siap.");
+  return frameBuffer;
 }
 
 function clearTimer(): void {
@@ -190,21 +245,16 @@ function handlePlaybackError(error: unknown): void {
 
 <svelte:head><title>LumaDesk Overlay</title></svelte:head>
 
-<div class="overlay-stage" style:opacity style:transform aria-hidden="true">
-  <canvas bind:this={canvas}></canvas>
-</div>
-
-<style>
-.overlay-stage {
-  width: 100vw;
-  height: 100vh;
-  transform-origin: center;
-  background: transparent;
-}
-
-canvas {
-  display: block;
-  width: 100%;
-  height: 100%;
-}
-</style>
+<OverlayStage
+  bind:canvas
+  {editMode}
+  {mediaOpacity}
+  {mediaTransform}
+  {overlay}
+  busy={actionBusy}
+  error={actionError}
+  onstartdrag={(event) => void startDrag(event)}
+  onpatch={(patch) => void patchOverlay(patch)}
+  onduplicate={() => void duplicateCurrent()}
+  onclose={() => void closeCurrent()}
+/>
