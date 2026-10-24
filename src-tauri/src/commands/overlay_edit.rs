@@ -3,6 +3,7 @@ use tauri::{AppHandle, State};
 use crate::{command_error::CommandError, overlay_windows, state::AppState};
 
 /// Returns whether desktop overlays currently accept edit input.
+#[allow(clippy::needless_pass_by_value)]
 #[tauri::command]
 pub(crate) fn get_overlay_edit_mode(state: State<'_, AppState>) -> bool {
     state.overlay_edit_mode()
@@ -12,6 +13,7 @@ pub(crate) fn get_overlay_edit_mode(state: State<'_, AppState>) -> bool {
 ///
 /// # Errors
 /// Returns a command error when native window interaction cannot be updated.
+#[allow(clippy::needless_pass_by_value)]
 #[tauri::command]
 pub(crate) fn set_overlay_edit_mode(
     app: AppHandle,

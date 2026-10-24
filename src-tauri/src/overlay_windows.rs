@@ -68,10 +68,8 @@ pub(crate) fn sync(
     if let Err(error) = configure(&window, overlay, size, edit_mode)
         .and_then(|()| app.emit_to(label.as_str(), OVERLAY_STATE_EVENT, overlay.clone()))
     {
-        if created {
-            if let Err(cleanup_error) = window.destroy() {
-                eprintln!("failed to clean up overlay window {label}: {cleanup_error}");
-            }
+        if created && let Err(cleanup_error) = window.destroy() {
+            eprintln!("failed to clean up overlay window {label}: {cleanup_error}");
         }
         return Err(error);
     }
