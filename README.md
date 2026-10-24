@@ -49,7 +49,12 @@ cargo test --workspace
 
 ## Dokumentasi
 
-- [Cara kerja semua fitur](docs/semua%20feature%20nya%20gimana.md)
+- [Koleksi animasi](docs/koleksi.md)
+- [Mengimpor media](docs/impor-media.md)
+- [Overlay desktop](docs/overlay-desktop.md)
+- [Tray dan lifecycle](docs/tray-dan-lifecycle.md)
+- [Pengaturan dan data lokal](docs/pengaturan-dan-data.md)
+- [Instalasi dan rilis](docs/instalasi-dan-rilis.md)
 - [Product requirements](PRD.md)
 - [Design system](DESIGN.md)
 - [Architecture](architecture.md)
