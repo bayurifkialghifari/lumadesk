@@ -121,7 +121,7 @@ fn deleting_media_cascades_overlays_without_touching_source() -> Result<(), Box<
     let report = library.delete_media(item.id)?;
     assert_eq!(report.overlays_removed, 1);
     assert!(source.exists());
-    assert!(library.list_overlays()?.is_empty());
+    assert_eq!(library.list_overlays()?, Vec::new());
     Ok(())
 }
 
