@@ -60,6 +60,8 @@ Gradients are limited to the brand banner, empty-state illustration, and preview
 - The main content column owns vertical scrolling. Navigation and inspector stay fixed within the viewport.
 - At widths below 1,100 px, the inspector becomes a modal sheet.
 - The library grid uses responsive columns with a minimum card width of 184 px. Media cards use a 4:3 preview stage and show controls only on selection or hover.
+- The desktop manager uses one compact row per active overlay on wide screens and stacks preview, metadata, actions, and sliders on narrow screens.
+- Browser preview keeps native-only controls visible but disabled and explains why they are unavailable.
 
 ## 4. Core primitives
 
@@ -88,6 +90,7 @@ Gradients are limited to the brand banner, empty-state illustration, and preview
 - Display mode is the default and ignores pointer events.
 - Edit mode adds a compact neutral toolbar near the selected overlay and a subtle bounding box.
 - The toolbar exposes drag, play/pause, flip, duplicate, and close. Detailed size, opacity, and speed controls live in the main-window inspector.
+- The **Aktif di Desktop** page owns global edit mode, live active/playing counts, pause-all, and confirmed close-all actions.
 - Overlay windows never display product chrome during display mode.
 
 ## 7. Content language

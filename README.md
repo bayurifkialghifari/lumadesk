@@ -17,6 +17,7 @@
 - Impor GIF, APNG, WebP, PNG, dan JPG melalui file picker atau drag-and-drop.
 - Cari, beri tag, favoritkan, ganti nama, dan hapus item dari koleksi lokal.
 - Buat beberapa overlay transparan dengan posisi, ukuran, opasitas, kecepatan, dan arah masing-masing.
+- Kelola seluruh overlay aktif, gunakan Mode edit untuk menggeser, lalu putar, jeda, duplikat, atau tutup setiap instance.
 - Pulihkan susunan overlay saat aplikasi dibuka kembali.
 - Simpan semuanya secara lokal tanpa akun dan tanpa telemetri.
 
