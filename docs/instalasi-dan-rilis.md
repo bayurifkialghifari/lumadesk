@@ -12,4 +12,6 @@ Linux menjalankan overlay langsung pada sesi X11. Pada sesi Wayland, LumaDesk me
 
 Rilis mengikuti Semantic Versioning. Tag Git `vMAJOR.MINOR.PATCH` memicu build seluruh platform. Release baru diterbitkan setelah pemeriksaan, test, dan packaging semua platform selesai. Setiap installer disertai checksum SHA-256.
 
-Build macOS dan Windows memakai signing ketika secret proyek sudah tersedia. Build pengembangan yang belum ditandatangani tetap diberi keterangan jelas pada halaman rilis.
+Versi pada tag, `package.json`, workspace Cargo, dan konfigurasi Tauri harus sama. Workflow menolak rilis ketika salah satunya berbeda. Artifact Linux, macOS, dan Windows dikumpulkan lebih dahulu, lalu GitHub Release beserta `SHA256SUMS.txt` diterbitkan hanya jika seluruh build berhasil.
+
+Build publik awal belum ditandatangani. Code signing macOS dan Windows akan dikonfigurasi setelah certificate dan secret proyek tersedia.

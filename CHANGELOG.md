@@ -20,3 +20,4 @@ All notable changes to LumaDesk are documented here. The project follows Semanti
 - **Tampilkan di desktop** action in the media inspector with native success and error feedback.
 - **Aktif di Desktop** workspace with live instance counts, responsive cards, browser-preview states, per-instance controls, and pause-all or confirmed close-all actions.
 - Global overlay edit mode with click-through switching, native drag placement, persisted logical positions, and compact play, flip, duplicate, and close controls on each overlay.
+- GitHub Actions checks for frontend and Rust code plus tagged cross-platform installer builds, synchronized version validation, SHA-256 checksums, and automatic GitHub Releases.
