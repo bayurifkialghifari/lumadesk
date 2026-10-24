@@ -99,6 +99,39 @@ impl Database {
         self.overlay_by_id(id)
     }
 
+    pub(crate) fn duplicate_overlay(
+        &mut self,
+        id: OverlayId,
+        x: f64,
+        y: f64,
+    ) -> Result<OverlayInstance, CoreError> {
+        validate_position(x, y)?;
+        let source = self.overlay_by_id(id)?;
+        let duplicate_id = OverlayId::new();
+        let now = Utc::now().timestamp_millis();
+        self.connection.execute(
+            "INSERT INTO overlay_instances
+             (id, media_id, monitor_id, x, y, width, opacity, speed, flip_horizontal,
+              is_playing, z_order, is_active, created_at, updated_at)
+             VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, 1, ?12, ?12)",
+            params![
+                duplicate_id.to_string(),
+                source.media_id.to_string(),
+                source.monitor_id,
+                x,
+                y,
+                source.width,
+                source.opacity,
+                source.speed,
+                source.flip_horizontal,
+                source.is_playing,
+                source.z_order.saturating_add(1),
+                now
+            ],
+        )?;
+        self.overlay_by_id(duplicate_id)
+    }
+
     pub(crate) fn remove_overlay(&mut self, id: OverlayId) -> Result<(), CoreError> {
         let changed = self.connection.execute(
             "DELETE FROM overlay_instances WHERE id = ?1",

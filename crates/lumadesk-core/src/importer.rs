@@ -244,6 +244,19 @@ impl Library {
         self.database.update_overlay(id, patch)
     }
 
+    /// Copies an overlay's controls to a new persisted instance at another position.
+    ///
+    /// # Errors
+    /// Returns an error for invalid coordinates, a missing overlay, or failed persistence.
+    pub fn duplicate_overlay(
+        &mut self,
+        id: OverlayId,
+        x: f64,
+        y: f64,
+    ) -> Result<OverlayInstance, CoreError> {
+        self.database.duplicate_overlay(id, x, y)
+    }
+
     /// Removes a persisted overlay.
     ///
     /// # Errors

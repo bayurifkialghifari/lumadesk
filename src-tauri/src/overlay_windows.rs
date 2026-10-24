@@ -6,8 +6,13 @@ use tauri::{
     WebviewWindowBuilder,
 };
 
+use crate::state::AppState;
+
 pub(crate) const OVERLAY_STATE_EVENT: &str = "overlay:state";
+pub(crate) const OVERLAY_EDIT_MODE_EVENT: &str = "overlay:edit-mode";
+pub(crate) const OVERLAY_CATALOG_EVENT: &str = "overlay:catalog-changed";
 const OVERLAY_LABEL_PREFIX: &str = "overlay-";
+const MAIN_WINDOW_LABEL: &str = "main";
 const FALLBACK_POSITION: f64 = 64.0;
 const MAX_WINDOW_DIMENSION: f64 = 4_096.0;
 
@@ -53,13 +58,14 @@ pub(crate) fn sync(
 
     let label = label(overlay.id);
     let size = overlay_size(overlay.width, media.width, media.height);
+    let edit_mode = app.state::<AppState>().overlay_edit_mode();
     let existing = app.get_webview_window(&label);
     let created = existing.is_none();
     let window = match existing {
         Some(window) => window,
         None => build(app, &label, overlay, size)?,
     };
-    if let Err(error) = configure(&window, overlay, size)
+    if let Err(error) = configure(&window, overlay, size, edit_mode)
         .and_then(|()| app.emit_to(label.as_str(), OVERLAY_STATE_EVENT, overlay.clone()))
     {
         if created {
@@ -68,6 +74,29 @@ pub(crate) fn sync(
             }
         }
         return Err(error);
+    }
+    Ok(())
+}
+
+pub(crate) fn emit_state(app: &AppHandle, overlay: &OverlayInstance) -> tauri::Result<()> {
+    app.emit_to(
+        label(overlay.id).as_str(),
+        OVERLAY_STATE_EVENT,
+        overlay.clone(),
+    )
+}
+
+pub(crate) fn emit_catalog_changed(app: &AppHandle) {
+    if let Err(error) = app.emit_to(MAIN_WINDOW_LABEL, OVERLAY_CATALOG_EVENT, ()) {
+        eprintln!("failed to notify main window about overlay changes: {error}");
+    }
+}
+
+pub(crate) fn apply_edit_mode(app: &AppHandle, enabled: bool) -> tauri::Result<()> {
+    for (label, window) in app.webview_windows() {
+        if label.starts_with(OVERLAY_LABEL_PREFIX) {
+            configure_interaction(&window, enabled)?;
+        }
     }
     Ok(())
 }
@@ -110,12 +139,25 @@ fn configure(
     window: &WebviewWindow,
     overlay: &OverlayInstance,
     size: OverlaySize,
+    edit_mode: bool,
 ) -> tauri::Result<()> {
     window.set_size(LogicalSize::new(size.width, size.height))?;
     window.set_position(LogicalPosition::new(overlay.x, overlay.y))?;
     window.set_always_on_top(true)?;
-    window.set_ignore_cursor_events(true)?;
+    configure_interaction(window, edit_mode)?;
     window.show()?;
+    Ok(())
+}
+
+fn configure_interaction(window: &WebviewWindow, edit_mode: bool) -> tauri::Result<()> {
+    window.emit(OVERLAY_EDIT_MODE_EVENT, edit_mode)?;
+    if edit_mode {
+        window.set_focusable(true)?;
+        window.set_ignore_cursor_events(false)?;
+    } else {
+        window.set_ignore_cursor_events(true)?;
+        window.set_focusable(false)?;
+    }
     Ok(())
 }
 

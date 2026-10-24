@@ -126,6 +126,49 @@ fn deleting_media_cascades_overlays_without_touching_source() -> Result<(), Box<
 }
 
 #[test]
+fn duplicated_overlay_copies_controls_at_the_requested_position() -> Result<(), Box<dyn Error>> {
+    let temp = TempDir::new()?;
+    let source = temp.path().join("source.png");
+    write_png(&source)?;
+    let mut library = Library::open(temp.path().join("data"))?;
+    let item = imported(library.import_file(&source)?)?;
+    let overlay = library.create_overlay(&NewOverlay {
+        media_id: item.id,
+        monitor_id: Some("Primary".into()),
+        x: 20.0,
+        y: 30.0,
+    })?;
+    let source_overlay = library.update_overlay(
+        overlay.id,
+        &OverlayPatch {
+            width: Some(480.0),
+            opacity: Some(0.7),
+            speed: Some(1.5),
+            flip_horizontal: Some(true),
+            is_playing: Some(false),
+            z_order: Some(4),
+            ..OverlayPatch::default()
+        },
+    )?;
+
+    let duplicate = library.duplicate_overlay(source_overlay.id, 44.0, 54.0)?;
+
+    assert_ne!(duplicate.id, source_overlay.id);
+    assert_eq!(duplicate.media_id, source_overlay.media_id);
+    assert_eq!(duplicate.monitor_id, source_overlay.monitor_id);
+    assert_eq!((duplicate.x, duplicate.y), (44.0, 54.0));
+    assert!((duplicate.width - source_overlay.width).abs() < f64::EPSILON);
+    assert!((duplicate.opacity - source_overlay.opacity).abs() < f64::EPSILON);
+    assert!((duplicate.speed - source_overlay.speed).abs() < f64::EPSILON);
+    assert_eq!(duplicate.flip_horizontal, source_overlay.flip_horizontal);
+    assert_eq!(duplicate.is_playing, source_overlay.is_playing);
+    assert_eq!(duplicate.z_order, 5);
+    assert!(duplicate.is_active);
+    assert_eq!(library.list_overlays()?.len(), 2);
+    Ok(())
+}
+
+#[test]
 fn catalog_edits_preserve_managed_file_and_drive_filters() -> Result<(), Box<dyn Error>> {
     let temp = TempDir::new()?;
     let source = temp.path().join("nama-asli.png");

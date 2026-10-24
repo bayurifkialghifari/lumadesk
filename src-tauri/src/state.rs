@@ -1,4 +1,7 @@
-use std::sync::{Arc, Mutex};
+use std::sync::{
+    Arc, Mutex,
+    atomic::{AtomicBool, Ordering},
+};
 
 use lumadesk_core::{CoreError, Library};
 use tauri::State;
@@ -8,13 +11,23 @@ use crate::command_error::CommandError;
 #[derive(Debug)]
 pub(crate) struct AppState {
     library: Arc<Mutex<Library>>,
+    overlay_edit_mode: AtomicBool,
 }
 
 impl AppState {
     pub(crate) fn new(library: Library) -> Self {
         Self {
             library: Arc::new(Mutex::new(library)),
+            overlay_edit_mode: AtomicBool::new(false),
         }
+    }
+
+    pub(crate) fn overlay_edit_mode(&self) -> bool {
+        self.overlay_edit_mode.load(Ordering::Acquire)
+    }
+
+    pub(crate) fn set_overlay_edit_mode(&self, enabled: bool) {
+        self.overlay_edit_mode.store(enabled, Ordering::Release);
     }
 }
 
