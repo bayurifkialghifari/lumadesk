@@ -39,6 +39,13 @@ body {
   background: var(--canvas-950);
 }
 
+html[data-window-kind="overlay"],
+html[data-window-kind="overlay"] body,
+html[data-window-kind="overlay"] #app {
+  min-width: 0;
+  background: transparent;
+}
+
 button,
 input,
 select {

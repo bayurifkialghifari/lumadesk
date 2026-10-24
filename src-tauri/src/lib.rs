@@ -2,6 +2,7 @@
 
 mod command_error;
 mod commands;
+mod overlay_windows;
 mod state;
 
 use lumadesk_core::Library;
@@ -30,7 +31,26 @@ pub fn run() {
         .setup(|application| {
             let data_root = application.path().app_data_dir()?;
             let library = Library::open(&data_root)?;
+            let restore = library.get_settings()?.restore_overlays;
+            let overlays = if restore {
+                library
+                    .list_overlays()?
+                    .into_iter()
+                    .filter(|overlay| overlay.is_active)
+                    .map(|overlay| {
+                        let media = library.media_item(overlay.media_id)?;
+                        Ok((overlay, media))
+                    })
+                    .collect::<Result<Vec<_>, lumadesk_core::CoreError>>()?
+            } else {
+                Vec::new()
+            };
             application.manage(AppState::new(library));
+            for (overlay, media) in overlays {
+                if let Err(error) = overlay_windows::sync(application.handle(), &overlay, &media) {
+                    eprintln!("failed to restore overlay {}: {error}", overlay.id);
+                }
+            }
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![
@@ -44,6 +64,7 @@ pub fn run() {
             commands::get_frame_batch,
             commands::list_overlays,
             commands::create_overlay,
+            commands::show_media_overlay,
             commands::update_overlay,
             commands::remove_overlay,
             commands::get_settings,

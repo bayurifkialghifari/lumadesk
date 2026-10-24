@@ -15,6 +15,13 @@ impl CommandError {
             message: "Data lokal sedang tidak dapat diakses. Coba lagi sebentar.".into(),
         }
     }
+
+    pub(crate) fn overlay(error: &tauri::Error) -> Self {
+        Self {
+            code: ErrorCode::Io,
+            message: format!("Overlay desktop tidak dapat diperbarui: {error}"),
+        }
+    }
 }
 
 impl From<CoreError> for CommandError {

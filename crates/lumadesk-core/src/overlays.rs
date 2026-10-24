@@ -1,5 +1,5 @@
 use chrono::{DateTime, Utc};
-use rusqlite::{Row, params};
+use rusqlite::{OptionalExtension as _, Row, params};
 use uuid::Uuid;
 
 use crate::{
@@ -113,14 +113,21 @@ impl Database {
         Ok(())
     }
 
-    fn overlay_by_id(&self, id: OverlayId) -> Result<OverlayInstance, CoreError> {
-        let raw = self.connection.query_row(
-            "SELECT id, media_id, monitor_id, x, y, width, opacity, speed, flip_horizontal,
+    pub(crate) fn overlay_by_id(&self, id: OverlayId) -> Result<OverlayInstance, CoreError> {
+        let raw = self
+            .connection
+            .query_row(
+                "SELECT id, media_id, monitor_id, x, y, width, opacity, speed, flip_horizontal,
                     is_playing, z_order, is_active, created_at, updated_at
              FROM overlay_instances WHERE id = ?1",
-            [id.to_string()],
-            read_raw_overlay,
-        )?;
+                [id.to_string()],
+                read_raw_overlay,
+            )
+            .optional()?
+            .ok_or_else(|| CoreError::NotFound {
+                entity: "Overlay",
+                id: id.to_string(),
+            })?;
         hydrate_overlay(raw)
     }
 }

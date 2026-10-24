@@ -2,13 +2,19 @@
 
 Pilih item di Koleksi lalu tekan **Tampilkan di desktop**. Satu item dapat memiliki beberapa instance dengan posisi dan pengaturan masing-masing.
 
-## Mode tampil dan Mode edit
+## Yang sudah tersedia
 
-**Mode tampil** adalah keadaan normal. Overlay berada di atas jendela biasa dan meneruskan klik ke aplikasi di bawahnya.
+- Overlay dibuat di tengah monitor utama dengan ukuran bawaan dari pengaturan.
+- Jendela transparan selalu berada di atas jendela biasa, tidak muncul di taskbar, dan meneruskan klik ke aplikasi di bawahnya.
+- GIF, APNG, dan WebP animasi diputar memakai timing frame asli. PNG dan JPEG statis dirender sekali tanpa scheduler animasi.
+- Pengaturan instance yang sudah tersimpan seperti ukuran, opasitas, kecepatan, balik horizontal, dan putar/jeda diterapkan oleh renderer.
+- Overlay aktif dipulihkan saat LumaDesk dibuka kembali jika **Pulihkan overlay** diaktifkan.
+- Menghapus media dari Koleksi menutup semua window overlay miliknya sebelum data lokal dihapus. Window yang sempat ditutup dipulihkan jika penghapusan gagal.
+- Perubahan instance dipulihkan ke nilai sebelumnya jika window native gagal diperbarui. Penghapusan instance juga menutup window sebelum record lokal dihapus.
 
-Aktifkan **Mode edit** dari jendela utama atau tray untuk memilih dan memindahkan overlay. Mode ini menampilkan toolbar ringkas pada overlay yang sedang dipilih.
+## Kontrol yang sedang dikembangkan
 
-## Kontrol instance
+Mode edit dan toolbar overlay belum tersedia pada antarmuka saat ini. Tahap berikutnya akan menambahkan pemilihan overlay, drag placement, serta sinkronisasi kontrol berikut dari jendela utama dan toolbar:
 
 - **Posisi:** seret overlay ketika Mode edit aktif.
 - **Ukuran:** mengubah lebar sambil mempertahankan rasio media.
@@ -19,8 +25,8 @@ Aktifkan **Mode edit** dari jendela utama atau tray untuk memilih dan memindahka
 - **Duplikat:** membuat instance baru dengan pengaturan serupa dan posisi sedikit bergeser.
 - **Tutup:** menghapus instance dari desktop tanpa menghapus item Koleksi.
 
-Halaman **Aktif di Desktop** menampilkan semua instance dan menyediakan aksi massal untuk Mode edit, jeda, dan tutup.
+Halaman **Aktif di Desktop** dan aksi massal untuk Mode edit, jeda, serta tutup juga masih dalam pengembangan.
 
 ## Banyak monitor
 
-LumaDesk menyimpan posisi dalam koordinat logis beserta identitas monitor. Jika monitor tidak tersedia saat aplikasi dibuka, instance dipindahkan ke area terlihat di monitor utama.
+LumaDesk menyimpan posisi dalam koordinat logis beserta identitas monitor. Overlay baru ditempatkan di monitor utama. Pemulihan otomatis ke area terlihat ketika susunan monitor berubah akan ditambahkan bersama Mode edit.

@@ -60,6 +60,7 @@ export interface CollectionController extends Readable<CollectionState> {
   readonly setDragActive: (active: boolean) => void;
   readonly importPaths: (paths: readonly string[]) => Promise<void>;
   readonly toggleFavorite: (item: MediaItem) => Promise<void>;
+  readonly showOverlay: (item: MediaItem) => Promise<void>;
   readonly rename: (item: MediaItem, name: string) => Promise<boolean>;
   readonly replaceTags: (item: MediaItem, tags: readonly string[]) => Promise<boolean>;
   readonly remove: (item: MediaItem) => Promise<boolean>;

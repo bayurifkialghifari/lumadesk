@@ -114,6 +114,10 @@ export function createOverlay(input: NewOverlay): Promise<OverlayInstance> {
   return invokeParsed("create_overlay", overlaySchema, { input });
 }
 
+export function showMediaOverlay(id: MediaId): Promise<OverlayInstance> {
+  return invokeParsed("show_media_overlay", overlaySchema, { id });
+}
+
 export function updateOverlay(id: OverlayId, patch: OverlayPatch): Promise<OverlayInstance> {
   return invokeParsed("update_overlay", overlaySchema, { id, patch });
 }

@@ -108,13 +108,15 @@ fn deleting_media_cascades_overlays_without_touching_source() -> Result<(), Box<
         x: 20.0,
         y: 30.0,
     })?;
-    library.update_overlay(
+    let updated = library.update_overlay(
         overlay.id,
         &OverlayPatch {
             speed: Some(2.0),
             ..OverlayPatch::default()
         },
     )?;
+    assert!((updated.speed - 2.0).abs() <= f64::EPSILON);
+    assert_eq!(library.overlay(overlay.id)?, updated);
 
     let report = library.delete_media(item.id)?;
     assert_eq!(report.overlays_removed, 1);

@@ -177,6 +177,14 @@ impl Library {
         Ok(report)
     }
 
+    /// Returns one catalog item by its internal identifier.
+    ///
+    /// # Errors
+    /// Returns an error when the item is missing or stored data is invalid.
+    pub fn media_item(&self, id: MediaId) -> Result<MediaItem, CoreError> {
+        self.database.media_by_id(id)
+    }
+
     /// Resolves an internal media identifier to its managed local path.
     ///
     /// # Errors
@@ -206,6 +214,14 @@ impl Library {
     /// Returns an error when overlay records cannot be read or decoded.
     pub fn list_overlays(&self) -> Result<Vec<OverlayInstance>, CoreError> {
         self.database.list_overlays()
+    }
+
+    /// Returns one persisted desktop overlay by its internal identifier.
+    ///
+    /// # Errors
+    /// Returns an error when the overlay is missing or its stored data is invalid.
+    pub fn overlay(&self, id: OverlayId) -> Result<OverlayInstance, CoreError> {
+        self.database.overlay_by_id(id)
     }
 
     /// Creates a persisted overlay using the current default settings.

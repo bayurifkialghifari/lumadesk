@@ -145,6 +145,7 @@ function edit(kind: CollectionDialog["kind"], item: MediaItem): void {
         ontags={(item) => edit("tags", item)}
         ondelete={(item) => edit("delete", item)}
         onfavorite={(item) => void collection.toggleFavorite(item)}
+        onshow={(item) => void collection.showOverlay(item)}
       />
     {/if}
   </div>

@@ -62,28 +62,29 @@ The frontend calls serializable commands with typed inputs and outputs:
 - `set_favorite(input) -> MediaItem`
 - `replace_tags(input) -> MediaItem`
 - `delete_media(input) -> DeleteReport`
+- `resolve_media_path(id) -> string`
+- `get_frame_batch(id, offset, limit) -> FrameBatch`
 - `list_overlays() -> OverlayInstance[]`
 - `create_overlay(input) -> OverlayInstance`
+- `show_media_overlay(id) -> OverlayInstance`
 - `update_overlay(input) -> OverlayInstance`
 - `remove_overlay(id) -> void`
-- `set_edit_mode(enabled) -> void`
 - `get_settings() -> AppSettings`
-- `update_settings(patch) -> AppSettings`
-- `clear_cache() -> CacheReport`
+- `update_settings(settings) -> AppSettings`
 
-Tauri events report import progress, overlay changes initiated by native windows, and external reopen requests. Inputs are validated once at the command boundary. Domain failures map to stable error codes plus Indonesian user messages.
+The native layer emits `overlay:state` to the matching overlay window after persisted state changes. A failed native update restores the previous persisted state, while overlay and media removal close dependent windows before deleting their records. If persistence fails, closed windows are restored from the captured state. Inputs are validated once at the command boundary. Domain failures map to stable error codes plus Indonesian user messages.
 
 ## File ownership
 
 Application data contains `lumadesk.sqlite3`, `media/`, `thumbnails/`, and `frames/`. Import writes to a temporary file, hashes and decodes it, moves it atomically into `media/`, then commits the database row. A scope guard removes temporary data if any stage fails.
 
-The frontend receives asset URLs only for managed media and cache roots. It cannot request arbitrary local paths. Deletion runs as a coordinated operation: deactivate instances, delete the catalog record transactionally, then remove managed files. Failed file cleanup is logged and retried on startup.
+The frontend receives asset URLs only for managed media and cache roots. It cannot request arbitrary local paths. Deletion removes the catalog record and dependent overlay records transactionally, then removes managed media and regenerable cache data. A managed file is quarantined before the transaction, restored if that transaction fails, and stale quarantine files are cleared at startup.
 
 ## Rendering and windows
 
-Rust reads animation metadata and decodes bounded frame batches. The overlay page renders frames to a transparent canvas using their original timing. A per-instance LRU budget prevents large animations from retaining unlimited decoded data.
+Rust reads animation metadata and generates a persistent frame cache atomically. The frontend requests batches of 32 frames, prefetches near the active batch boundary, and retains at most the current and next batch in memory. The transparent canvas renderer uses original frame timing adjusted by the persisted speed multiplier. Static images render once without starting a playback scheduler.
 
-Each overlay is an undecorated, transparent, always-on-top Tauri window. Its label is derived from an internal instance UUID. Display mode ignores cursor events; edit mode restores hit testing and focus. macOS builds enable the required private transparent-window API and are distributed directly rather than through the App Store.
+Each active overlay is an undecorated, transparent, always-on-top Tauri window. Its label is derived from an internal instance UUID. The current display mode ignores cursor events and stays out of the taskbar. Active instances are restored at startup when `restore_overlays` is enabled, and deleting media also destroys its native windows. Edit-mode hit testing, drag placement, and inline controls are planned work. macOS builds enable the required private transparent-window API and are distributed directly rather than through the App Store.
 
 ## Migrations and compatibility
 

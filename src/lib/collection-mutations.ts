@@ -1,11 +1,18 @@
-import { deleteMedia, importMedia, renameMedia, replaceTags, setFavorite } from "./api";
+import {
+  deleteMedia,
+  importMedia,
+  renameMedia,
+  replaceTags,
+  setFavorite,
+  showMediaOverlay,
+} from "./api";
 import type { CollectionController, CollectionState } from "./collection-model";
 import type { MediaId, MediaItem } from "./contracts";
 import { userErrorMessage } from "./presentation";
 
 type MutationActions = Pick<
   CollectionController,
-  "importPaths" | "toggleFavorite" | "rename" | "replaceTags" | "remove"
+  "importPaths" | "toggleFavorite" | "showOverlay" | "rename" | "replaceTags" | "remove"
 >;
 
 interface MutationContext {
@@ -83,6 +90,29 @@ export function createCollectionMutations(context: MutationContext): MutationAct
     }
   }
 
+  async function showOverlay(item: MediaItem): Promise<void> {
+    if (!context.nativeAvailable) {
+      context.notify(
+        "info",
+        "Overlay desktop tersedia saat LumaDesk dijalankan sebagai aplikasi desktop.",
+      );
+      return;
+    }
+    setBusy(item.id, true);
+    try {
+      await showMediaOverlay(item.id);
+      context.notify("success", "Animasi ditampilkan di desktop.");
+    } catch (error) {
+      const message =
+        error instanceof Error
+          ? userErrorMessage(error, "Overlay desktop tidak dapat dibuka.")
+          : "Overlay desktop tidak dapat dibuka.";
+      context.notify("error", message);
+    } finally {
+      setBusy(item.id, false);
+    }
+  }
+
   async function rename(item: MediaItem, name: string): Promise<boolean> {
     if (!context.nativeAvailable) return false;
     setBusy(item.id, true);
@@ -150,5 +180,5 @@ export function createCollectionMutations(context: MutationContext): MutationAct
     }
   }
 
-  return { importPaths, toggleFavorite, rename, replaceTags: updateTags, remove };
+  return { importPaths, toggleFavorite, showOverlay, rename, replaceTags: updateTags, remove };
 }
