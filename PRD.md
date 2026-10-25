@@ -29,6 +29,7 @@ LumaDesk is a local-first desktop animation library. It lets people collect tran
 
 - Show starter and imported items in grid and compact-list views.
 - Filter by text, favorite state, file format, and tags.
+- Open an external GIF search from the Collection toolbar, carrying the current text query into Tenor when one is present. Downloaded files return through the normal local import flow.
 - Detect duplicate imports by SHA-256 and focus the existing item instead of copying it again.
 - Store imported files in an application-managed media directory. Renaming changes the display name only.
 - Require confirmation before deletion. Deleting an item stops its active overlays and removes its managed media and cache files; the original source file is never touched.

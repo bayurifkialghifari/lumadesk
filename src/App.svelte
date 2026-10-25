@@ -3,6 +3,7 @@ import { isTauri } from "@tauri-apps/api/core";
 import type { UnlistenFn } from "@tauri-apps/api/event";
 import { getCurrentWebview } from "@tauri-apps/api/webview";
 import { open } from "@tauri-apps/plugin-dialog";
+import { openUrl } from "@tauri-apps/plugin-opener";
 import { onMount } from "svelte";
 import { createCollectionController } from "./lib/collection-controller";
 import type { CollectionDialog } from "./lib/collection-model";
@@ -14,6 +15,7 @@ import MediaInspector from "./lib/components/MediaInspector.svelte";
 import Toast from "./lib/components/Toast.svelte";
 import type { MediaItem } from "./lib/contracts";
 import { createDesktopController } from "./lib/desktop-controller";
+import { gifDiscoveryUrl } from "./lib/gif-discovery";
 import type { NavigationId } from "./lib/navigation";
 import { userErrorMessage } from "./lib/presentation";
 
@@ -95,6 +97,30 @@ async function chooseFiles(): Promise<void> {
   }
 }
 
+async function discoverGifs(): Promise<void> {
+  const url = gifDiscoveryUrl($collection.filters.search);
+  if (!nativeAvailable) {
+    const opened = window.open(url, "_blank", "noopener,noreferrer");
+    if (opened === null) {
+      collection.notify(
+        "error",
+        "Your browser blocked the GIF search page. Allow pop-ups and try again.",
+      );
+    }
+    return;
+  }
+
+  try {
+    await openUrl(url);
+  } catch (error) {
+    const message =
+      error instanceof Error
+        ? userErrorMessage(error, "The GIF search page could not be opened.")
+        : "The GIF search page could not be opened.";
+    collection.notify("error", message);
+  }
+}
+
 function edit(kind: CollectionDialog["kind"], item: MediaItem): void {
   dialog = { kind, item };
 }
@@ -123,6 +149,7 @@ function navigate(id: NavigationId, enabled: boolean): void {
         onfavoritefilter={collection.setFavoriteOnly}
         ontag={collection.setTag}
         onview={(view) => void collection.setView(view)}
+        ondiscover={() => void discoverGifs()}
         onimport={() => void chooseFiles()}
         onselect={collection.select}
         onfavorite={(item) => void collection.toggleFavorite(item)}

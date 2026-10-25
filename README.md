@@ -15,6 +15,7 @@
 ## What you can do
 
 - Import GIF, APNG, WebP, PNG, and JPEG files through the native picker or drag and drop.
+- Open GIF search in your browser from the Collection toolbar, then import downloaded files locally.
 - Search, tag, favorite, rename, and remove items from a local library.
 - Create multiple overlays with independent position, size, opacity, speed, horizontal flip, and automatic background removal.
 - Drag overlays directly on the desktop, then play, pause, flip, duplicate, or close them from the always-visible toolbar.
@@ -56,6 +57,7 @@ cargo test --workspace
 
 - [Animation library](docs/animation-library.md)
 - [Importing media](docs/importing-media.md)
+- [Discovering GIFs](docs/discovering-gifs.md)
 - [Desktop overlays](docs/desktop-overlays.md)
 - [Background removal](docs/background-removal.md)
 - [Window and application lifecycle](docs/window-lifecycle.md)

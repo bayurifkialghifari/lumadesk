@@ -4,6 +4,10 @@ All notable changes to LumaDesk are documented here. The project follows Semanti
 
 ## [Unreleased]
 
+### Added
+
+- Added a **Discover GIFs** Collection action that opens Tenor in the default browser and carries over the current search text.
+
 ### Changed
 
 - Overlay edit controls and boundaries now appear when the animation is pressed and hide after three seconds without interaction.

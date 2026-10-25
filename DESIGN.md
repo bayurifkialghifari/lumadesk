@@ -71,6 +71,7 @@ Gradients are limited to the brand banner, empty-state illustration, and preview
 - **NavItem:** icon, label, optional count; selected state uses `surface-750` and `ink-100`.
 - **MediaCard:** preview stage, name, format metadata, favorite action, active-instance count. Selection uses a tonal wash and check glyph.
 - **SearchField:** leading search icon, clear action, keyboard shortcut hint.
+- **External discovery action:** a neutral secondary button beside import opens GIF search in the system browser and reuses the current collection query.
 - **Tag:** compact neutral pill; removable tags include a labeled close action.
 - **InspectorSection:** heading, grouped controls, neutral separators.
 - **Dialog:** focused title, concise copy, ordered actions, Escape and focus trapping.

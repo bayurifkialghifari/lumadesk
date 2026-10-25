@@ -6,6 +6,8 @@ LumaDesk accepts GIF, APNG, animated or static WebP, PNG, and JPEG files. Video 
 
 Select **Import animation**, choose one or more files, or drag files onto the Collection area. Progress is reported for each file so one invalid file does not block the others.
 
+To find new media, enter an optional Collection search term and select **Discover GIFs**. Download a GIF from the page that opens, then import it through the same picker or drag-and-drop flow.
+
 ## File storage
 
 LumaDesk copies imported media into its application data directory. The source file remains in its original location. The initial display name comes from the filename and can be changed after import.

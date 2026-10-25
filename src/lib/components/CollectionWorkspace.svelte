@@ -12,6 +12,7 @@ export let onkind: (value: MediaKindFilter) => void;
 export let onfavoritefilter: (value: boolean) => void;
 export let ontag: (value: string) => void;
 export let onview: (value: AppSettings["collectionView"]) => void;
+export let ondiscover: () => void;
 export let onimport: () => void;
 export let onselect: (id: MediaId) => void;
 export let onfavorite: (item: MediaItem) => void;
@@ -69,6 +70,7 @@ onMount(() => {
     onfavorite={onfavoritefilter}
     {ontag}
     {onview}
+    {ondiscover}
     {onimport}
   />
 

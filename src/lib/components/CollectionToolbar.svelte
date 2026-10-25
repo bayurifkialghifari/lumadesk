@@ -1,5 +1,5 @@
 <script lang="ts">
-import { Grid2X2, List, Search, Upload, X } from "@lucide/svelte";
+import { ExternalLink, Grid2X2, List, Search, Upload, X } from "@lucide/svelte";
 import { onMount } from "svelte";
 import type { CollectionFilters, MediaKindFilter } from "../collection-model";
 import type { AppSettings } from "../contracts";
@@ -15,6 +15,7 @@ export let onkind: (value: MediaKindFilter) => void;
 export let onfavorite: (value: boolean) => void;
 export let ontag: (value: string) => void;
 export let onview: (value: AppSettings["collectionView"]) => void;
+export let ondiscover: () => void;
 export let onimport: () => void;
 
 let shortcutLabel = "Ctrl K";
@@ -55,6 +56,10 @@ onMount(() => {
         <List size={17} />
       </button>
     </div>
+    <button class="secondary-button" type="button" title="Open GIF search in your browser" onclick={ondiscover}>
+      <ExternalLink size={16} />
+      Discover GIFs
+    </button>
     <button class="primary-button" type="button" disabled={importing} onclick={onimport}>
       <Upload size={16} />
       {importing ? "Importing…" : "Import animation"}
@@ -134,14 +139,14 @@ kbd {
   gap: 8px;
 }
 
-.primary-button {
+.primary-button, .secondary-button {
   min-height: 40px;
   padding-inline: 12px;
   border-radius: 6px;
   cursor: pointer;
 }
 
-.primary-button {
+.primary-button, .secondary-button {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -168,7 +173,14 @@ kbd {
   border: 0;
 }
 
+.secondary-button {
+  color: var(--ink-300);
+  background: var(--surface-800);
+  border: 1px solid var(--line-700);
+}
+
 .primary-button:hover { background: var(--brand-300); }
+.secondary-button:hover { color: var(--ink-100); background: var(--surface-750); }
 button:disabled { cursor: wait; opacity: 0.6; }
 
 .refresh-line {
@@ -201,9 +213,9 @@ button:disabled { cursor: wait; opacity: 0.6; }
 
 @media (max-width: 620px) {
   .toolbar { padding: 12px 16px; }
-  .toolbar__end .primary-button { width: 40px; padding: 0; }
-  .toolbar__end .primary-button :global(svg) { margin: 0; }
-  .toolbar__end .primary-button { font-size: 0; }
+  .toolbar__end .primary-button, .toolbar__end .secondary-button { width: 40px; padding: 0; }
+  .toolbar__end .primary-button :global(svg), .toolbar__end .secondary-button :global(svg) { margin: 0; }
+  .toolbar__end .primary-button, .toolbar__end .secondary-button { font-size: 0; }
   kbd { display: none; }
 }
 
