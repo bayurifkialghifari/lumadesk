@@ -51,6 +51,7 @@ describe("native command contracts", () => {
       opacity: 0.8,
       speed: 1.25,
       flipHorizontal: false,
+      removeBackground: true,
       isPlaying: true,
       zOrder: 0,
       isActive: true,

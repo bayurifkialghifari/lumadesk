@@ -116,6 +116,10 @@ pub struct MediaPage {
 
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
+#[expect(
+    clippy::struct_excessive_bools,
+    reason = "independent persisted overlay controls are represented as booleans at the command boundary"
+)]
 pub struct OverlayInstance {
     pub id: OverlayId,
     pub media_id: MediaId,
@@ -126,6 +130,7 @@ pub struct OverlayInstance {
     pub opacity: f64,
     pub speed: f64,
     pub flip_horizontal: bool,
+    pub remove_background: bool,
     pub is_playing: bool,
     pub z_order: i32,
     pub is_active: bool,
@@ -152,6 +157,7 @@ pub struct OverlayPatch {
     pub opacity: Option<f64>,
     pub speed: Option<f64>,
     pub flip_horizontal: Option<bool>,
+    pub remove_background: Option<bool>,
     pub is_playing: Option<bool>,
     pub z_order: Option<i32>,
     pub is_active: Option<bool>,

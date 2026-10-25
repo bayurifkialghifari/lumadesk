@@ -16,7 +16,7 @@
 
 - Import GIF, APNG, WebP, PNG, and JPEG files through the native picker or drag and drop.
 - Search, tag, favorite, rename, and remove items from a local library.
-- Create multiple transparent overlays with independent position, size, opacity, speed, and direction.
+- Create multiple overlays with independent position, size, opacity, speed, horizontal flip, and automatic background removal.
 - Drag overlays directly on the desktop, then play, pause, flip, duplicate, or close them from the always-visible toolbar.
 - Use familiar Hide, Minimize, Maximize/Restore, and Close controls in the custom title bar.
 - Restore your overlay layout when the application starts again.
@@ -57,6 +57,7 @@ cargo test --workspace
 - [Animation library](docs/animation-library.md)
 - [Importing media](docs/importing-media.md)
 - [Desktop overlays](docs/desktop-overlays.md)
+- [Background removal](docs/background-removal.md)
 - [Window and application lifecycle](docs/window-lifecycle.md)
 - [Settings and local data](docs/settings-and-local-data.md)
 - [Installation and releases](docs/installation-and-releases.md)

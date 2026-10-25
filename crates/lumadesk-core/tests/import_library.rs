@@ -147,6 +147,7 @@ fn duplicated_overlay_copies_controls_at_the_requested_position() -> Result<(), 
             opacity: Some(0.7),
             speed: Some(1.5),
             flip_horizontal: Some(true),
+            remove_background: Some(true),
             is_playing: Some(false),
             z_order: Some(4),
             ..OverlayPatch::default()
@@ -163,6 +164,10 @@ fn duplicated_overlay_copies_controls_at_the_requested_position() -> Result<(), 
     assert!((duplicate.opacity - source_overlay.opacity).abs() < f64::EPSILON);
     assert!((duplicate.speed - source_overlay.speed).abs() < f64::EPSILON);
     assert_eq!(duplicate.flip_horizontal, source_overlay.flip_horizontal);
+    assert_eq!(
+        duplicate.remove_background,
+        source_overlay.remove_background
+    );
     assert_eq!(duplicate.is_playing, source_overlay.is_playing);
     assert_eq!(duplicate.z_order, 5);
     assert!(duplicate.is_active);

@@ -91,6 +91,8 @@ Gradients are limited to the brand banner, empty-state illustration, and preview
 - Every overlay accepts pointer input and can be dragged directly from the animation surface or toolbar grip.
 - A compact neutral toolbar and subtle boundary remain visible on every overlay.
 - The toolbar exposes drag, play/pause, flip, duplicate, and close. Detailed size, opacity, and speed controls live in the main-window inspector.
+- The **Remove background** effect uses a standard checkbox in the main-window inspector. Its supporting copy stays concise and explains that solid or near-solid backgrounds produce the best result.
+- Effect processing never modifies the managed source file. A checked state is persisted per overlay and remains distinguishable through text and control state without relying on color.
 - The **Active on Desktop** page shows live active and playing counts plus pause-all and confirmed close-all actions.
 
 ## 7. Content language

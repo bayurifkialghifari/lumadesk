@@ -121,6 +121,19 @@ function numberValue(event: Event): number {
         />
       </label>
     </div>
+
+    <label class="effect-toggle">
+      <input
+        type="checkbox"
+        checked={item.overlay.removeBackground}
+        disabled={busy}
+        onchange={() => onupdate(item.overlay.id, { removeBackground: !item.overlay.removeBackground })}
+      />
+      <span>
+        <strong>Remove background</strong>
+        <small>Best for solid or near-solid backgrounds.</small>
+      </span>
+    </label>
   </div>
 </article>
 
@@ -176,6 +189,20 @@ label strong { color: var(--ink-300); font-weight: 650; }
 output { font-variant-numeric: tabular-nums; }
 input[type="range"] { width: 100%; accent-color: var(--brand-400); cursor: pointer; }
 input[type="range"]:disabled { cursor: wait; opacity: 0.55; }
+
+.effect-toggle {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 40px;
+  margin-top: 16px;
+  cursor: pointer;
+}
+.effect-toggle > input { width: 18px; height: 18px; margin: 0; accent-color: var(--brand-400); }
+.effect-toggle > input:disabled { cursor: wait; opacity: 0.55; }
+.effect-toggle > span { display: grid; justify-content: start; gap: 2px; color: var(--ink-500); font-size: 11px; }
+.effect-toggle strong { color: var(--ink-300); font-size: 12px; }
+.effect-toggle small { font-size: 11px; }
 
 @container desktop-workspace (max-width: 760px) {
   .overlay-card { grid-template-columns: 132px minmax(0, 1fr); }

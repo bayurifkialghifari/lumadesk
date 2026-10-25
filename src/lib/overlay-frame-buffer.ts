@@ -1,4 +1,5 @@
 import { getFrameBatch } from "./api";
+import { removeEdgeConnectedBackground } from "./background-removal";
 import type { FrameAsset, MediaId } from "./contracts";
 import {
   appendBufferedBatch,
@@ -9,6 +10,7 @@ import {
 
 interface LoadedFrame extends FrameAsset {
   readonly image: HTMLImageElement;
+  backgroundRemovedImage?: HTMLCanvasElement;
 }
 
 export class OverlayPlaybackError extends Error {
@@ -60,7 +62,7 @@ export class OverlayFrameBuffer {
     }
   }
 
-  public draw(index: number): void {
+  public draw(index: number, removeBackground: boolean): void {
     const frame = this.frame(index);
     if (frame === undefined) {
       throw new OverlayPlaybackError(`Frame ${index + 1} is not available yet.`);
@@ -68,7 +70,8 @@ export class OverlayFrameBuffer {
     const context = this.#canvas.getContext("2d", { alpha: true });
     if (context === null) throw new OverlayPlaybackError("The overlay canvas is unavailable.");
     context.clearRect(0, 0, this.#canvas.width, this.#canvas.height);
-    context.drawImage(frame.image, 0, 0, this.#canvas.width, this.#canvas.height);
+    const image = removeBackground ? backgroundRemovedImage(frame) : frame.image;
+    context.drawImage(image, 0, 0, this.#canvas.width, this.#canvas.height);
   }
 
   public clear(): void {
@@ -96,6 +99,21 @@ export class OverlayFrameBuffer {
     const frames = await Promise.all(batch.frames.map(loadFrame));
     return { offset, frames };
   }
+}
+
+function backgroundRemovedImage(frame: LoadedFrame): HTMLCanvasElement {
+  if (frame.backgroundRemovedImage !== undefined) return frame.backgroundRemovedImage;
+  const canvas = document.createElement("canvas");
+  canvas.width = frame.image.naturalWidth;
+  canvas.height = frame.image.naturalHeight;
+  const context = canvas.getContext("2d", { alpha: true });
+  if (context === null) throw new OverlayPlaybackError("Background removal is unavailable.");
+  context.drawImage(frame.image, 0, 0);
+  const imageData = context.getImageData(0, 0, canvas.width, canvas.height);
+  removeEdgeConnectedBackground(imageData.data, canvas.width, canvas.height);
+  context.putImageData(imageData, 0, 0);
+  frame.backgroundRemovedImage = canvas;
+  return canvas;
 }
 
 function loadFrame(frame: FrameAsset): Promise<LoadedFrame> {

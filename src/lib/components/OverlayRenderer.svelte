@@ -30,6 +30,7 @@ let failed = false;
 let overlayRevision = 0;
 let actionBusy = false;
 let actionError: string | null = null;
+let backgroundRemovalFailed = false;
 const nativeWindow = getCurrentWindow();
 const positionSaver = new LatestPositionSaver<PhysicalPosition>(
   async (position) => {
@@ -87,7 +88,7 @@ async function initialize(): Promise<void> {
   }
   const frames = requireFrameBuffer();
   await frames.ensure(overlay.mediaId, 0);
-  frames.draw(currentIndex);
+  drawCurrentFrame(frames, overlay);
   prefetch();
   scheduleNextFrame();
 }
@@ -108,7 +109,7 @@ async function patchOverlay(patch: Parameters<typeof updateOverlay>[1]): Promise
   actionBusy = true;
   actionError = null;
   try {
-    overlay = await updateOverlay(current.id, patch);
+    applyOverlay(await updateOverlay(current.id, patch));
   } catch (error) {
     showActionError(error, "The overlay controls could not be updated.");
   } finally {
@@ -148,10 +149,18 @@ function showActionError(error: unknown, fallback: string): void {
 }
 
 function applyOverlay(next: OverlayInstance): void {
+  if (next.removeBackground && overlay?.removeBackground !== true) {
+    backgroundRemovalFailed = false;
+  }
+  if (!next.removeBackground) backgroundRemovalFailed = false;
   overlay = next;
   if (!next.isActive) {
     clearTimer();
     return;
+  }
+  const frames = frameBuffer;
+  if (frames?.frame(currentIndex) !== undefined) {
+    drawCurrentFrame(frames, next);
   }
   scheduleNextFrame();
 }
@@ -189,9 +198,10 @@ async function advanceFrame(): Promise<void> {
     return;
   const next = nextFrameIndex(currentIndex, frames.totalFrames);
   await frames.ensure(current.mediaId, batchOffsetForFrame(next));
-  if (disposed || overlay?.isPlaying !== true) return;
+  const latest = overlay;
+  if (disposed || latest?.isPlaying !== true) return;
   currentIndex = next;
-  frames.draw(currentIndex);
+  drawCurrentFrame(frames, latest);
   prefetch();
   scheduleNextFrame();
 }
@@ -207,6 +217,17 @@ function prefetch(): void {
 function requireFrameBuffer(): OverlayFrameBuffer {
   if (frameBuffer === null) throw new OverlayPlaybackError("The overlay buffer is not ready.");
   return frameBuffer;
+}
+
+function drawCurrentFrame(frames: OverlayFrameBuffer, current: OverlayInstance): void {
+  try {
+    frames.draw(currentIndex, current.removeBackground && !backgroundRemovalFailed);
+  } catch (error) {
+    if (!current.removeBackground) throw error;
+    backgroundRemovalFailed = true;
+    showActionError(error, "The background could not be removed from this media.");
+    frames.draw(currentIndex, false);
+  }
 }
 
 function clearTimer(): void {

@@ -235,6 +235,7 @@ async fn restore_updated_overlay(app: &AppHandle, previous: OverlayInstance, med
         opacity: Some(previous.opacity),
         speed: Some(previous.speed),
         flip_horizontal: Some(previous.flip_horizontal),
+        remove_background: Some(previous.remove_background),
         is_playing: Some(previous.is_playing),
         z_order: Some(previous.z_order),
         is_active: Some(previous.is_active),

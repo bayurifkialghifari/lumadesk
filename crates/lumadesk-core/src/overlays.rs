@@ -7,6 +7,10 @@ use crate::{
 };
 
 #[derive(Debug)]
+#[expect(
+    clippy::struct_excessive_bools,
+    reason = "the database row mirrors independent boolean overlay controls"
+)]
 struct RawOverlay {
     id: String,
     media_id: String,
@@ -17,6 +21,7 @@ struct RawOverlay {
     opacity: f64,
     speed: f64,
     flip_horizontal: bool,
+    remove_background: bool,
     is_playing: bool,
     z_order: i32,
     is_active: bool,
@@ -28,7 +33,7 @@ impl Database {
     pub(crate) fn list_overlays(&self) -> Result<Vec<OverlayInstance>, CoreError> {
         let mut statement = self.connection.prepare(
             "SELECT id, media_id, monitor_id, x, y, width, opacity, speed, flip_horizontal,
-                    is_playing, z_order, is_active, created_at, updated_at
+                    remove_background, is_playing, z_order, is_active, created_at, updated_at
              FROM overlay_instances ORDER BY z_order ASC, created_at ASC",
         )?;
         let rows = statement.query_map([], read_raw_overlay)?;
@@ -47,8 +52,8 @@ impl Database {
         self.connection.execute(
             "INSERT INTO overlay_instances
              (id, media_id, monitor_id, x, y, width, opacity, speed, flip_horizontal,
-              is_playing, z_order, is_active, created_at, updated_at)
-             VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, 0, 1, 0, 1, ?9, ?9)",
+              remove_background, is_playing, z_order, is_active, created_at, updated_at)
+             VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, 0, 0, 1, 0, 1, ?9, ?9)",
             params![
                 id.to_string(),
                 input.media_id.to_string(),
@@ -79,8 +84,8 @@ impl Database {
         validate_overlay_values(x, y, width, opacity, speed)?;
         self.connection.execute(
             "UPDATE overlay_instances SET monitor_id = ?1, x = ?2, y = ?3, width = ?4,
-             opacity = ?5, speed = ?6, flip_horizontal = ?7, is_playing = ?8, z_order = ?9,
-             is_active = ?10, updated_at = ?11 WHERE id = ?12",
+             opacity = ?5, speed = ?6, flip_horizontal = ?7, remove_background = ?8,
+             is_playing = ?9, z_order = ?10, is_active = ?11, updated_at = ?12 WHERE id = ?13",
             params![
                 monitor_id,
                 x,
@@ -89,6 +94,7 @@ impl Database {
                 opacity,
                 speed,
                 patch.flip_horizontal.unwrap_or(current.flip_horizontal),
+                patch.remove_background.unwrap_or(current.remove_background),
                 patch.is_playing.unwrap_or(current.is_playing),
                 patch.z_order.unwrap_or(current.z_order),
                 patch.is_active.unwrap_or(current.is_active),
@@ -112,8 +118,8 @@ impl Database {
         self.connection.execute(
             "INSERT INTO overlay_instances
              (id, media_id, monitor_id, x, y, width, opacity, speed, flip_horizontal,
-              is_playing, z_order, is_active, created_at, updated_at)
-             VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, 1, ?12, ?12)",
+              remove_background, is_playing, z_order, is_active, created_at, updated_at)
+             VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, 1, ?13, ?13)",
             params![
                 duplicate_id.to_string(),
                 source.media_id.to_string(),
@@ -124,6 +130,7 @@ impl Database {
                 source.opacity,
                 source.speed,
                 source.flip_horizontal,
+                source.remove_background,
                 source.is_playing,
                 source.z_order.saturating_add(1),
                 now
@@ -151,7 +158,7 @@ impl Database {
             .connection
             .query_row(
                 "SELECT id, media_id, monitor_id, x, y, width, opacity, speed, flip_horizontal,
-                    is_playing, z_order, is_active, created_at, updated_at
+                    remove_background, is_playing, z_order, is_active, created_at, updated_at
              FROM overlay_instances WHERE id = ?1",
                 [id.to_string()],
                 read_raw_overlay,
@@ -176,11 +183,12 @@ fn read_raw_overlay(row: &Row<'_>) -> rusqlite::Result<RawOverlay> {
         opacity: row.get(6)?,
         speed: row.get(7)?,
         flip_horizontal: row.get(8)?,
-        is_playing: row.get(9)?,
-        z_order: row.get(10)?,
-        is_active: row.get(11)?,
-        created_at: row.get(12)?,
-        updated_at: row.get(13)?,
+        remove_background: row.get(9)?,
+        is_playing: row.get(10)?,
+        z_order: row.get(11)?,
+        is_active: row.get(12)?,
+        created_at: row.get(13)?,
+        updated_at: row.get(14)?,
     })
 }
 
@@ -195,6 +203,7 @@ fn hydrate_overlay(raw: RawOverlay) -> Result<OverlayInstance, CoreError> {
         opacity: raw.opacity,
         speed: raw.speed,
         flip_horizontal: raw.flip_horizontal,
+        remove_background: raw.remove_background,
         is_playing: raw.is_playing,
         z_order: raw.z_order,
         is_active: raw.is_active,

@@ -22,6 +22,7 @@ All notable changes to LumaDesk are documented here. The project follows Semanti
 - Always-interactive overlays with direct native drag placement, persisted logical positions, a permanent boundary, and compact play, flip, duplicate, and close controls.
 - Custom title-bar controls for Hide, Minimize, Maximize/Restore, and Close.
 - English interface copy and user-facing error messages throughout the application.
+- Per-overlay automatic background removal for still images and animated frames, with edge-connected color detection, feathered transparency, bounded frame caching, and unchanged source media.
 
 ### Changed
 

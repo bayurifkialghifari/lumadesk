@@ -1,6 +1,6 @@
 # LumaDesk Product Requirements
 
-**Status:** v0.1 implementation contract
+**Status:** v0.2 implementation contract
 **Updated:** 25 October 2026
 
 ## Product statement
@@ -13,7 +13,7 @@ LumaDesk is a local-first desktop animation library. It lets people collect tran
 - Artists want to test GIF, APNG, WebP, and still-image assets against a real desktop.
 - Collectors want one searchable library with names, tags, favorites, and safe local ownership.
 
-## v0.1 outcomes
+## v0.2 outcomes
 
 1. A user can import GIF, APNG, animated/static WebP, PNG, and JPG files through a file picker or drag and drop.
 2. Imported media appears in a searchable library and can be previewed, renamed, tagged, favorited, or deleted.
@@ -21,6 +21,7 @@ LumaDesk is a local-first desktop animation library. It lets people collect tran
 4. Overlay layouts survive application restarts with persisted logical positions.
 5. All media, settings, and catalog data stay on the user's device.
 6. Installers are built for Linux, macOS, and Windows from version tags.
+7. Each overlay can remove a solid or near-solid edge-connected background without changing the imported file.
 
 ## Functional requirements
 
@@ -40,6 +41,9 @@ LumaDesk is a local-first desktop animation library. It lets people collect tran
 - Keep every overlay interactive so it can be dragged directly from the animation or toolbar.
 - Keep a compact overlay toolbar and boundary visible for play, pause, flip, duplicate, close, and drag actions.
 - Expose playback, 25–400% speed, 10–100% opacity, horizontal flip, and bounded size controls.
+- Expose a persisted **Remove background** checkbox per overlay for still images, GIF, APNG, and animated WebP frames.
+- Estimate the background from frame edges, remove only matching regions connected to those edges, feather the result, and preserve existing transparency.
+- Keep imported and managed source media unchanged when an effect is enabled or disabled.
 - Restore active instances when LumaDesk starts. Monitor recovery remains deferred until saved positions can be remapped safely.
 
 ### Desktop lifecycle
@@ -58,6 +62,7 @@ LumaDesk is a local-first desktop animation library. It lets people collect tran
 
 - Library actions should feel immediate for collections of at least 1,000 items.
 - Decoding must be bounded by a frame cache; the app may not hold every frame of every active item indefinitely.
+- Background-removed frames must follow the same bounded playback batches and may be cached only while their frame batch remains active.
 - Database migrations are transactional and preserve user data.
 - Corrupt and unsupported files return a clear user-facing error without creating partial catalog entries.
 - Keyboard navigation, visible focus, reduced motion, labels, contrast, and minimum 40 px interaction targets are required.
@@ -74,6 +79,7 @@ LumaDesk is a local-first desktop animation library. It lets people collect tran
 ## Deferred
 
 - Timeline, sprite, or animation editing.
+- AI subject segmentation for complex photographic backgrounds.
 - Video and audio playback.
 - Autonomous pets, desktop object detection, and interactive character AI.
 - Online catalog, account sync, cloud backup, and marketplace features.
@@ -81,7 +87,7 @@ LumaDesk is a local-first desktop animation library. It lets people collect tran
 
 ## Acceptance criteria
 
-- All v0.1 outcomes pass automated tests where the behavior is deterministic.
+- All v0.2 outcomes pass automated tests where the behavior is deterministic.
 - Overlay behavior is manually verified on Windows, macOS, Linux X11, and Linux Wayland through XWayland.
 - A fresh machine can install a tagged release, import media, place an overlay, restart, and receive the same layout.
 - README download links, release assets, checksums, and changelog agree with the released version.

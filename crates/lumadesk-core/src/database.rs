@@ -4,7 +4,7 @@ use rusqlite::{Connection, OptionalExtension, TransactionBehavior};
 
 use crate::CoreError;
 
-pub const SCHEMA_VERSION: u32 = 1;
+pub const SCHEMA_VERSION: u32 = 2;
 
 #[derive(Debug)]
 pub(crate) struct Database {
@@ -54,6 +54,11 @@ impl Database {
         }
         if current < 1 {
             migration_v1(&transaction)?;
+        }
+        if current < 2 {
+            migration_v2(&transaction)?;
+        }
+        if current < SCHEMA_VERSION {
             transaction.execute("DELETE FROM schema_version", [])?;
             transaction.execute(
                 "INSERT INTO schema_version (version) VALUES (?1)",
@@ -67,4 +72,64 @@ impl Database {
 
 fn migration_v1(transaction: &rusqlite::Transaction<'_>) -> Result<(), rusqlite::Error> {
     transaction.execute_batch(include_str!("schema_v1.sql"))
+}
+
+fn migration_v2(transaction: &rusqlite::Transaction<'_>) -> Result<(), rusqlite::Error> {
+    transaction.execute_batch(include_str!("schema_v2.sql"))
+}
+
+#[cfg(test)]
+mod tests {
+    use std::error::Error;
+
+    use rusqlite::Connection;
+    use uuid::Uuid;
+
+    use super::{Database, migration_v1};
+
+    #[test]
+    fn migration_v2_defaults_existing_overlays_to_original_background() -> Result<(), Box<dyn Error>>
+    {
+        let mut connection = Connection::open_in_memory()?;
+        connection.execute_batch(
+            "CREATE TABLE schema_version (version INTEGER NOT NULL);
+             INSERT INTO schema_version (version) VALUES (1);",
+        )?;
+        let transaction = connection.transaction()?;
+        migration_v1(&transaction)?;
+        transaction.commit()?;
+
+        let media_id = Uuid::new_v4().to_string();
+        let overlay_id = Uuid::new_v4().to_string();
+        connection.execute(
+            "INSERT INTO media_items
+             (id, content_hash, display_name, managed_path, media_kind, width, height,
+              frame_count, duration_ms, is_favorite, created_at, updated_at)
+             VALUES (?1, ?2, 'Fixture', 'fixture.png', 'png', 4, 3, 1, 0, 0, 1, 1)",
+            rusqlite::params![media_id, "a".repeat(64)],
+        )?;
+        connection.execute(
+            "INSERT INTO overlay_instances
+             (id, media_id, x, y, width, opacity, speed, created_at, updated_at)
+             VALUES (?1, ?2, 0, 0, 240, 1, 1, 1, 1)",
+            rusqlite::params![overlay_id, media_id],
+        )?;
+
+        let database = Database::initialize(connection)?;
+        let remove_background = database.connection.query_row(
+            "SELECT remove_background FROM overlay_instances WHERE id = ?1",
+            [overlay_id],
+            |row| row.get::<_, bool>(0),
+        )?;
+        let version =
+            database
+                .connection
+                .query_row("SELECT version FROM schema_version", [], |row| {
+                    row.get::<_, u32>(0)
+                })?;
+
+        assert!(!remove_background);
+        assert_eq!(version, 2);
+        Ok(())
+    }
 }

@@ -46,7 +46,7 @@ Tags use `tags` and `media_tags` tables. `managed_path` is never accepted from t
 
 ### `overlay_instances`
 
-Each record references a media item and stores logical x/y position, monitor identity, width, opacity, speed, horizontal flip, playback state, z-order, and active state. Logical coordinates avoid DPI-dependent persistence.
+Each record references a media item and stores logical x/y position, monitor identity, width, opacity, speed, horizontal flip, background-removal state, playback state, z-order, and active state. Logical coordinates avoid DPI-dependent persistence.
 
 ### `settings`
 
@@ -87,7 +87,9 @@ The frontend receives asset URLs only for managed media and cache roots. It cann
 
 Rust reads animation metadata and generates a persistent frame cache atomically. The frontend requests batches of 32 frames, prefetches near the active batch boundary, and retains at most the current and next batch in memory. The transparent canvas renderer uses original frame timing adjusted by the persisted speed multiplier. Static images render once without starting a playback scheduler.
 
-Each active overlay is an undecorated, transparent, always-on-top Tauri window. Its label is derived from an internal instance UUID. Overlay windows always accept pointer input, display a compact toolbar and boundary, start native window dragging from either the animation surface or drag handle, and persist the latest logical position through a debounced serial writer. The management window lists active instances and exposes size, opacity, speed, playback, flip, duplicate, close, pause-all, and close-all controls. Active instances are restored at startup when `restore_overlays` is enabled, and deleting media also destroys its native windows. macOS builds enable the required private transparent-window API and are distributed directly rather than through the App Store.
+Automatic background removal runs as a non-destructive canvas effect owned by each overlay renderer. It estimates the dominant edge color, flood-fills only similar pixels connected to frame boundaries, feathers their alpha, and preserves existing transparent pixels. Processed canvases are created lazily per frame and leave memory when their bounded playback batch is evicted. The managed source and persistent decoded frame cache remain unchanged.
+
+Each active overlay is an undecorated, transparent, always-on-top Tauri window. Its label is derived from an internal instance UUID. Overlay windows always accept pointer input, display a compact toolbar and boundary, start native window dragging from either the animation surface or drag handle, and persist the latest logical position through a debounced serial writer. The management window lists active instances and exposes size, opacity, speed, playback, flip, background removal, duplicate, close, pause-all, and close-all controls. Active instances are restored at startup when `restore_overlays` is enabled, and deleting media also destroys its native windows. macOS builds enable the required private transparent-window API and are distributed directly rather than through the App Store.
 
 The main window uses a custom title bar. Tauri window APIs provide Hide, Minimize, Maximize/Restore, and Close actions, while the remaining title-bar area acts as a native drag region.
 

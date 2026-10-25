@@ -7,7 +7,7 @@ Select an item in the Collection and choose **Show on desktop**. One library ite
 - New overlays open in the center of the primary monitor using the configured default size.
 - Transparent windows stay above regular windows, remain hidden from the taskbar, and accept pointer input for direct manipulation.
 - GIF, APNG, and animated WebP files use their original frame timing. Static PNG and JPEG files render once without an animation scheduler.
-- The renderer applies persisted size, opacity, speed, horizontal flip, and play or pause state for each instance.
+- The renderer applies persisted size, opacity, speed, horizontal flip, background removal, and play or pause state for each instance.
 - The **Active on Desktop** page lists every active instance with its media, monitor, size, status, and controls.
 - Every overlay always displays a subtle boundary and toolbar for moving, playing or pausing, flipping, duplicating, and closing it.
 - The latest dragged position is stored locally in logical coordinates.
@@ -23,11 +23,14 @@ Select an item in the Collection and choose **Show on desktop**. One library ite
 - **Opacity:** 10% to 100%.
 - **Speed:** 0.25× to 4×.
 - **Horizontal flip:** mirror the visual without modifying the original media.
+- **Remove background:** automatically make a solid or near-solid edge background transparent without modifying the original media.
 - **Play/Pause:** control one instance.
 - **Duplicate:** create another instance with matching settings and a slightly offset position.
 - **Close:** remove the desktop instance without deleting the Collection item.
 
 Detailed controls are available on the **Active on Desktop** page. The toolbar attached to an overlay stays compact so it does not cover the animation. When the interface runs in a browser during development, the page remains available for preview while native window controls are disabled.
+
+See [Background removal](background-removal.md) for supported media, behavior, and practical limits.
 
 ## Multiple monitors
 

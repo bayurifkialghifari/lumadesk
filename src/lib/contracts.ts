@@ -77,6 +77,7 @@ export const overlaySchema = z.object({
   opacity: z.number().min(0).max(1),
   speed: z.number().min(0.25).max(4),
   flipHorizontal: z.boolean(),
+  removeBackground: z.boolean(),
   isPlaying: z.boolean(),
   zOrder: z.number().int(),
   isActive: z.boolean(),
@@ -150,6 +151,7 @@ export interface OverlayPatch {
   readonly opacity?: number;
   readonly speed?: number;
   readonly flipHorizontal?: boolean;
+  readonly removeBackground?: boolean;
   readonly isPlaying?: boolean;
   readonly zOrder?: number;
   readonly isActive?: boolean;
