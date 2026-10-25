@@ -116,10 +116,11 @@ function backgroundRemovedImage(frame: LoadedFrame): HTMLCanvasElement {
   return canvas;
 }
 
-function loadFrame(frame: FrameAsset): Promise<LoadedFrame> {
+export function loadFrame(frame: FrameAsset): Promise<LoadedFrame> {
   return new Promise((resolve, reject) => {
     const image = new Image();
     image.decoding = "async";
+    image.crossOrigin = "anonymous";
     image.onload = () => resolve({ ...frame, image });
     image.onerror = () =>
       reject(new OverlayPlaybackError(`Frame ${frame.index + 1} could not be loaded.`));

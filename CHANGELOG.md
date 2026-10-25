@@ -4,8 +4,13 @@ All notable changes to LumaDesk are documented here. The project follows Semanti
 
 ## [Unreleased]
 
+### Added
+
+- Added a background-removal toggle directly to every desktop overlay while keeping the matching control in **Active on Desktop**.
+
 ### Fixed
 
+- Frame images now use anonymous CORS before loading, allowing background removal to read pixels from Tauri asset URLs without tainting the canvas.
 - The title bar now reads the application version from package metadata instead of displaying a stale hardcoded value.
 
 ### Removed

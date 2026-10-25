@@ -9,7 +9,7 @@ Select an item in the Collection and choose **Show on desktop**. One library ite
 - GIF, APNG, and animated WebP files use their original frame timing. Static PNG and JPEG files render once without an animation scheduler.
 - The renderer applies persisted size, opacity, speed, horizontal flip, background removal, and play or pause state for each instance.
 - The **Active on Desktop** page lists every active instance with its media, monitor, size, status, and controls.
-- Every overlay always displays a subtle boundary and toolbar for moving, playing or pausing, flipping, duplicating, and closing it.
+- Every overlay always displays a subtle boundary and toolbar for moving, playing or pausing, flipping, removing or restoring its background, duplicating, and closing it.
 - The latest dragged position is stored locally in logical coordinates.
 - Bulk actions can pause every playing overlay or close all overlays after confirmation.
 - Active overlays are restored when LumaDesk opens if **Restore overlays** is enabled.
@@ -23,7 +23,7 @@ Select an item in the Collection and choose **Show on desktop**. One library ite
 - **Opacity:** 10% to 100%.
 - **Speed:** 0.25× to 4×.
 - **Horizontal flip:** mirror the visual without modifying the original media.
-- **Remove background:** automatically make a solid or near-solid edge background transparent without modifying the original media.
+- **Remove background:** use the overlay eraser button or manager checkbox to make a solid or near-solid edge background transparent without modifying the original media.
 - **Play/Pause:** control one instance.
 - **Duplicate:** create another instance with matching settings and a slightly offset position.
 - **Close:** remove the desktop instance without deleting the Collection item.

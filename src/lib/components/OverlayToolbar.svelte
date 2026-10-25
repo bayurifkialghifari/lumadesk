@@ -1,5 +1,5 @@
 <script lang="ts">
-import { Copy, FlipHorizontal2, GripVertical, Pause, Play, X } from "@lucide/svelte";
+import { Copy, Eraser, FlipHorizontal2, GripVertical, Pause, Play, X } from "@lucide/svelte";
 import type { OverlayInstance, OverlayPatch } from "../contracts";
 
 export let overlay: OverlayInstance | null;
@@ -33,6 +33,17 @@ export let onclose: () => void;
   >
     <FlipHorizontal2 size={15} />
   </button>
+  <button
+    class:active={overlay?.removeBackground === true}
+    type="button"
+    aria-label={overlay?.removeBackground === true ? "Restore background" : "Remove background"}
+    aria-pressed={overlay?.removeBackground === true}
+    title={overlay?.removeBackground === true ? "Restore background" : "Remove background"}
+    disabled={busy || overlay === null}
+    onclick={() => onpatch({ removeBackground: overlay?.removeBackground !== true })}
+  >
+    <Eraser size={15} />
+  </button>
   <button type="button" aria-label="Duplicate overlay" title="Duplicate" disabled={busy || overlay === null} onclick={onduplicate}>
     <Copy size={15} />
   </button>
@@ -50,7 +61,7 @@ export let onclose: () => void;
   top: 5px;
   left: 50%;
   display: grid;
-  grid-template-columns: repeat(5, 30px);
+  grid-template-columns: repeat(6, 30px);
   gap: 2px;
   padding: 3px;
   background: rgb(8 17 28 / 92%);
@@ -75,6 +86,8 @@ export let onclose: () => void;
 }
 
 .overlay-toolbar button:hover { color: #f4f8fc; background: #1e354e; }
+.overlay-toolbar button.active { color: #07111d; background: #72c5ff; }
+.overlay-toolbar button.active:hover { color: #07111d; background: #9bd8ff; }
 .overlay-toolbar button.danger:hover { color: #ff6b75; }
 .overlay-toolbar button:disabled { cursor: wait; opacity: 0.5; }
 
