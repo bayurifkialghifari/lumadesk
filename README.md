@@ -17,7 +17,8 @@
 - Import GIF, APNG, WebP, PNG, and JPEG files through the native picker or drag and drop.
 - Search, tag, favorite, rename, and remove items from a local library.
 - Create multiple transparent overlays with independent position, size, opacity, speed, and direction.
-- Manage every active overlay, move it in edit mode, then play, pause, duplicate, or close each instance.
+- Drag overlays directly on the desktop, then play, pause, flip, duplicate, or close them from the always-visible toolbar.
+- Use familiar Hide, Minimize, Maximize/Restore, and Close controls in the custom title bar.
 - Restore your overlay layout when the application starts again.
 - Keep everything local, with no account and no telemetry.
 
@@ -32,7 +33,7 @@
 | Linux x86-64 | `.AppImage`, `.deb`, and `.rpm` |
 | Linux ARM64 | `.AppImage`, `.deb`, and `.rpm` |
 
-Installers will be available from [GitHub Releases](https://github.com/bayurifkialghifari/lumadesk/releases) with the first public release. Development builds can be run from source.
+Installers are published through [GitHub Releases](https://github.com/bayurifkialghifari/lumadesk/releases). Development builds can also be run from source.
 
 ## Development
 
@@ -53,12 +54,12 @@ cargo test --workspace
 
 ## Documentation
 
-- [Animation library](docs/koleksi.md)
-- [Importing media](docs/impor-media.md)
-- [Desktop overlays](docs/overlay-desktop.md)
-- [Tray and application lifecycle](docs/tray-dan-lifecycle.md)
-- [Settings and local data](docs/pengaturan-dan-data.md)
-- [Installation and releases](docs/instalasi-dan-rilis.md)
+- [Animation library](docs/animation-library.md)
+- [Importing media](docs/importing-media.md)
+- [Desktop overlays](docs/desktop-overlays.md)
+- [Window and application lifecycle](docs/window-lifecycle.md)
+- [Settings and local data](docs/settings-and-local-data.md)
+- [Installation and releases](docs/installation-and-releases.md)
 - [Product requirements](PRD.md)
 - [Design system](DESIGN.md)
 - [Architecture](architecture.md)

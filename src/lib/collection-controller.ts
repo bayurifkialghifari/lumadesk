@@ -112,8 +112,8 @@ export function createCollectionController(nativeAvailable: boolean): Collection
       if (request !== requestSequence) return;
       const message =
         error instanceof Error
-          ? userErrorMessage(error, "Koleksi tidak dapat dimuat.")
-          : "Koleksi tidak dapat dimuat.";
+          ? userErrorMessage(error, "The collection could not be loaded.")
+          : "The collection could not be loaded.";
       store.update((state) => ({
         ...state,
         ready: true,
@@ -135,8 +135,8 @@ export function createCollectionController(nativeAvailable: boolean): Collection
     } catch (error) {
       const message =
         error instanceof Error
-          ? userErrorMessage(error, "Pengaturan lokal tidak dapat dimuat.")
-          : "Pengaturan lokal tidak dapat dimuat.";
+          ? userErrorMessage(error, "Local settings could not be loaded.")
+          : "Local settings could not be loaded.";
       notify("error", message);
     }
     await reload();
@@ -176,8 +176,8 @@ export function createCollectionController(nativeAvailable: boolean): Collection
     } catch (error) {
       const message =
         error instanceof Error
-          ? userErrorMessage(error, "Tampilan koleksi tidak dapat disimpan.")
-          : "Tampilan koleksi tidak dapat disimpan.";
+          ? userErrorMessage(error, "The collection view could not be saved.")
+          : "The collection view could not be saved.";
       store.update((state) => ({ ...state, settings: previous }));
       notify("error", message);
     }

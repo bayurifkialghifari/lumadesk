@@ -66,13 +66,13 @@ fn write_frames<'a>(
         let frame = frame.map_err(media::image_error)?;
         let frame_delay_ms = media::delay_ms(frame.delay())?;
         let index = u32::try_from(durations_ms.len())
-            .map_err(|_| CoreError::InvalidMedia("Jumlah frame terlalu besar.".into()))?;
+            .map_err(|_| CoreError::InvalidMedia("The frame count is too large.".into()))?;
         write_buffer(destination, index, &frame.into_buffer())?;
         durations_ms.push(frame_delay_ms);
     }
     if durations_ms.is_empty() {
         return Err(CoreError::InvalidMedia(
-            "Animasi tidak memiliki frame.".into(),
+            "The animation has no frames.".into(),
         ));
     }
     Ok(DecodedFrames { durations_ms })

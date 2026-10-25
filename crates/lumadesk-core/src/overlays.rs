@@ -213,17 +213,17 @@ fn validate_overlay_values(
     validate_position(x, y)?;
     if !width.is_finite() || !(32.0..=4_096.0).contains(&width) {
         return Err(CoreError::InvalidInput(
-            "Lebar overlay harus 32–4096 piksel.".into(),
+            "Overlay width must be 32–4096 pixels.".into(),
         ));
     }
     if !opacity.is_finite() || !(0.1..=1.0).contains(&opacity) {
         return Err(CoreError::InvalidInput(
-            "Opasitas overlay harus 0,1–1.".into(),
+            "Overlay opacity must be between 0.1 and 1.".into(),
         ));
     }
     if !speed.is_finite() || !(0.25..=4.0).contains(&speed) {
         return Err(CoreError::InvalidInput(
-            "Kecepatan overlay harus 0,25×–4×.".into(),
+            "Overlay speed must be between 0.25× and 4×.".into(),
         ));
     }
     Ok(())
@@ -232,17 +232,17 @@ fn validate_overlay_values(
 fn validate_position(x: f64, y: f64) -> Result<(), CoreError> {
     if !x.is_finite() || !y.is_finite() {
         return Err(CoreError::InvalidInput(
-            "Posisi overlay tidak valid.".into(),
+            "The overlay position is invalid.".into(),
         ));
     }
     Ok(())
 }
 
 fn parse_uuid(value: &str) -> Result<Uuid, CoreError> {
-    Uuid::parse_str(value).map_err(|_| CoreError::InvalidData("ID overlay tidak valid.".into()))
+    Uuid::parse_str(value).map_err(|_| CoreError::InvalidData("The overlay ID is invalid.".into()))
 }
 
 fn timestamp(value: i64) -> Result<DateTime<Utc>, CoreError> {
     DateTime::from_timestamp_millis(value)
-        .ok_or_else(|| CoreError::InvalidData("Waktu overlay tidak valid.".into()))
+        .ok_or_else(|| CoreError::InvalidData("The overlay timestamp is invalid.".into()))
 }

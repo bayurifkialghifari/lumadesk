@@ -46,7 +46,7 @@ impl Database {
                 .query_row(&total_sql, params![search, kind, favorite, tag], |row| {
                     row.get::<_, i64>(0)
                 })?;
-        let total = u64::try_from(total).map_err(|_| invalid_data("jumlah media"))?;
+        let total = u64::try_from(total).map_err(|_| invalid_data("media count"))?;
         let list_sql = format!(
             "SELECT m.id, m.content_hash, m.display_name, m.managed_path, m.media_kind,
                     m.width, m.height, m.frame_count, m.duration_ms, m.is_favorite,
@@ -69,7 +69,7 @@ impl Database {
     pub(crate) fn media_by_id(&self, id: MediaId) -> Result<MediaItem, CoreError> {
         self.find_media("m.id = ?1", id.to_string())?
             .ok_or_else(|| CoreError::NotFound {
-                entity: "Animasi",
+                entity: "Animation",
                 id: id.to_string(),
             })
     }
@@ -81,7 +81,7 @@ impl Database {
     pub(crate) fn insert_media(&mut self, new: &NewMediaItem) -> Result<MediaItem, CoreError> {
         let now = Utc::now().timestamp_millis();
         let duration_ms = i64::try_from(new.duration_ms)
-            .map_err(|_| CoreError::InvalidInput("Durasi media terlalu panjang.".into()))?;
+            .map_err(|_| CoreError::InvalidInput("The media duration is too long.".into()))?;
         self.connection.execute(
             "INSERT INTO media_items
              (id, content_hash, display_name, managed_path, media_kind, width, height,
@@ -109,7 +109,7 @@ impl Database {
             "UPDATE media_items SET display_name = ?1, updated_at = ?2 WHERE id = ?3",
             params![name, Utc::now().timestamp_millis(), id.to_string()],
         )?;
-        ensure_changed(changed, "Animasi", id)?;
+        ensure_changed(changed, "Animation", id)?;
         self.media_by_id(id)
     }
 
@@ -122,7 +122,7 @@ impl Database {
             "UPDATE media_items SET is_favorite = ?1, updated_at = ?2 WHERE id = ?3",
             params![favorite, Utc::now().timestamp_millis(), id.to_string()],
         )?;
-        ensure_changed(changed, "Animasi", id)?;
+        ensure_changed(changed, "Animation", id)?;
         self.media_by_id(id)
     }
 
@@ -163,7 +163,7 @@ impl Database {
         )?;
         let changed =
             transaction.execute("DELETE FROM media_items WHERE id = ?1", [id.to_string()])?;
-        ensure_changed(changed, "Animasi", id)?;
+        ensure_changed(changed, "Animation", id)?;
         transaction.commit()?;
         Ok(DeleteReport {
             media_id: id,
@@ -193,11 +193,11 @@ impl Database {
             display_name: raw.display_name,
             managed_path: raw.managed_path,
             media_kind: MediaKind::parse(&raw.media_kind)
-                .ok_or_else(|| invalid_data("jenis media"))?,
-            width: to_u32(raw.width, "lebar")?,
-            height: to_u32(raw.height, "tinggi")?,
-            frame_count: to_u32(raw.frame_count, "jumlah frame")?,
-            duration_ms: u64::try_from(raw.duration_ms).map_err(|_| invalid_data("durasi"))?,
+                .ok_or_else(|| invalid_data("media kind"))?,
+            width: to_u32(raw.width, "width")?,
+            height: to_u32(raw.height, "height")?,
+            frame_count: to_u32(raw.frame_count, "frame count")?,
+            duration_ms: u64::try_from(raw.duration_ms).map_err(|_| invalid_data("duration"))?,
             is_favorite: raw.is_favorite,
             tags,
             created_at: timestamp(raw.created_at)?,
@@ -254,7 +254,7 @@ fn parse_uuid(value: &str) -> Result<Uuid, CoreError> {
 }
 
 fn timestamp(value: i64) -> Result<DateTime<Utc>, CoreError> {
-    DateTime::from_timestamp_millis(value).ok_or_else(|| invalid_data("waktu"))
+    DateTime::from_timestamp_millis(value).ok_or_else(|| invalid_data("timestamp"))
 }
 
 fn to_u32(value: i64, field: &str) -> Result<u32, CoreError> {
@@ -262,5 +262,5 @@ fn to_u32(value: i64, field: &str) -> Result<u32, CoreError> {
 }
 
 fn invalid_data(field: &str) -> CoreError {
-    CoreError::InvalidData(format!("Nilai {field} tidak valid."))
+    CoreError::InvalidData(format!("The {field} value is invalid."))
 }

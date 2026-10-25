@@ -105,7 +105,7 @@ export function lastCollectionPage(total: number): number {
 
 export function availableTags(items: readonly Pick<MediaItem, "tags">[]): readonly string[] {
   return [...new Set(items.flatMap((item) => item.tags))].sort((left, right) =>
-    left.localeCompare(right, "id", { sensitivity: "base" }),
+    left.localeCompare(right, "en", { sensitivity: "base" }),
   );
 }
 

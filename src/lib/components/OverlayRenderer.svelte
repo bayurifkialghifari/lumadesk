@@ -2,14 +2,7 @@
 import { listen, type UnlistenFn } from "@tauri-apps/api/event";
 import { currentMonitor, getCurrentWindow, type PhysicalPosition } from "@tauri-apps/api/window";
 import { onMount } from "svelte";
-import {
-  duplicateOverlay,
-  getOverlayEditMode,
-  listOverlays,
-  moveOverlay,
-  removeOverlay,
-  updateOverlay,
-} from "../api";
+import { duplicateOverlay, listOverlays, moveOverlay, removeOverlay, updateOverlay } from "../api";
 import { type OverlayId, type OverlayInstance, overlaySchema } from "../contracts";
 import { OverlayFrameBuffer, OverlayPlaybackError } from "../overlay-frame-buffer";
 import {
@@ -24,7 +17,6 @@ import { userErrorMessage } from "../presentation";
 import OverlayStage from "./OverlayStage.svelte";
 
 const OVERLAY_STATE_EVENT = "overlay:state";
-const OVERLAY_EDIT_MODE_EVENT = "overlay:edit-mode";
 export let overlayId: OverlayId;
 
 let canvas: HTMLCanvasElement;
@@ -35,9 +27,7 @@ let timer: number | undefined;
 let unlisten: readonly UnlistenFn[] = [];
 let disposed = false;
 let failed = false;
-let editMode = false;
 let overlayRevision = 0;
-let editModeRevision = 0;
 let actionBusy = false;
 let actionError: string | null = null;
 const nativeWindow = getCurrentWindow();
@@ -48,7 +38,7 @@ const positionSaver = new LatestPositionSaver<PhysicalPosition>(
     const monitor = await currentMonitor();
     await moveOverlay(overlayId, monitor?.name ?? null, logical.x, logical.y);
   },
-  (error) => showActionError(error, "Posisi overlay tidak dapat disimpan."),
+  (error) => showActionError(error, "The overlay position could not be saved."),
 );
 
 $: mediaOpacity = overlay?.opacity ?? 0;
@@ -76,14 +66,8 @@ async function initialize(): Promise<void> {
         applyOverlay(parsed.data);
       }
     }),
-    listen<unknown>(OVERLAY_EDIT_MODE_EVENT, (event) => {
-      if (typeof event.payload === "boolean") {
-        editModeRevision += 1;
-        editMode = event.payload;
-      }
-    }),
     nativeWindow.onMoved((event) => {
-      if (!editMode || disposed) return;
+      if (disposed) return;
       positionSaver.schedule(event.payload);
     }),
   ]);
@@ -94,14 +78,12 @@ async function initialize(): Promise<void> {
   unlisten = cleanups;
 
   const overlayRevisionAtRequest = overlayRevision;
-  const editModeRevisionAtRequest = editModeRevision;
-  const [overlays, initialEditMode] = await Promise.all([listOverlays(), getOverlayEditMode()]);
+  const overlays = await listOverlays();
   if (disposed) return;
   const initial = overlays.find((candidate) => candidate.id === overlayId);
   if (overlayRevision === overlayRevisionAtRequest && initial !== undefined) overlay = initial;
-  if (editModeRevision === editModeRevisionAtRequest) editMode = initialEditMode;
   if (overlay === null) {
-    throw new OverlayPlaybackError("Data overlay tidak ditemukan.");
+    throw new OverlayPlaybackError("Overlay data was not found.");
   }
   const frames = requireFrameBuffer();
   await frames.ensure(overlay.mediaId, 0);
@@ -116,7 +98,7 @@ async function startDrag(event: MouseEvent): Promise<void> {
   try {
     await nativeWindow.startDragging();
   } catch (error) {
-    showActionError(error, "Overlay tidak dapat digeser.");
+    showActionError(error, "The overlay could not be moved.");
   }
 }
 
@@ -128,7 +110,7 @@ async function patchOverlay(patch: Parameters<typeof updateOverlay>[1]): Promise
   try {
     overlay = await updateOverlay(current.id, patch);
   } catch (error) {
-    showActionError(error, "Kontrol overlay tidak dapat diperbarui.");
+    showActionError(error, "The overlay controls could not be updated.");
   } finally {
     actionBusy = false;
   }
@@ -142,7 +124,7 @@ async function duplicateCurrent(): Promise<void> {
   try {
     await duplicateOverlay(current.id);
   } catch (error) {
-    showActionError(error, "Overlay tidak dapat diduplikasi.");
+    showActionError(error, "The overlay could not be duplicated.");
   } finally {
     actionBusy = false;
   }
@@ -157,7 +139,7 @@ async function closeCurrent(): Promise<void> {
     await removeOverlay(current.id);
   } catch (error) {
     actionBusy = false;
-    showActionError(error, "Overlay tidak dapat ditutup.");
+    showActionError(error, "The overlay could not be closed.");
   }
 }
 
@@ -223,7 +205,7 @@ function prefetch(): void {
 }
 
 function requireFrameBuffer(): OverlayFrameBuffer {
-  if (frameBuffer === null) throw new OverlayPlaybackError("Buffer overlay belum siap.");
+  if (frameBuffer === null) throw new OverlayPlaybackError("The overlay buffer is not ready.");
   return frameBuffer;
 }
 
@@ -247,7 +229,6 @@ function handlePlaybackError(error: unknown): void {
 
 <OverlayStage
   bind:canvas
-  {editMode}
   {mediaOpacity}
   {mediaTransform}
   {overlay}

@@ -16,7 +16,7 @@ $: if (src !== undefined) {
   {#if src !== undefined && !failed}
     <img
       src={src}
-      alt={`Pratinjau ${item.displayName}`}
+      alt={`${item.displayName} preview`}
       width={item.width}
       height={item.height}
       loading={eager ? "eager" : "lazy"}
@@ -25,7 +25,7 @@ $: if (src !== undefined) {
       onerror={() => (failed = true)}
     />
   {:else}
-    <div class="preview-placeholder" aria-label="Pratinjau belum tersedia">
+    <div class="preview-placeholder" aria-label="Preview unavailable">
       <ImageIcon size={24} strokeWidth={1.7} />
     </div>
   {/if}

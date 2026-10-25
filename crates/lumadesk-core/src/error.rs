@@ -34,21 +34,21 @@ impl ErrorCode {
 
 #[derive(Debug, Error)]
 pub enum CoreError {
-    #[error("operasi berkas gagal: {0}")]
+    #[error("file operation failed: {0}")]
     Io(#[from] io::Error),
-    #[error("operasi database gagal: {0}")]
+    #[error("database operation failed: {0}")]
     Database(#[from] rusqlite::Error),
-    #[error("format media tidak didukung")]
+    #[error("unsupported media format")]
     UnsupportedMedia,
-    #[error("media rusak atau tidak dapat dibaca: {0}")]
+    #[error("corrupt or unreadable media: {0}")]
     InvalidMedia(String),
-    #[error("input tidak valid: {0}")]
+    #[error("invalid input: {0}")]
     InvalidInput(String),
-    #[error("data lokal tidak valid: {0}")]
+    #[error("invalid local data: {0}")]
     InvalidData(String),
-    #[error("{entity} tidak ditemukan: {id}")]
+    #[error("{entity} not found: {id}")]
     NotFound { entity: &'static str, id: String },
-    #[error("versi database {found} lebih baru dari versi yang didukung {supported}")]
+    #[error("database version {found} is newer than supported version {supported}")]
     SchemaTooNew { found: u32, supported: u32 },
 }
 
@@ -70,15 +70,15 @@ impl CoreError {
     #[must_use]
     pub fn user_message(&self) -> String {
         match self {
-            Self::Io(_) => "Berkas tidak dapat dibaca atau disimpan.".into(),
-            Self::Database(_) => "Data lokal tidak dapat diperbarui.".into(),
-            Self::UnsupportedMedia => "Format berkas ini belum didukung.".into(),
-            Self::InvalidMedia(_) => "Berkas media rusak atau tidak dapat dibaca.".into(),
+            Self::Io(_) => "The file could not be read or saved.".into(),
+            Self::Database(_) => "Local data could not be updated.".into(),
+            Self::UnsupportedMedia => "This file format is not supported.".into(),
+            Self::InvalidMedia(_) => "The media file is corrupt or unreadable.".into(),
             Self::InvalidInput(reason) => reason.clone(),
-            Self::InvalidData(_) => "Data lokal rusak dan tidak dapat dibaca.".into(),
-            Self::NotFound { entity, .. } => format!("{entity} tidak ditemukan."),
+            Self::InvalidData(_) => "Local data is corrupt and could not be read.".into(),
+            Self::NotFound { entity, .. } => format!("{entity} was not found."),
             Self::SchemaTooNew { .. } => {
-                "Data dibuat oleh LumaDesk versi lebih baru. Perbarui aplikasi sebelum membukanya."
+                "This data was created by a newer version of LumaDesk. Update the app before opening it."
                     .into()
             }
         }

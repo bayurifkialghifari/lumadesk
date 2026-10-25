@@ -19,8 +19,6 @@ export interface DesktopState {
   readonly overlays: readonly DesktopOverlay[];
   readonly assetUrls: Readonly<Record<string, string>>;
   readonly busyIds: ReadonlySet<OverlayId>;
-  readonly editMode: boolean;
-  readonly editModeBusy: boolean;
   readonly batchBusy: boolean;
   readonly loadError: string | null;
   readonly notice: CollectionNotice | null;
@@ -29,7 +27,6 @@ export interface DesktopState {
 export interface DesktopController extends Readable<DesktopState> {
   readonly initialize: () => Promise<void>;
   readonly reload: () => Promise<void>;
-  readonly setEditMode: (enabled: boolean) => Promise<void>;
   readonly update: (id: OverlayId, patch: OverlayPatch) => Promise<void>;
   readonly duplicate: (id: OverlayId) => Promise<void>;
   readonly close: (id: OverlayId) => Promise<void>;

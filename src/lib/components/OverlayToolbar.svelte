@@ -11,14 +11,14 @@ export let onduplicate: () => void;
 export let onclose: () => void;
 </script>
 
-<div class="overlay-toolbar" role="toolbar" aria-label="Kontrol overlay">
-  <button type="button" aria-label="Geser overlay" title="Geser" disabled={busy} onmousedown={onstartdrag}>
+<div class="overlay-toolbar" role="toolbar" aria-label="Overlay controls">
+  <button type="button" aria-label="Move overlay" title="Move" disabled={busy} onmousedown={onstartdrag}>
     <GripVertical size={15} />
   </button>
   <button
     type="button"
-    aria-label={overlay?.isPlaying === true ? "Jeda animasi" : "Putar animasi"}
-    title={overlay?.isPlaying === true ? "Jeda" : "Putar"}
+    aria-label={overlay?.isPlaying === true ? "Pause animation" : "Play animation"}
+    title={overlay?.isPlaying === true ? "Pause" : "Play"}
     disabled={busy || overlay === null}
     onclick={() => onpatch({ isPlaying: overlay?.isPlaying !== true })}
   >
@@ -26,17 +26,17 @@ export let onclose: () => void;
   </button>
   <button
     type="button"
-    aria-label="Balik horizontal"
-    title="Balik horizontal"
+    aria-label="Flip horizontally"
+    title="Flip horizontally"
     disabled={busy || overlay === null}
     onclick={() => onpatch({ flipHorizontal: overlay?.flipHorizontal !== true })}
   >
     <FlipHorizontal2 size={15} />
   </button>
-  <button type="button" aria-label="Duplikat overlay" title="Duplikat" disabled={busy || overlay === null} onclick={onduplicate}>
+  <button type="button" aria-label="Duplicate overlay" title="Duplicate" disabled={busy || overlay === null} onclick={onduplicate}>
     <Copy size={15} />
   </button>
-  <button class="danger" type="button" aria-label="Tutup overlay" title="Tutup" disabled={busy || overlay === null} onclick={onclose}>
+  <button class="danger" type="button" aria-label="Close overlay" title="Close" disabled={busy || overlay === null} onclick={onclose}>
     <X size={15} />
   </button>
 </div>

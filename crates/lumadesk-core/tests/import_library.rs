@@ -30,7 +30,7 @@ fn imported(outcome: ImportOutcome) -> Result<MediaItem, io::Error> {
     match outcome {
         ImportOutcome::Imported { item } => Ok(item),
         ImportOutcome::Duplicate { .. } => Err(io::Error::other(
-            "fixture pertama tidak boleh terdeteksi sebagai duplikat",
+            "the first fixture must not be detected as a duplicate",
         )),
     }
 }
@@ -39,7 +39,7 @@ fn imported(outcome: ImportOutcome) -> Result<MediaItem, io::Error> {
 fn imports_static_and_animated_media_with_real_metadata() -> Result<(), Box<dyn Error>> {
     let temp = TempDir::new()?;
     let png = temp.path().join("biru.png");
-    let gif = temp.path().join("kedip.gif");
+    let gif = temp.path().join("blink.gif");
     write_png(&png)?;
     write_gif(&gif)?;
     let mut library = Library::open(temp.path().join("data"))?;
@@ -72,7 +72,9 @@ fn duplicate_import_reuses_catalog_item_and_managed_file() -> Result<(), Box<dyn
     let item = match duplicate {
         ImportOutcome::Duplicate { item } => item,
         ImportOutcome::Imported { .. } => {
-            return Err(io::Error::other("impor kedua harus terdeteksi sebagai duplikat").into());
+            return Err(
+                io::Error::other("the second import must be detected as a duplicate").into(),
+            );
         }
     };
     assert_eq!(item.id, original.id);
@@ -84,7 +86,7 @@ fn duplicate_import_reuses_catalog_item_and_managed_file() -> Result<(), Box<dyn
 #[test]
 fn rejected_media_leaves_no_row_or_partial_file() -> Result<(), Box<dyn Error>> {
     let temp = TempDir::new()?;
-    let broken = temp.path().join("rusak.png");
+    let broken = temp.path().join("broken.png");
     fs::write(&broken, b"not a real image")?;
     let data = temp.path().join("data");
     let mut library = Library::open(&data)?;
@@ -171,26 +173,26 @@ fn duplicated_overlay_copies_controls_at_the_requested_position() -> Result<(), 
 #[test]
 fn catalog_edits_preserve_managed_file_and_drive_filters() -> Result<(), Box<dyn Error>> {
     let temp = TempDir::new()?;
-    let source = temp.path().join("nama-asli.png");
+    let source = temp.path().join("original-name.png");
     write_png(&source)?;
     let mut library = Library::open(temp.path().join("data"))?;
     let original = imported(library.import_file(&source)?)?;
     let managed_path = library.managed_media_path(original.id)?;
 
-    let renamed = library.rename_media(original.id, "Lampu Biru")?;
-    assert_eq!(renamed.display_name, "Lampu Biru");
+    let renamed = library.rename_media(original.id, "Blue Light")?;
+    assert_eq!(renamed.display_name, "Blue Light");
     assert_eq!(library.managed_media_path(original.id)?, managed_path);
     assert!(source.exists());
 
     let tagged = library.replace_tags(
         original.id,
-        &["Pixel".into(), " santai ".into(), "pixel".into()],
+        &["Pixel".into(), " ambient ".into(), "pixel".into()],
     )?;
-    assert_eq!(tagged.tags, ["Pixel", "santai"]);
+    assert_eq!(tagged.tags, ["ambient", "Pixel"]);
     assert!(library.set_favorite(original.id, true)?.is_favorite);
 
     let by_tag = LibraryQuery {
-        search: Some("santai".into()),
+        search: Some("ambient".into()),
         ..LibraryQuery::default()
     };
     assert_eq!(library.list_media(&by_tag)?.total, 1);

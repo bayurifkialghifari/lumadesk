@@ -27,9 +27,9 @@ impl FrameManifest {
         durations_ms: Vec<u64>,
     ) -> Result<Self, CoreError> {
         let total_duration_ms = durations_ms.iter().try_fold(0_u64, |total, value| {
-            total
-                .checked_add(*value)
-                .ok_or_else(|| CoreError::InvalidMedia("Durasi animasi terlalu panjang.".into()))
+            total.checked_add(*value).ok_or_else(|| {
+                CoreError::InvalidMedia("The animation duration is too long.".into())
+            })
         })?;
         let manifest = Self {
             version: CACHE_VERSION,
@@ -41,7 +41,7 @@ impl FrameManifest {
         };
         if !manifest.matches_item(item)? {
             return Err(CoreError::InvalidData(
-                "Hasil decode tidak cocok dengan metadata media.".into(),
+                "Decoded frames do not match the media metadata.".into(),
             ));
         }
         Ok(manifest)
@@ -60,7 +60,7 @@ impl FrameManifest {
         let file = File::create(cache_dir.join("manifest.json"))?;
         let mut writer = BufWriter::new(file);
         serde_json::to_writer(&mut writer, self).map_err(|error| {
-            CoreError::InvalidData(format!("Manifest frame tidak dapat disimpan: {error}"))
+            CoreError::InvalidData(format!("The frame manifest could not be saved: {error}"))
         })?;
         writer.flush()?;
         writer.get_ref().sync_all()?;
@@ -85,7 +85,7 @@ impl FrameManifest {
 
     fn matches_item(&self, item: &MediaItem) -> Result<bool, CoreError> {
         let frame_count = u32::try_from(self.durations_ms.len())
-            .map_err(|_| CoreError::InvalidData("Jumlah frame cache tidak valid.".into()))?;
+            .map_err(|_| CoreError::InvalidData("The cached frame count is invalid.".into()))?;
         Ok(self.version == CACHE_VERSION
             && self.content_hash == item.content_hash
             && self.width == item.width

@@ -38,14 +38,14 @@ onMount(() => {
 <main class="workspace">
   <header class="workspace-header">
     <div>
-      <span class="eyebrow">PUSTAKA LOKAL</span>
-      <h1>Koleksi</h1>
-      <p>Atur animasi, gambar transparan, dan loop favoritmu dari satu tempat.</p>
+      <span class="eyebrow">LOCAL LIBRARY</span>
+      <h1>Collection</h1>
+      <p>Organize animations, transparent images, and favorite loops in one place.</p>
     </div>
     <div class="collection-summary">
       <strong>{state.total}</strong>
-      <span>item tersimpan</span>
-      <button type="button" aria-label="Muat ulang koleksi" disabled={state.refreshing} onclick={onreload}>
+      <span>saved items</span>
+      <button type="button" aria-label="Reload collection" disabled={state.refreshing} onclick={onreload}>
         <RefreshCw size={16} />
       </button>
     </div>
@@ -54,7 +54,7 @@ onMount(() => {
   {#if !state.nativeAvailable}
     <div class="browser-note" role="status">
       <CloudOff size={17} />
-      <span><strong>Mode pratinjau browser.</strong> Katalog native dan pemilih file aktif di aplikasi desktop.</span>
+      <span><strong>Browser preview.</strong> The native catalog and file picker are available in the desktop app.</span>
     </div>
   {/if}
 
@@ -84,8 +84,8 @@ onMount(() => {
   {#if state.dragActive}
     <div class="drop-curtain" role="status">
       <span><Download size={28} /></span>
-      <strong>Lepaskan file untuk mengimpor</strong>
-      <p>GIF, APNG, WebP, PNG, dan JPG</p>
+      <strong>Drop files to import</strong>
+      <p>GIF, APNG, WebP, PNG, and JPG</p>
     </div>
   {/if}
 </main>

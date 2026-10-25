@@ -74,11 +74,11 @@ fn frame_metadata<'a>(
         let frame = frame.map_err(image_error)?;
         count = count
             .checked_add(1)
-            .ok_or_else(|| CoreError::InvalidMedia("Jumlah frame terlalu besar.".into()))?;
+            .ok_or_else(|| CoreError::InvalidMedia("The frame count is too large.".into()))?;
         let rounded = delay_ms(frame.delay())?;
         duration = duration
             .checked_add(rounded)
-            .ok_or_else(|| CoreError::InvalidMedia("Durasi animasi terlalu panjang.".into()))?;
+            .ok_or_else(|| CoreError::InvalidMedia("The animation duration is too long.".into()))?;
     }
     Ok((count, duration))
 }
@@ -92,7 +92,7 @@ fn metadata(
 ) -> Result<MediaMetadata, CoreError> {
     if width == 0 || height == 0 || frame_count == 0 {
         return Err(CoreError::InvalidMedia(
-            "Dimensi atau frame media kosong.".into(),
+            "The media dimensions or frame list are empty.".into(),
         ));
     }
     Ok(MediaMetadata {
@@ -107,7 +107,9 @@ fn metadata(
 pub(crate) fn delay_ms(delay: Delay) -> Result<u64, CoreError> {
     let (numerator, denominator) = delay.numer_denom_ms();
     if denominator == 0 {
-        return Err(CoreError::InvalidMedia("Durasi frame tidak valid.".into()));
+        return Err(CoreError::InvalidMedia(
+            "The frame duration is invalid.".into(),
+        ));
     }
     Ok((u64::from(numerator) + u64::from(denominator) / 2) / u64::from(denominator))
 }

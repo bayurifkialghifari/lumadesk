@@ -231,5 +231,5 @@ pub(crate) fn display_name(path: &Path) -> String {
     path.file_stem()
         .and_then(|name| name.to_str())
         .filter(|name| !name.trim().is_empty())
-        .map_or_else(|| "Animasi tanpa nama".into(), str::to_owned)
+        .map_or_else(|| "Untitled animation".into(), str::to_owned)
 }

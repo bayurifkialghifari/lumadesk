@@ -6,7 +6,7 @@ pub(crate) fn validate_name(name: &str) -> Result<&str, CoreError> {
     let name = name.trim();
     if name.is_empty() || name.chars().count() > 120 {
         return Err(CoreError::InvalidInput(
-            "Nama harus berisi 1–120 karakter.".into(),
+            "The name must contain 1–120 characters.".into(),
         ));
     }
     Ok(name)
@@ -15,7 +15,7 @@ pub(crate) fn validate_name(name: &str) -> Result<&str, CoreError> {
 pub(crate) fn validate_tags(tags: &[String]) -> Result<BTreeMap<String, String>, CoreError> {
     if tags.len() > 20 {
         return Err(CoreError::InvalidInput(
-            "Maksimal 20 tag per animasi.".into(),
+            "Each animation can have at most 20 tags.".into(),
         ));
     }
     let mut unique = BTreeMap::new();
@@ -23,7 +23,7 @@ pub(crate) fn validate_tags(tags: &[String]) -> Result<BTreeMap<String, String>,
         let tag = tag.trim();
         if tag.is_empty() || tag.chars().count() > 32 {
             return Err(CoreError::InvalidInput(
-                "Setiap tag harus berisi 1–32 karakter.".into(),
+                "Each tag must contain 1–32 characters.".into(),
             ));
         }
         unique

@@ -27,7 +27,7 @@ $: selectedItem =
     ? undefined
     : $collection.items.find((item) => item.id === $collection.selectedId);
 $: selectedBusy = selectedItem === undefined ? false : $collection.busyIds.has(selectedItem.id);
-$: pageTitle = activePage === "desktop" ? "Aktif di Desktop" : "Koleksi";
+$: pageTitle = activePage === "desktop" ? "Active on Desktop" : "Collection";
 
 onMount(() => {
   let disposed = false;
@@ -54,8 +54,8 @@ onMount(() => {
       .catch((error) => {
         const message =
           error instanceof Error
-            ? userErrorMessage(error, "Drag dan drop tidak dapat diaktifkan.")
-            : "Drag dan drop tidak dapat diaktifkan.";
+            ? userErrorMessage(error, "Drag and drop could not be enabled.")
+            : "Drag and drop could not be enabled.";
         collection.notify("error", message);
       });
   }
@@ -70,27 +70,27 @@ onMount(() => {
 
 async function chooseFiles(): Promise<void> {
   if (!nativeAvailable) {
-    collection.notify(
-      "info",
-      "Pemilih file tersedia saat LumaDesk dijalankan sebagai aplikasi desktop.",
-    );
+    collection.notify("info", "The file picker is available in the LumaDesk desktop app.");
     return;
   }
   try {
     const paths = await open({
-      title: "Impor animasi ke LumaDesk",
+      title: "Import animations into LumaDesk",
       multiple: true,
       directory: false,
       filters: [
-        { name: "Animasi dan gambar", extensions: ["gif", "apng", "webp", "png", "jpg", "jpeg"] },
+        {
+          name: "Animations and images",
+          extensions: ["gif", "apng", "webp", "png", "jpg", "jpeg"],
+        },
       ],
     });
     if (paths !== null) await collection.importPaths(paths);
   } catch (error) {
     const message =
       error instanceof Error
-        ? userErrorMessage(error, "Pemilih file tidak dapat dibuka.")
-        : "Pemilih file tidak dapat dibuka.";
+        ? userErrorMessage(error, "The file picker could not be opened.")
+        : "The file picker could not be opened.";
     collection.notify("error", message);
   }
 }
@@ -146,7 +146,6 @@ function navigate(id: NavigationId, enabled: boolean): void {
     {:else if activePage === "desktop"}
       <DesktopWorkspace
         state={$desktop}
-        oneditmode={(enabled) => void desktop.setEditMode(enabled)}
         onupdate={(id, patch) => void desktop.update(id, patch)}
         onduplicate={(id) => void desktop.duplicate(id)}
         onclose={(id) => void desktop.close(id)}

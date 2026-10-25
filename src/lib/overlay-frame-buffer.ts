@@ -63,10 +63,10 @@ export class OverlayFrameBuffer {
   public draw(index: number): void {
     const frame = this.frame(index);
     if (frame === undefined) {
-      throw new OverlayPlaybackError(`Frame ${index + 1} belum tersedia.`);
+      throw new OverlayPlaybackError(`Frame ${index + 1} is not available yet.`);
     }
     const context = this.#canvas.getContext("2d", { alpha: true });
-    if (context === null) throw new OverlayPlaybackError("Canvas overlay tidak tersedia.");
+    if (context === null) throw new OverlayPlaybackError("The overlay canvas is unavailable.");
     context.clearRect(0, 0, this.#canvas.width, this.#canvas.height);
     context.drawImage(frame.image, 0, 0, this.#canvas.width, this.#canvas.height);
   }
@@ -87,7 +87,7 @@ export class OverlayFrameBuffer {
 
   async #loadBatch(mediaId: MediaId, offset: number): Promise<BufferedFrameBatch<LoadedFrame>> {
     const batch = await getFrameBatch(mediaId, offset, FRAME_BATCH_SIZE);
-    if (batch.frames.length === 0) throw new OverlayPlaybackError("Batch frame kosong.");
+    if (batch.frames.length === 0) throw new OverlayPlaybackError("The frame batch is empty.");
     if (!this.#disposed && this.#mediaId === mediaId) {
       this.#totalFrames = batch.totalFrames;
       this.#canvas.width = batch.width;
@@ -104,7 +104,7 @@ function loadFrame(frame: FrameAsset): Promise<LoadedFrame> {
     image.decoding = "async";
     image.onload = () => resolve({ ...frame, image });
     image.onerror = () =>
-      reject(new OverlayPlaybackError(`Frame ${frame.index + 1} tidak dapat dimuat.`));
+      reject(new OverlayPlaybackError(`Frame ${frame.index + 1} could not be loaded.`));
     image.src = frame.path;
   });
 }

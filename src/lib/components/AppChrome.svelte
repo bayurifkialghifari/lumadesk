@@ -1,11 +1,64 @@
 <script lang="ts">
-import { Sparkles } from "@lucide/svelte";
+import { Copy, EyeOff, Minus, Sparkles, Square, X } from "@lucide/svelte";
+import { isTauri } from "@tauri-apps/api/core";
+import type { UnlistenFn } from "@tauri-apps/api/event";
+import { getCurrentWindow } from "@tauri-apps/api/window";
+import { onMount } from "svelte";
 import { type NavigationId, navigation } from "../navigation";
 
 export let activePage: NavigationId;
 export let collectionCount = 0;
 export let desktopCount = 0;
 export let onnavigate: (id: NavigationId, enabled: boolean) => void;
+
+const nativeWindow = isTauri() ? getCurrentWindow() : null;
+let maximized = false;
+let windowBusy = false;
+
+onMount(() => {
+  if (nativeWindow === null) return;
+  let disposed = false;
+  let unlisten: UnlistenFn | undefined;
+
+  void nativeWindow.isMaximized().then((value) => {
+    if (!disposed) maximized = value;
+  });
+  void nativeWindow
+    .onResized(() => {
+      void nativeWindow.isMaximized().then((value) => {
+        if (!disposed) maximized = value;
+      });
+    })
+    .then((cleanup) => {
+      if (disposed) cleanup();
+      else unlisten = cleanup;
+    });
+
+  return () => {
+    disposed = true;
+    unlisten?.();
+  };
+});
+
+async function runWindowAction(action: () => Promise<void>): Promise<void> {
+  if (nativeWindow === null || windowBusy) return;
+  windowBusy = true;
+  try {
+    await action();
+  } catch (error) {
+    console.error("LumaDesk window action failed", error);
+  } finally {
+    windowBusy = false;
+  }
+}
+
+async function toggleMaximize(): Promise<void> {
+  if (nativeWindow === null) return;
+  await runWindowAction(async () => {
+    await nativeWindow.toggleMaximize();
+    maximized = await nativeWindow.isMaximized();
+  });
+}
 </script>
 
 <header class="titlebar" data-tauri-drag-region>
@@ -13,11 +66,23 @@ export let onnavigate: (id: NavigationId, enabled: boolean) => void;
     <span class="brand-mark"><Sparkles size={16} strokeWidth={2.4} /></span>
     <span data-tauri-drag-region>LumaDesk</span>
   </div>
-  <span class="version" data-tauri-drag-region>v0.1.0</span>
+  <div class="titlebar-end">
+    <span class="version" data-tauri-drag-region>v0.1.0</span>
+    {#if nativeWindow !== null}
+      <div class="window-controls" aria-label="Window controls">
+        <button type="button" aria-label="Hide window" title="Hide" disabled={windowBusy} onclick={() => void runWindowAction(() => nativeWindow.hide())}><EyeOff size={14} /></button>
+        <button type="button" aria-label="Minimize window" title="Minimize" disabled={windowBusy} onclick={() => void runWindowAction(() => nativeWindow.minimize())}><Minus size={15} /></button>
+        <button type="button" aria-label={maximized ? "Restore window" : "Maximize window"} title={maximized ? "Restore" : "Maximize"} disabled={windowBusy} onclick={() => void toggleMaximize()}>
+          {#if maximized}<Copy size={13} />{:else}<Square size={13} />{/if}
+        </button>
+        <button class="close-button" type="button" aria-label="Close window" title="Close" disabled={windowBusy} onclick={() => void runWindowAction(() => nativeWindow.close())}><X size={15} /></button>
+      </div>
+    {/if}
+  </div>
 </header>
 
 <aside class="sidebar">
-  <nav aria-label="Navigasi utama">
+  <nav aria-label="Primary navigation">
     {#each navigation as item}
       <button
         class:active={activePage === item.id}
@@ -36,10 +101,6 @@ export let onnavigate: (id: NavigationId, enabled: boolean) => void;
       </button>
     {/each}
   </nav>
-  <div class="privacy-note">
-    <span class="status-dot"></span>
-    <div><strong>Lokal sepenuhnya</strong><small>Tanpa akun atau telemetri</small></div>
-  </div>
 </aside>
 
 <style>
@@ -58,12 +119,18 @@ export let onnavigate: (id: NavigationId, enabled: boolean) => void;
 .brand { display: flex; align-items: center; gap: 8px; font-family: "Space Grotesk Variable", sans-serif; font-weight: 680; }
 .brand-mark { display: grid; width: 28px; height: 28px; place-items: center; color: var(--brand-300); background: var(--surface-800); border-radius: 6px; }
 .version { color: var(--ink-500); font-size: 12px; }
+.titlebar-end, .window-controls { display: flex; height: 100%; align-items: center; }
+.titlebar-end { gap: 12px; }
+.window-controls { margin-right: -16px; }
+.window-controls button { display: grid; width: 42px; height: 100%; padding: 0; place-items: center; color: var(--ink-300); background: transparent; border: 0; cursor: pointer; }
+.window-controls button:hover { color: var(--ink-100); background: var(--surface-750); }
+.window-controls button.close-button:hover { color: var(--ink-100); background: var(--danger-400); }
+.window-controls button:disabled { cursor: default; opacity: 0.55; }
 
 .sidebar {
   display: flex;
   min-height: 0;
   flex-direction: column;
-  justify-content: space-between;
   padding: 20px 12px 16px;
   background: var(--canvas-900);
   border-right: 1px solid var(--line-700);
@@ -89,16 +156,11 @@ nav button:not(:disabled) { cursor: pointer; }
 nav button:disabled { opacity: 0.52; }
 nav small { color: var(--ink-500); font-size: 12px; }
 
-.privacy-note { display: flex; align-items: flex-start; gap: 10px; padding: 12px; color: var(--ink-300); font-size: 12px; background: var(--surface-850); border: 1px solid var(--line-700); border-radius: 8px; }
-.privacy-note div { display: grid; gap: 3px; }
-.privacy-note small { color: var(--ink-500); }
-.status-dot { width: 8px; height: 8px; margin-top: 4px; background: var(--success-400); border-radius: 50%; }
-
 @media (max-width: 760px) {
   .sidebar { z-index: 8; grid-row: 3; padding: 8px 12px; border-top: 1px solid var(--line-700); border-right: 0; }
   nav { grid-template-columns: repeat(3, 1fr); }
   nav button { display: flex; flex-direction: column; justify-content: center; gap: 3px; padding: 0 4px; font-size: 12px; text-align: center; }
   nav button small { display: none; }
-  .privacy-note { display: none; }
+  .version { display: none; }
 }
 </style>

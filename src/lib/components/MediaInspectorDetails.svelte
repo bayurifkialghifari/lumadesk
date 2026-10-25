@@ -16,13 +16,13 @@ export let ondelete: (item: MediaItem) => void;
 </script>
 
 <section class="inspector-section">
-  <h3>Informasi</h3>
+  <h3>Information</h3>
   <dl>
     <div><dt>Format</dt><dd>{mediaKindLabel(item.mediaKind)}</dd></div>
-    <div><dt>Ukuran</dt><dd>{mediaDimensions(item)}</dd></div>
-    <div><dt>Frame</dt><dd>{mediaFrameLabel(item.frameCount)}</dd></div>
-    <div><dt>Durasi</dt><dd>{mediaDuration(item)}</dd></div>
-    <div><dt>Ditambahkan</dt><dd>{mediaDate(item.createdAt)}</dd></div>
+    <div><dt>Size</dt><dd>{mediaDimensions(item)}</dd></div>
+    <div><dt>Frames</dt><dd>{mediaFrameLabel(item.frameCount)}</dd></div>
+    <div><dt>Duration</dt><dd>{mediaDuration(item)}</dd></div>
+    <div><dt>Added</dt><dd>{mediaDate(item.createdAt)}</dd></div>
   </dl>
 </section>
 
@@ -30,7 +30,7 @@ export let ondelete: (item: MediaItem) => void;
   <div class="section-heading">
     <h3>Tag</h3>
     <button class="quiet-button" type="button" disabled={busy} onclick={() => ontags(item)}>
-      <Tags size={15} /> Kelola
+      <Tags size={15} /> Manage
     </button>
   </div>
   {#if item.tags.length > 0}
@@ -40,15 +40,15 @@ export let ondelete: (item: MediaItem) => void;
       {/each}
     </div>
   {:else}
-    <p class="muted-copy">Belum ada tag untuk animasi ini.</p>
+    <p class="muted-copy">This animation has no tags yet.</p>
   {/if}
 </section>
 
 <section class="inspector-section danger-zone">
-  <h3>Kelola koleksi</h3>
-  <p>Salinan terkelola dan cache akan dihapus. File sumber asli tetap aman.</p>
+  <h3>Manage collection</h3>
+  <p>The managed copy and cache will be removed. The original source file stays untouched.</p>
   <button class="danger-button" type="button" disabled={busy} onclick={() => ondelete(item)}>
-    <Trash2 size={16} /> Hapus dari koleksi
+    <Trash2 size={16} /> Remove from collection
   </button>
 </section>
 

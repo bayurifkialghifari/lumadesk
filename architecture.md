@@ -12,13 +12,13 @@ flowchart LR
   APP --> CACHE[Thumbnail and frame cache]
   APP --> WINDOWS[Native overlay windows]
   WINDOWS --> RENDER[Canvas frame renderer]
-  APP --> TRAY[Tray and lifecycle]
+  APP --> LIFECYCLE[Window lifecycle]
 ```
 
 ## Repository boundaries
 
 - `src/`: Svelte application, typed command client, stores, pages, components, and CSS tokens.
-- `src-tauri/src/`: Tauri adapter, commands, tray, single-instance handling, and native window coordination.
+- `src-tauri/src/`: Tauri adapter, commands, single-instance handling, and native window coordination.
 - `crates/lumadesk-core/`: platform-independent domain, SQLite repositories, import pipeline, hashing, and media metadata.
 - `assets/starter/`: redistributable starter animation sources and license records.
 - `docs/`: user-facing feature and contribution guides.
@@ -72,12 +72,10 @@ The frontend calls serializable commands with typed inputs and outputs:
 - `move_overlay(id, monitor_id, x, y) -> OverlayInstance`
 - `duplicate_overlay(id) -> OverlayInstance`
 - `remove_overlay(id) -> void`
-- `get_overlay_edit_mode() -> bool`
-- `set_overlay_edit_mode(enabled) -> bool`
 - `get_settings() -> AppSettings`
 - `update_settings(settings) -> AppSettings`
 
-The native layer emits `overlay:state` to the matching overlay window after persisted state changes, `overlay:edit-mode` when pointer interaction changes, and `overlay:catalog-changed` when the management view must refresh. A failed native update restores the previous persisted state, while overlay and media removal close dependent windows before deleting their records. If persistence fails, closed windows are restored from the captured state. Inputs are validated once at the command boundary. Domain failures map to stable error codes plus localized user messages.
+The native layer emits `overlay:state` to the matching overlay window after persisted state changes and `overlay:catalog-changed` when the management view must refresh. A failed native update restores the previous persisted state, while overlay and media removal close dependent windows before deleting their records. If persistence fails, closed windows are restored from the captured state. Inputs are validated once at the command boundary. Domain failures map to stable error codes plus English user messages.
 
 ## File ownership
 
@@ -89,7 +87,9 @@ The frontend receives asset URLs only for managed media and cache roots. It cann
 
 Rust reads animation metadata and generates a persistent frame cache atomically. The frontend requests batches of 32 frames, prefetches near the active batch boundary, and retains at most the current and next batch in memory. The transparent canvas renderer uses original frame timing adjusted by the persisted speed multiplier. Static images render once without starting a playback scheduler.
 
-Each active overlay is an undecorated, transparent, always-on-top Tauri window. Its label is derived from an internal instance UUID. Display mode ignores cursor events and stays out of the taskbar. Edit mode enables pointer input, displays a compact toolbar and boundary, starts native window dragging from the drag handle, and persists the latest logical position through a debounced serial writer. The management window lists active instances and exposes size, opacity, speed, playback, flip, duplicate, close, pause-all, and close-all controls. Active instances are restored at startup when `restore_overlays` is enabled, and deleting media also destroys its native windows. macOS builds enable the required private transparent-window API and are distributed directly rather than through the App Store.
+Each active overlay is an undecorated, transparent, always-on-top Tauri window. Its label is derived from an internal instance UUID. Overlay windows always accept pointer input, display a compact toolbar and boundary, start native window dragging from either the animation surface or drag handle, and persist the latest logical position through a debounced serial writer. The management window lists active instances and exposes size, opacity, speed, playback, flip, duplicate, close, pause-all, and close-all controls. Active instances are restored at startup when `restore_overlays` is enabled, and deleting media also destroys its native windows. macOS builds enable the required private transparent-window API and are distributed directly rather than through the App Store.
+
+The main window uses a custom title bar. Tauri window APIs provide Hide, Minimize, Maximize/Restore, and Close actions, while the remaining title-bar area acts as a native drag region.
 
 ## Migrations and compatibility
 

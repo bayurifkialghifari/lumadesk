@@ -53,14 +53,14 @@ async function invokeParsed<TSchema extends z.ZodType>(
       throw error;
     }
     throw new NativeCommandError(
-      { code: "invalid_data", message: "Respons aplikasi tidak dapat dibaca." },
+      { code: "invalid_data", message: "The application response could not be read." },
       { cause: error },
     );
   }
   const parsed = schema.safeParse(payload);
   if (!parsed.success) {
     throw new NativeCommandError(
-      { code: "invalid_data", message: "Respons aplikasi tidak dapat dibaca." },
+      { code: "invalid_data", message: "The application response could not be read." },
       { cause: parsed.error },
     );
   }
@@ -143,14 +143,6 @@ export function duplicateOverlay(id: OverlayId): Promise<OverlayInstance> {
 
 export async function removeOverlay(id: OverlayId): Promise<void> {
   await invokeParsed("remove_overlay", z.null(), { id });
-}
-
-export function getOverlayEditMode(): Promise<boolean> {
-  return invokeParsed("get_overlay_edit_mode", z.boolean());
-}
-
-export function setOverlayEditMode(enabled: boolean): Promise<boolean> {
-  return invokeParsed("set_overlay_edit_mode", z.boolean(), { enabled });
 }
 
 export function getSettings(): Promise<AppSettings> {

@@ -12,14 +12,14 @@ impl CommandError {
     pub(crate) fn unavailable() -> Self {
         Self {
             code: ErrorCode::Database,
-            message: "Data lokal sedang tidak dapat diakses. Coba lagi sebentar.".into(),
+            message: "Local data is temporarily unavailable. Try again shortly.".into(),
         }
     }
 
     pub(crate) fn overlay(error: &tauri::Error) -> Self {
         Self {
             code: ErrorCode::Io,
-            message: format!("Overlay desktop tidak dapat diperbarui: {error}"),
+            message: format!("The desktop overlay could not be updated: {error}"),
         }
     }
 }

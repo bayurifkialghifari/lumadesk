@@ -1,6 +1,6 @@
 import { listen, type UnlistenFn } from "@tauri-apps/api/event";
 import { writable } from "svelte/store";
-import { getOverlayEditMode, listDesktopOverlays, mediaAssetUrl } from "./api";
+import { listDesktopOverlays, mediaAssetUrl } from "./api";
 import type { ToastTone } from "./collection-model";
 import type { DesktopOverlay } from "./contracts";
 import { createDesktopActions } from "./desktop-actions";
@@ -20,8 +20,6 @@ export function createDesktopController(nativeAvailable: boolean): DesktopContro
     overlays: [],
     assetUrls: {},
     busyIds: new Set(),
-    editMode: false,
-    editModeBusy: nativeAvailable,
     batchBusy: false,
     loadError: null,
     notice: null,
@@ -90,8 +88,8 @@ export function createDesktopController(nativeAvailable: boolean): DesktopContro
       if (disposed || request !== requestSequence) return;
       const message =
         error instanceof Error
-          ? userErrorMessage(error, "Overlay aktif tidak dapat dimuat.")
-          : "Overlay aktif tidak dapat dimuat.";
+          ? userErrorMessage(error, "Active overlays could not be loaded.")
+          : "Active overlays could not be loaded.";
       store.update((state) => ({
         ...state,
         ready: true,
@@ -122,23 +120,11 @@ export function createDesktopController(nativeAvailable: boolean): DesktopContro
     } catch (error) {
       const message =
         error instanceof Error
-          ? userErrorMessage(error, "Sinkronisasi overlay tidak dapat diaktifkan.")
-          : "Sinkronisasi overlay tidak dapat diaktifkan.";
+          ? userErrorMessage(error, "Overlay synchronization could not be enabled.")
+          : "Overlay synchronization could not be enabled.";
       notify("error", message);
     }
-    const [modeResult] = await Promise.allSettled([getOverlayEditMode(), reload()]);
-    if (disposed) return;
-    if (modeResult.status === "fulfilled") {
-      store.update((state) => ({ ...state, editMode: modeResult.value, editModeBusy: false }));
-      return;
-    }
-    store.update((state) => ({ ...state, editModeBusy: false }));
-    const error = modeResult.reason;
-    const message =
-      error instanceof Error
-        ? userErrorMessage(error, "Status Mode edit tidak dapat dibaca.")
-        : "Status Mode edit tidak dapat dibaca.";
-    notify("error", message);
+    await reload();
   }
 
   const actions = createDesktopActions({ nativeAvailable, store, reload, notify });

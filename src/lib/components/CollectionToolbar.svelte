@@ -24,19 +24,19 @@ onMount(() => {
 });
 </script>
 
-<section class="toolbar" aria-label="Alat koleksi">
+<section class="toolbar" aria-label="Collection tools">
   <label class="search-field">
     <Search size={17} aria-hidden="true" />
-    <span class="sr-only">Cari koleksi</span>
+    <span class="sr-only">Search collection</span>
     <input
       id="collection-search"
       type="search"
-      placeholder="Cari nama atau tag"
+      placeholder="Search names or tags"
       value={filters.search}
       oninput={(event) => onsearch(event.currentTarget.value)}
     />
     {#if filters.search !== ""}
-      <button type="button" aria-label="Bersihkan pencarian" onclick={() => onsearch("")}>
+      <button type="button" aria-label="Clear search" onclick={() => onsearch("")}>
         <X size={15} />
       </button>
     {:else}
@@ -47,23 +47,23 @@ onMount(() => {
   <div class="filter-slot"><CollectionFiltersControl {filters} {tags} {onkind} {onfavorite} {ontag} /></div>
 
   <div class="toolbar__end">
-    <div class="view-switcher" aria-label="Tampilan koleksi">
-      <button class:active={view === "grid"} type="button" aria-label="Tampilan grid" onclick={() => onview("grid")}>
+    <div class="view-switcher" aria-label="Collection view">
+      <button class:active={view === "grid"} type="button" aria-label="Grid view" onclick={() => onview("grid")}>
         <Grid2X2 size={16} />
       </button>
-      <button class:active={view === "list"} type="button" aria-label="Tampilan daftar" onclick={() => onview("list")}>
+      <button class:active={view === "list"} type="button" aria-label="List view" onclick={() => onview("list")}>
         <List size={17} />
       </button>
     </div>
     <button class="primary-button" type="button" disabled={importing} onclick={onimport}>
       <Upload size={16} />
-      {importing ? "Mengimpor…" : "Impor animasi"}
+      {importing ? "Importing…" : "Import animation"}
     </button>
   </div>
 </section>
 
 {#if refreshing}
-  <div class="refresh-line" role="progressbar" aria-label="Memperbarui koleksi"></div>
+  <div class="refresh-line" role="progressbar" aria-label="Refreshing collection"></div>
 {/if}
 
 <style>

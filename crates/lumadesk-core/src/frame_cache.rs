@@ -43,7 +43,7 @@ impl FrameCache {
         let manifest = self
             .manifests
             .get(&item.id)
-            .ok_or_else(|| CoreError::InvalidData("Manifest frame tidak tersedia.".into()))?;
+            .ok_or_else(|| CoreError::InvalidData("The frame manifest is unavailable.".into()))?;
         build_batch(&self.root, item, manifest, request)
     }
 
@@ -92,7 +92,7 @@ impl FrameCache {
 fn validate_request(request: FrameBatchRequest) -> Result<(), CoreError> {
     if request.limit == 0 || request.limit > MAX_BATCH_SIZE {
         return Err(CoreError::InvalidInput(format!(
-            "Jumlah frame per batch harus 1–{MAX_BATCH_SIZE}."
+            "Frames per batch must be between 1 and {MAX_BATCH_SIZE}."
         )));
     }
     Ok(())
@@ -105,9 +105,9 @@ fn build_batch(
     request: FrameBatchRequest,
 ) -> Result<FrameBatch, CoreError> {
     let offset = usize::try_from(request.offset)
-        .map_err(|_| CoreError::InvalidInput("Offset frame terlalu besar.".into()))?;
+        .map_err(|_| CoreError::InvalidInput("The frame offset is too large.".into()))?;
     let limit = usize::try_from(request.limit)
-        .map_err(|_| CoreError::InvalidInput("Jumlah frame terlalu besar.".into()))?;
+        .map_err(|_| CoreError::InvalidInput("The frame count is too large.".into()))?;
     let cache_dir = root.join(item.id.to_string());
     let mut frames = Vec::with_capacity(limit.min(manifest.durations_ms.len()));
     for (index, duration_ms) in manifest
@@ -119,7 +119,7 @@ fn build_batch(
         .take(limit)
     {
         let index = u32::try_from(index)
-            .map_err(|_| CoreError::InvalidData("Indeks frame tidak valid.".into()))?;
+            .map_err(|_| CoreError::InvalidData("The frame index is invalid.".into()))?;
         frames.push(FrameAsset {
             index,
             duration_ms,

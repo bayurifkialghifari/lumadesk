@@ -46,55 +46,55 @@ async function submitDelete(): Promise<void> {
 </script>
 
 {#if dialog?.kind === "rename"}
-  <Modal title="Ganti nama animasi" description="Nama katalog berubah tanpa mengganti nama file internal." {busy} {onclose}>
+  <Modal title="Rename animation" description="Change the catalog name without renaming the managed file." {busy} {onclose}>
     <form onsubmit={submitRename}>
-      <label for="rename-media">Nama tampilan</label>
+      <label for="rename-media">Display name</label>
       <input id="rename-media" bind:value={name} maxlength="120" required />
       <div class="dialog-actions">
-        <button class="secondary-button" type="button" disabled={busy} onclick={onclose}>Batal</button>
-        <button class="primary-button" type="submit" disabled={busy || name.trim() === ""}>Simpan nama</button>
+        <button class="secondary-button" type="button" disabled={busy} onclick={onclose}>Cancel</button>
+        <button class="primary-button" type="submit" disabled={busy || name.trim() === ""}>Save name</button>
       </div>
     </form>
   </Modal>
 {:else if dialog?.kind === "tags"}
-  <Modal title="Kelola tag" description="Pisahkan beberapa tag dengan koma." {busy} {onclose}>
+  <Modal title="Manage tags" description="Separate multiple tags with commas." {busy} {onclose}>
     <form onsubmit={submitTags}>
-      <label for="media-tags"><Tag size={15} /> Tag animasi</label>
-      <input id="media-tags" bind:value={tags} placeholder="pixel, ambient, karakter" />
-      <p class="field-help">Tag duplikat dan spasi berlebih akan dirapikan otomatis.</p>
+      <label for="media-tags"><Tag size={15} /> Animation tags</label>
+      <input id="media-tags" bind:value={tags} placeholder="pixel, ambient, character" />
+      <p class="field-help">Duplicate tags and extra spaces are cleaned up automatically.</p>
       <div class="dialog-actions">
-        <button class="secondary-button" type="button" disabled={busy} onclick={onclose}>Batal</button>
-        <button class="primary-button" type="submit" disabled={busy}>Simpan tag</button>
+        <button class="secondary-button" type="button" disabled={busy} onclick={onclose}>Cancel</button>
+        <button class="primary-button" type="submit" disabled={busy}>Save tags</button>
       </div>
     </form>
   </Modal>
 {:else if dialog?.kind === "delete"}
-  <Modal title="Hapus dari koleksi?" description={`“${dialog.item.displayName}” akan dihapus dari LumaDesk.`} {busy} {onclose}>
+  <Modal title="Remove from collection?" description={`“${dialog.item.displayName}” will be removed from LumaDesk.`} {busy} {onclose}>
     <div class="delete-copy">
       <span><AlertTriangle size={20} /></span>
-      <p>Salinan terkelola, cache, dan overlay terkait akan dihapus. File sumber asli tetap aman.</p>
+      <p>The managed copy, cache, and related overlays will be removed. The original source file stays untouched.</p>
     </div>
     <div class="dialog-actions">
-      <button class="secondary-button" type="button" disabled={busy} onclick={onclose}>Batal</button>
-      <button class="danger-button" type="button" disabled={busy} onclick={submitDelete}>Hapus animasi</button>
+      <button class="secondary-button" type="button" disabled={busy} onclick={onclose}>Cancel</button>
+      <button class="danger-button" type="button" disabled={busy} onclick={submitDelete}>Remove animation</button>
     </div>
   </Modal>
 {:else if report !== null}
-  <Modal title="Hasil impor" description="Setiap file diproses sendiri agar satu kegagalan tidak menghentikan file lain." onclose={onclosereport}>
+  <Modal title="Import results" description="Each file is processed independently so one failure does not stop the rest." onclose={onclosereport}>
     <div class="report-summary">
-      <span><CheckCircle2 size={17} /> {report.outcomes.filter((outcome) => outcome.status === "imported").length} baru</span>
-      <span><Copy size={17} /> {report.outcomes.filter((outcome) => outcome.status === "duplicate").length} duplikat</span>
-      <span class:error={report.failures.length > 0}><FileWarning size={17} /> {report.failures.length} gagal</span>
+      <span><CheckCircle2 size={17} /> {report.outcomes.filter((outcome) => outcome.status === "imported").length} new</span>
+      <span><Copy size={17} /> {report.outcomes.filter((outcome) => outcome.status === "duplicate").length} duplicate</span>
+      <span class:error={report.failures.length > 0}><FileWarning size={17} /> {report.failures.length} failed</span>
     </div>
     <div class="report-list">
       {#each report.outcomes as outcome}
-        <div><span class="result-icon success"><CheckCircle2 size={16} /></span><strong>{outcome.item.displayName}</strong><small>{outcome.status === "imported" ? "Ditambahkan" : "Sudah ada"}</small></div>
+        <div><span class="result-icon success"><CheckCircle2 size={16} /></span><strong>{outcome.item.displayName}</strong><small>{outcome.status === "imported" ? "Added" : "Already exists"}</small></div>
       {/each}
       {#each report.failures as failure}
         <div><span class="result-icon failure"><FileWarning size={16} /></span><strong>{filenameFromPath(failure.path)}</strong><small>{failure.message}</small></div>
       {/each}
     </div>
-    <div class="dialog-actions"><button class="primary-button" type="button" onclick={onclosereport}>Selesai</button></div>
+    <div class="dialog-actions"><button class="primary-button" type="button" onclick={onclosereport}>Done</button></div>
   </Modal>
 {/if}
 

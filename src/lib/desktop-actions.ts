@@ -1,5 +1,5 @@
 import { get, type Writable } from "svelte/store";
-import { duplicateOverlay, removeOverlay, setOverlayEditMode, updateOverlay } from "./api";
+import { duplicateOverlay, removeOverlay, updateOverlay } from "./api";
 import type { ToastTone } from "./collection-model";
 import type { OverlayId, OverlayPatch } from "./contracts";
 import { runSettledBatch } from "./desktop-batch";
@@ -8,7 +8,7 @@ import { userErrorMessage } from "./presentation";
 
 type DesktopActions = Pick<
   DesktopController,
-  "setEditMode" | "update" | "duplicate" | "close" | "pauseAll" | "closeAll"
+  "update" | "duplicate" | "close" | "pauseAll" | "closeAll"
 >;
 
 interface DesktopActionContext {
@@ -45,29 +45,13 @@ export function createDesktopActions(context: DesktopActionContext): DesktopActi
     notify("error", error instanceof Error ? userErrorMessage(error, fallback) : fallback);
   }
 
-  async function setEditMode(enabled: boolean): Promise<void> {
-    if (!nativeAvailable) {
-      notify("info", "Mode edit tersedia saat LumaDesk dijalankan sebagai aplikasi desktop.");
-      return;
-    }
-    store.update((state) => ({ ...state, editModeBusy: true }));
-    try {
-      const editMode = await setOverlayEditMode(enabled);
-      store.update((state) => ({ ...state, editMode }));
-    } catch (error) {
-      actionError(error, "Mode edit tidak dapat diubah.");
-    } finally {
-      store.update((state) => ({ ...state, editModeBusy: false }));
-    }
-  }
-
   async function update(id: OverlayId, patch: OverlayPatch): Promise<void> {
     if (!nativeAvailable) return;
     setBusy([id], true);
     try {
       replaceOverlay(await updateOverlay(id, patch));
     } catch (error) {
-      actionError(error, "Pengaturan overlay tidak dapat disimpan.");
+      actionError(error, "The overlay settings could not be saved.");
     } finally {
       setBusy([id], false);
     }
@@ -78,10 +62,10 @@ export function createDesktopActions(context: DesktopActionContext): DesktopActi
     setBusy([id], true);
     try {
       await duplicateOverlay(id);
-      notify("success", "Overlay diduplikasi.");
+      notify("success", "Overlay duplicated.");
       await reload();
     } catch (error) {
-      actionError(error, "Overlay tidak dapat diduplikasi.");
+      actionError(error, "The overlay could not be duplicated.");
     } finally {
       setBusy([id], false);
     }
@@ -96,9 +80,9 @@ export function createDesktopActions(context: DesktopActionContext): DesktopActi
         ...state,
         overlays: state.overlays.filter((item) => item.overlay.id !== id),
       }));
-      notify("success", "Overlay ditutup.");
+      notify("success", "Overlay closed.");
     } catch (error) {
-      actionError(error, "Overlay tidak dapat ditutup.");
+      actionError(error, "The overlay could not be closed.");
     } finally {
       setBusy([id], false);
     }
@@ -127,14 +111,14 @@ export function createDesktopActions(context: DesktopActionContext): DesktopActi
       .overlays.filter((item) => item.overlay.isPlaying)
       .map((item) => item.overlay.id);
     if (ids.length === 0) {
-      notify("info", "Semua overlay sudah dijeda.");
+      notify("info", "All overlays are already paused.");
       return;
     }
     await performBatch(
       ids,
       (id) => updateOverlay(id, { isPlaying: false }),
-      `${ids.length} overlay dijeda.`,
-      (failed) => `${failed} overlay tidak dapat dijeda.`,
+      `${ids.length} overlays paused.`,
+      (failed) => `${failed} overlays could not be paused.`,
     );
   }
 
@@ -144,10 +128,10 @@ export function createDesktopActions(context: DesktopActionContext): DesktopActi
     await performBatch(
       ids,
       removeOverlay,
-      `${ids.length} overlay ditutup.`,
-      (failed) => `${failed} overlay tidak dapat ditutup.`,
+      `${ids.length} overlays closed.`,
+      (failed) => `${failed} overlays could not be closed.`,
     );
   }
 
-  return { setEditMode, update, duplicate, close, pauseAll, closeAll };
+  return { update, duplicate, close, pauseAll, closeAll };
 }

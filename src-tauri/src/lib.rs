@@ -70,8 +70,6 @@ pub fn run() {
             commands::overlays::move_overlay,
             commands::overlays::duplicate_overlay,
             commands::overlays::remove_overlay,
-            commands::overlay_edit::get_overlay_edit_mode,
-            commands::overlay_edit::set_overlay_edit_mode,
             commands::settings::get_settings,
             commands::settings::update_settings,
         ])

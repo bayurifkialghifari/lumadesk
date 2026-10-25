@@ -18,7 +18,7 @@ LumaDesk is a local-first desktop animation library. It lets people collect tran
 1. A user can import GIF, APNG, animated/static WebP, PNG, and JPG files through a file picker or drag and drop.
 2. Imported media appears in a searchable library and can be previewed, renamed, tagged, favorited, or deleted.
 3. A library item can create one or more transparent desktop overlays with independent position, size, opacity, speed, flip, pause, and loop controls.
-4. Overlay layouts survive application restarts and recover safely when a monitor is removed.
+4. Overlay layouts survive application restarts with persisted logical positions.
 5. All media, settings, and catalog data stay on the user's device.
 6. Installers are built for Linux, macOS, and Windows from version tags.
 
@@ -37,14 +37,15 @@ LumaDesk is a local-first desktop animation library. It lets people collect tran
 - Preserve transparency, frame order, frame duration, looping, and GIF/APNG disposal behavior.
 - Render still images as valid one-frame animations.
 - Create one undecorated transparent native window for each active overlay.
-- Display mode ignores pointer input. Edit mode accepts pointer input and supports drag placement.
+- Keep every overlay interactive so it can be dragged directly from the animation or toolbar.
+- Keep a compact overlay toolbar and boundary visible for play, pause, flip, duplicate, close, and drag actions.
 - Expose playback, 25–400% speed, 10–100% opacity, horizontal flip, and bounded size controls.
-- Restore active instances when LumaDesk starts. If a saved monitor is gone, move the overlay into the primary monitor's visible work area.
+- Restore active instances when LumaDesk starts. Monitor recovery remains deferred until saved positions can be remapped safely.
 
 ### Desktop lifecycle
 
 - Run as a single application instance. Reopening focuses the library window.
-- Keep a tray menu for opening LumaDesk, toggling edit mode, pausing all overlays, and quitting.
+- Provide Hide, Minimize, Maximize/Restore, and Close controls in the custom title bar.
 - Autostart is opt-in and disabled by default.
 - Linux targets X11 directly and XWayland automatically when launched in a Wayland session.
 
@@ -60,6 +61,7 @@ LumaDesk is a local-first desktop animation library. It lets people collect tran
 - Database migrations are transactional and preserve user data.
 - Corrupt and unsupported files return a clear user-facing error without creating partial catalog entries.
 - Keyboard navigation, visible focus, reduced motion, labels, contrast, and minimum 40 px interaction targets are required.
+- The application interface and all user-facing errors use English.
 
 ## Distribution and privacy
 

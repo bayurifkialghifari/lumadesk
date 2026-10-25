@@ -17,7 +17,7 @@ export let onfavorite: (item: MediaItem) => void;
     <span class="media-row__preview"><MediaPreview {item} {src} /></span>
     <span class="media-row__identity">
       <span class="media-row__name" title={item.displayName}>{item.displayName}</span>
-      <span class="media-row__tags">{item.tags.length > 0 ? item.tags.join(", ") : "Belum ada tag"}</span>
+      <span class="media-row__tags">{item.tags.length > 0 ? item.tags.join(", ") : "No tags yet"}</span>
     </span>
     <span class="media-row__cell">{mediaKindLabel(item.mediaKind)}</span>
     <span class="media-row__cell">{mediaDimensions(item)}</span>
@@ -30,7 +30,7 @@ export let onfavorite: (item: MediaItem) => void;
     class:favorite={item.isFavorite}
     class="favorite-button"
     type="button"
-    aria-label={item.isFavorite ? `Hapus ${item.displayName} dari favorit` : `Favoritkan ${item.displayName}`}
+    aria-label={item.isFavorite ? `Remove ${item.displayName} from favorites` : `Add ${item.displayName} to favorites`}
     disabled={busy}
     onclick={() => onfavorite(item)}
   >

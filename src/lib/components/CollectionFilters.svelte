@@ -26,9 +26,9 @@ function handleMediaKind(event: Event): void {
 
 <div class="filter-group">
   <label>
-    <span class="sr-only">Filter format</span>
+    <span class="sr-only">Format filter</span>
     <select value={filters.mediaKind} onchange={handleMediaKind}>
-      <option value={ALL_MEDIA_KINDS}>Semua format</option>
+      <option value={ALL_MEDIA_KINDS}>All formats</option>
       <option value="gif">GIF</option>
       <option value="apng">APNG</option>
       <option value="webp">WebP</option>
@@ -38,9 +38,9 @@ function handleMediaKind(event: Event): void {
   </label>
 
   <label>
-    <span class="sr-only">Filter tag</span>
+    <span class="sr-only">Tag filter</span>
     <select value={filters.tag} onchange={(event) => ontag(event.currentTarget.value)}>
-      <option value="">Semua tag</option>
+      <option value="">All tags</option>
       {#each tags as tag}
         <option value={tag}>{tag}</option>
       {/each}
@@ -54,7 +54,7 @@ function handleMediaKind(event: Event): void {
     onclick={() => onfavorite(!filters.favoriteOnly)}
   >
     <Heart size={16} fill={filters.favoriteOnly ? "currentColor" : "none"} />
-    Favorit
+    Favorites
   </button>
 </div>
 

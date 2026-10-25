@@ -27,7 +27,7 @@ fn imported(outcome: ImportOutcome) -> Result<MediaItem, io::Error> {
     match outcome {
         ImportOutcome::Imported { item } => Ok(item),
         ImportOutcome::Duplicate { .. } => Err(io::Error::other(
-            "fixture pertama tidak boleh terdeteksi sebagai duplikat",
+            "the first fixture must not be detected as a duplicate",
         )),
     }
 }
@@ -35,7 +35,7 @@ fn imported(outcome: ImportOutcome) -> Result<MediaItem, io::Error> {
 #[test]
 fn decodes_animation_into_bounded_batches_with_original_timing() -> Result<(), Box<dyn Error>> {
     let temp = TempDir::new()?;
-    let source = temp.path().join("kedip.gif");
+    let source = temp.path().join("blink.gif");
     write_gif(&source)?;
     let mut library = Library::open(temp.path().join("data"))?;
     let item = imported(library.import_file(&source)?)?;
@@ -109,7 +109,7 @@ fn reuses_complete_disk_cache_after_reopening_library() -> Result<(), Box<dyn Er
 #[test]
 fn rejects_unbounded_frame_batch_requests() -> Result<(), Box<dyn Error>> {
     let temp = TempDir::new()?;
-    let source = temp.path().join("batas.gif");
+    let source = temp.path().join("limit.gif");
     write_gif(&source)?;
     let mut library = Library::open(temp.path().join("data"))?;
     let item = imported(library.import_file(&source)?)?;

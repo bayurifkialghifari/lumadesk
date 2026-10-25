@@ -86,10 +86,12 @@ impl Library {
     pub fn import_file(&mut self, source: &Path) -> Result<ImportOutcome, CoreError> {
         let source_metadata = source.metadata()?;
         if !source_metadata.is_file() {
-            return Err(CoreError::InvalidInput("Pilih berkas media biasa.".into()));
+            return Err(CoreError::InvalidInput(
+                "Choose a regular media file.".into(),
+            ));
         }
         if source_metadata.len() == 0 {
-            return Err(CoreError::InvalidMedia("Berkas kosong.".into()));
+            return Err(CoreError::InvalidMedia("The file is empty.".into()));
         }
 
         let temporary = self
@@ -285,7 +287,7 @@ impl Library {
         let path = Path::new(managed_path);
         if path.components().count() != 1 || path.file_name().is_none() {
             return Err(CoreError::InvalidData(
-                "Lokasi media terkelola tidak valid.".into(),
+                "The managed media location is invalid.".into(),
             ));
         }
         Ok(self.media_root.join(path))

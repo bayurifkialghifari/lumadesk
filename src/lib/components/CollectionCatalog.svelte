@@ -18,7 +18,7 @@ $: filtered = hasActiveFilters(state.filters);
 
 <section class="catalog" aria-busy={state.loading || state.refreshing}>
   {#if state.loading}
-    <div class="media-grid skeleton-grid" aria-label="Memuat koleksi">
+    <div class="media-grid skeleton-grid" aria-label="Loading collection">
       {#each Array(8) as _}
         <div class="skeleton-card"><span></span><i></i><i></i></div>
       {/each}
@@ -26,22 +26,22 @@ $: filtered = hasActiveFilters(state.filters);
   {:else if state.loadError !== null}
     <div class="state-panel">
       <span class="state-icon error"><RefreshCw size={24} /></span>
-      <div><h2>Koleksi belum terbaca</h2><p>{state.loadError}</p></div>
-      <button class="secondary-button" type="button" onclick={onreload}>Coba lagi</button>
+      <div><h2>Collection could not be loaded</h2><p>{state.loadError}</p></div>
+      <button class="secondary-button" type="button" onclick={onreload}>Try again</button>
     </div>
   {:else if state.items.length === 0 && !filtered}
     <div class="state-panel empty">
       <span class="state-icon"><Images size={28} /></span>
       <div>
-        <h2>Koleksimu siap diisi</h2>
-        <p>Impor GIF, APNG, WebP, PNG, atau JPG. Semua file tetap diproses di perangkatmu.</p>
+        <h2>Your collection is ready</h2>
+        <p>Import GIF, APNG, WebP, PNG, or JPG files. Everything stays on your device.</p>
       </div>
-      <button class="primary-button" type="button" onclick={onimport}><Upload size={16} /> Impor animasi</button>
+      <button class="primary-button" type="button" onclick={onimport}><Upload size={16} /> Import animation</button>
     </div>
   {:else if state.items.length === 0}
     <div class="state-panel">
       <span class="state-icon"><SearchX size={26} /></span>
-      <div><h2>Tidak ada hasil</h2><p>Coba kata kunci lain atau longgarkan filter koleksi.</p></div>
+      <div><h2>No results</h2><p>Try another search or broaden the collection filters.</p></div>
     </div>
   {:else}
     {#if state.settings.collectionView === "grid"}
@@ -60,7 +60,7 @@ $: filtered = hasActiveFilters(state.filters);
     {:else}
       <div class="media-list">
         <div class="list-heading" aria-hidden="true">
-          <span>Animasi</span><span>Format</span><span>Ukuran</span><span>Frame</span><span></span>
+          <span>Animation</span><span>Format</span><span>Size</span><span>Frames</span><span></span>
         </div>
         {#each state.items as item (item.id)}
           <MediaListRow
@@ -76,12 +76,12 @@ $: filtered = hasActiveFilters(state.filters);
     {/if}
 
     {#if pageCount > 1}
-      <nav class="pagination" aria-label="Halaman koleksi">
-        <button type="button" aria-label="Halaman sebelumnya" disabled={state.page === 0} onclick={() => onpage(state.page - 1)}>
+      <nav class="pagination" aria-label="Collection pages">
+        <button type="button" aria-label="Previous page" disabled={state.page === 0} onclick={() => onpage(state.page - 1)}>
           <ChevronLeft size={17} />
         </button>
-        <span>Halaman {state.page + 1} dari {pageCount}</span>
-        <button type="button" aria-label="Halaman berikutnya" disabled={state.page + 1 >= pageCount} onclick={() => onpage(state.page + 1)}>
+        <span>Page {state.page + 1} of {pageCount}</span>
+        <button type="button" aria-label="Next page" disabled={state.page + 1 >= pageCount} onclick={() => onpage(state.page + 1)}>
           <ChevronRight size={17} />
         </button>
       </nav>

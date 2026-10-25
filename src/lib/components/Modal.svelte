@@ -36,7 +36,7 @@ function handleBackdrop(event: MouseEvent): void {
         <h2 id="action-dialog-title">{title}</h2>
         <p id="action-dialog-copy">{description}</p>
       </div>
-      <button type="button" aria-label="Tutup dialog" disabled={busy} onclick={onclose}>
+      <button type="button" aria-label="Close dialog" disabled={busy} onclick={onclose}>
         <X size={18} />
       </button>
     </header>

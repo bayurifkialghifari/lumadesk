@@ -56,12 +56,13 @@ Gradients are limited to the brand banner, empty-state illustration, and preview
 ## 3. Application shell
 
 - The top title strip is 40 px and reserves native drag regions.
+- Its right edge contains Hide, Minimize, Maximize/Restore, and Close controls with familiar desktop hover states.
 - The left rail is fixed on desktop and becomes a bottom navigation bar below 760 px.
 - The main content column owns vertical scrolling. Navigation and inspector stay fixed within the viewport.
 - At widths below 1,100 px, the inspector becomes a modal sheet.
 - The library grid uses responsive columns with a minimum card width of 184 px. Media cards use a 4:3 preview stage and show controls only on selection or hover.
 - The desktop manager uses one compact row per active overlay on wide screens and stacks preview, metadata, actions, and sliders on narrow screens.
-- Browser preview keeps native-only controls visible but disabled and explains why they are unavailable.
+- Browser preview omits native-only window controls because no native window exists.
 
 ## 4. Core primitives
 
@@ -87,16 +88,15 @@ Gradients are limited to the brand banner, empty-state illustration, and preview
 
 ## 6. Overlay controls
 
-- Display mode is the default and ignores pointer events.
-- Edit mode adds a compact neutral toolbar near the selected overlay and a subtle bounding box.
+- Every overlay accepts pointer input and can be dragged directly from the animation surface or toolbar grip.
+- A compact neutral toolbar and subtle boundary remain visible on every overlay.
 - The toolbar exposes drag, play/pause, flip, duplicate, and close. Detailed size, opacity, and speed controls live in the main-window inspector.
-- The **Active on Desktop** page owns global edit mode, live active and playing counts, pause-all, and confirmed close-all actions.
-- Overlay windows never display product chrome during display mode.
+- The **Active on Desktop** page shows live active and playing counts plus pause-all and confirmed close-all actions.
 
 ## 7. Content language
 
-- The current interface language is Indonesian; public project documentation is English.
-- Prefer direct verbs. Current interface examples include `Impor animasi` (Import animation), `Tampilkan di desktop` (Show on desktop), `Ganti nama` (Rename), and `Hapus dari koleksi` (Remove from collection).
+- The interface and public project documentation use English.
+- Prefer direct verbs. Interface examples include `Import animation`, `Show on desktop`, `Rename`, and `Remove from collection`.
 - Explain file ownership precisely: deleting from LumaDesk removes its managed copy and never deletes the original source.
 - Error messages state what failed and one useful next step.
 
@@ -106,4 +106,4 @@ Gradients are limited to the brand banner, empty-state illustration, and preview
 - All controls are keyboard reachable and expose names to accessibility APIs.
 - Color never carries status alone.
 - Transparent overlay interaction is verified per operating system because accessibility and input behavior differ across window managers.
-- v0.1 supports an Indonesian UI only. Localization infrastructure is deferred, but copy stays centralized so additional languages can be added without redesign.
+- v0.1 supports an English UI. Localization infrastructure is deferred, but copy stays centralized so additional languages can be added without redesign.

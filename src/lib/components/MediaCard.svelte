@@ -32,8 +32,8 @@ export let onfavorite: (item: MediaItem) => void;
     class:favorite={item.isFavorite}
     class="favorite-button"
     type="button"
-    aria-label={item.isFavorite ? `Hapus ${item.displayName} dari favorit` : `Favoritkan ${item.displayName}`}
-    title={item.isFavorite ? "Hapus dari favorit" : "Tambahkan ke favorit"}
+    aria-label={item.isFavorite ? `Remove ${item.displayName} from favorites` : `Add ${item.displayName} to favorites`}
+    title={item.isFavorite ? "Remove from favorites" : "Add to favorites"}
     disabled={busy}
     onclick={() => onfavorite(item)}
   >

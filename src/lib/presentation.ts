@@ -9,8 +9,8 @@ const MEDIA_KIND_LABEL: Readonly<Record<MediaKind, string>> = {
   jpeg: "JPG",
 };
 
-const decimal = new Intl.NumberFormat("id-ID", { maximumFractionDigits: 1 });
-const date = new Intl.DateTimeFormat("id-ID", {
+const decimal = new Intl.NumberFormat("en-US", { maximumFractionDigits: 1 });
+const date = new Intl.DateTimeFormat("en-US", {
   day: "numeric",
   month: "short",
   year: "numeric",
@@ -26,9 +26,9 @@ export function mediaDimensions(item: MediaItem): string {
 
 export function mediaDuration(item: MediaItem): string {
   if (item.frameCount === 1 || item.durationMs === 0) {
-    return "Gambar statis";
+    return "Static image";
   }
-  return `${decimal.format(item.durationMs / 1000)} detik per loop`;
+  return `${decimal.format(item.durationMs / 1000)} seconds per loop`;
 }
 
 export function mediaFrameLabel(frameCount: number): string {

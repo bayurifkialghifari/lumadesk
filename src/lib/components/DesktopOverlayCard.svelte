@@ -38,7 +38,7 @@ function numberValue(event: Event): number {
     </div>
     <div class="preview-status">
       <span class:paused={!item.overlay.isPlaying}>
-        {#if item.overlay.isPlaying}<Play size={11} fill="currentColor" /> Aktif{:else}<Pause size={11} /> Dijeda{/if}
+        {#if item.overlay.isPlaying}<Play size={11} fill="currentColor" /> Active{:else}<Pause size={11} /> Paused{/if}
       </span>
       <small>{mediaKindLabel(item.media.mediaKind)}</small>
     </div>
@@ -48,14 +48,14 @@ function numberValue(event: Event): number {
     <div class="overlay-title">
       <div>
         <h2 title={item.media.displayName}>{item.media.displayName}</h2>
-        <p><Monitor size={13} /> {item.overlay.monitorId ?? "Monitor utama"} · {Math.round(item.overlay.width)} × {height} px</p>
+        <p><Monitor size={13} /> {item.overlay.monitorId ?? "Primary monitor"} · {Math.round(item.overlay.width)} × {height} px</p>
       </div>
       <div class="quick-actions">
         <button
           class:active={item.overlay.isPlaying}
           type="button"
-          aria-label={item.overlay.isPlaying ? "Jeda overlay" : "Putar overlay"}
-          title={item.overlay.isPlaying ? "Jeda" : "Putar"}
+          aria-label={item.overlay.isPlaying ? "Pause overlay" : "Play overlay"}
+          title={item.overlay.isPlaying ? "Pause" : "Play"}
           disabled={busy}
           onclick={() => onupdate(item.overlay.id, { isPlaying: !item.overlay.isPlaying })}
         >
@@ -64,17 +64,17 @@ function numberValue(event: Event): number {
         <button
           class:active={item.overlay.flipHorizontal}
           type="button"
-          aria-label="Balik overlay secara horizontal"
-          title="Balik horizontal"
+          aria-label="Flip overlay horizontally"
+          title="Flip horizontally"
           disabled={busy}
           onclick={() => onupdate(item.overlay.id, { flipHorizontal: !item.overlay.flipHorizontal })}
         >
           <FlipHorizontal2 size={16} />
         </button>
-        <button type="button" aria-label="Duplikat overlay" title="Duplikat" disabled={busy} onclick={() => onduplicate(item.overlay.id)}>
+        <button type="button" aria-label="Duplicate overlay" title="Duplicate" disabled={busy} onclick={() => onduplicate(item.overlay.id)}>
           <Copy size={16} />
         </button>
-        <button class="danger" type="button" aria-label="Tutup overlay" title="Tutup" disabled={busy} onclick={() => onclose(item.overlay.id)}>
+        <button class="danger" type="button" aria-label="Close overlay" title="Close" disabled={busy} onclick={() => onclose(item.overlay.id)}>
           <X size={16} />
         </button>
       </div>
@@ -82,7 +82,7 @@ function numberValue(event: Event): number {
 
     <div class="control-grid">
       <label>
-        <span><strong>Ukuran</strong><output>{Math.round(item.overlay.width)} px</output></span>
+        <span><strong>Size</strong><output>{Math.round(item.overlay.width)} px</output></span>
         <input
           type="range"
           min={MIN_OVERLAY_WIDTH}
@@ -90,12 +90,12 @@ function numberValue(event: Event): number {
           step="16"
           value={item.overlay.width}
           disabled={busy}
-          aria-label={`Lebar ${item.media.displayName}`}
+          aria-label={`${item.media.displayName} width`}
           onchange={(event) => onupdate(item.overlay.id, { width: normalizeOverlayWidth(numberValue(event)) })}
         />
       </label>
       <label>
-        <span><strong>Opasitas</strong><output>{opacityPercent}%</output></span>
+        <span><strong>Opacity</strong><output>{opacityPercent}%</output></span>
         <input
           type="range"
           min="10"
@@ -103,12 +103,12 @@ function numberValue(event: Event): number {
           step="5"
           value={opacityPercent}
           disabled={busy}
-          aria-label={`Opasitas ${item.media.displayName}`}
+          aria-label={`${item.media.displayName} opacity`}
           onchange={(event) => onupdate(item.overlay.id, { opacity: opacityFromPercent(numberValue(event)) })}
         />
       </label>
       <label>
-        <span><strong>Kecepatan</strong><output>{item.overlay.speed.toLocaleString("id-ID")}×</output></span>
+        <span><strong>Speed</strong><output>{item.overlay.speed.toLocaleString("en-US")}×</output></span>
         <input
           type="range"
           min="0.25"
@@ -116,7 +116,7 @@ function numberValue(event: Event): number {
           step="0.25"
           value={item.overlay.speed}
           disabled={busy}
-          aria-label={`Kecepatan ${item.media.displayName}`}
+          aria-label={`${item.media.displayName} speed`}
           onchange={(event) => onupdate(item.overlay.id, { speed: normalizeOverlaySpeed(numberValue(event)) })}
         />
       </label>

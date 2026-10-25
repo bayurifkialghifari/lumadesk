@@ -15,13 +15,13 @@ export let onfavorite: (item: MediaItem) => void;
 export let onshow: (item: MediaItem) => void;
 </script>
 
-<aside class="inspector" aria-label={`Detail ${item.displayName}`}>
+<aside class="inspector" aria-label={`${item.displayName} details`}>
   <header class="inspector__header">
     <div>
-      <span class="eyebrow">DETAIL ANIMASI</span>
+      <span class="eyebrow">ANIMATION DETAILS</span>
       <h2>{item.displayName}</h2>
     </div>
-    <button class="icon-button" type="button" aria-label="Tutup detail" onclick={onclose}>
+    <button class="icon-button" type="button" aria-label="Close details" onclick={onclose}>
       <X size={18} />
     </button>
   </header>
@@ -31,16 +31,16 @@ export let onshow: (item: MediaItem) => void;
 
     <button class="primary-button" type="button" disabled={busy} onclick={() => onshow(item)}>
       <MonitorUp size={17} />
-      Tampilkan di desktop
+      Show on desktop
     </button>
 
     <div class="inspector__actions">
       <button class="secondary-button" type="button" disabled={busy} onclick={() => onfavorite(item)}>
         <Heart size={16} fill={item.isFavorite ? "currentColor" : "none"} />
-        {item.isFavorite ? "Difavoritkan" : "Favorit"}
+        {item.isFavorite ? "Favorited" : "Favorite"}
       </button>
       <button class="secondary-button" type="button" disabled={busy} onclick={() => onrename(item)}>
-        <Pencil size={16} /> Ganti nama
+        <Pencil size={16} /> Rename
       </button>
     </div>
 

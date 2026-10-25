@@ -43,10 +43,7 @@ export function createCollectionMutations(context: MutationContext): MutationAct
   async function importPaths(paths: readonly string[]): Promise<void> {
     if (paths.length === 0) return;
     if (!context.nativeAvailable) {
-      context.notify(
-        "info",
-        "Impor file tersedia saat LumaDesk dijalankan sebagai aplikasi desktop.",
-      );
+      context.notify("info", "File import is available in the LumaDesk desktop app.");
       return;
     }
     context.updateState((state) => ({ ...state, importing: true, dragActive: false }));
@@ -59,13 +56,13 @@ export function createCollectionMutations(context: MutationContext): MutationAct
       const duplicate = report.outcomes.length - imported;
       context.notify(
         "success",
-        `${imported} baru, ${duplicate} duplikat, ${report.failures.length} gagal.`,
+        `${imported} new, ${duplicate} duplicate, ${report.failures.length} failed.`,
       );
     } catch (error) {
       const message =
         error instanceof Error
-          ? userErrorMessage(error, "File tidak dapat diimpor.")
-          : "File tidak dapat diimpor.";
+          ? userErrorMessage(error, "The files could not be imported.")
+          : "The files could not be imported.";
       context.notify("error", message);
     } finally {
       context.updateState((state) => ({ ...state, importing: false }));
@@ -82,8 +79,8 @@ export function createCollectionMutations(context: MutationContext): MutationAct
     } catch (error) {
       const message =
         error instanceof Error
-          ? userErrorMessage(error, "Favorit tidak dapat diubah.")
-          : "Favorit tidak dapat diubah.";
+          ? userErrorMessage(error, "The favorite status could not be changed.")
+          : "The favorite status could not be changed.";
       context.notify("error", message);
     } finally {
       setBusy(item.id, false);
@@ -92,21 +89,18 @@ export function createCollectionMutations(context: MutationContext): MutationAct
 
   async function showOverlay(item: MediaItem): Promise<void> {
     if (!context.nativeAvailable) {
-      context.notify(
-        "info",
-        "Overlay desktop tersedia saat LumaDesk dijalankan sebagai aplikasi desktop.",
-      );
+      context.notify("info", "Desktop overlays are available in the LumaDesk desktop app.");
       return;
     }
     setBusy(item.id, true);
     try {
       await showMediaOverlay(item.id);
-      context.notify("success", "Animasi ditampilkan di desktop.");
+      context.notify("success", "Animation shown on the desktop.");
     } catch (error) {
       const message =
         error instanceof Error
-          ? userErrorMessage(error, "Overlay desktop tidak dapat dibuka.")
-          : "Overlay desktop tidak dapat dibuka.";
+          ? userErrorMessage(error, "The desktop overlay could not be opened.")
+          : "The desktop overlay could not be opened.";
       context.notify("error", message);
     } finally {
       setBusy(item.id, false);
@@ -120,13 +114,13 @@ export function createCollectionMutations(context: MutationContext): MutationAct
       const updated = await renameMedia(item.id, name);
       if (context.getState().filters.search.trim() === "") replaceItem(updated);
       else await context.reload();
-      context.notify("success", "Nama animasi diperbarui.");
+      context.notify("success", "Animation name updated.");
       return true;
     } catch (error) {
       const message =
         error instanceof Error
-          ? userErrorMessage(error, "Nama tidak dapat diubah.")
-          : "Nama tidak dapat diubah.";
+          ? userErrorMessage(error, "The name could not be changed.")
+          : "The name could not be changed.";
       context.notify("error", message);
       return false;
     } finally {
@@ -142,13 +136,13 @@ export function createCollectionMutations(context: MutationContext): MutationAct
       const filters = context.getState().filters;
       if (filters.search.trim() === "" && filters.tag.trim() === "") replaceItem(updated);
       else await context.reload();
-      context.notify("success", "Tag animasi diperbarui.");
+      context.notify("success", "Animation tags updated.");
       return true;
     } catch (error) {
       const message =
         error instanceof Error
-          ? userErrorMessage(error, "Tag tidak dapat diubah.")
-          : "Tag tidak dapat diubah.";
+          ? userErrorMessage(error, "The tags could not be changed.")
+          : "The tags could not be changed.";
       context.notify("error", message);
       return false;
     } finally {
@@ -164,15 +158,15 @@ export function createCollectionMutations(context: MutationContext): MutationAct
       await context.reload();
       const message =
         report.overlaysRemoved > 0
-          ? `Animasi dihapus bersama ${report.overlaysRemoved} overlay aktif.`
-          : "Animasi dihapus dari koleksi.";
+          ? `Animation removed with ${report.overlaysRemoved} active overlays.`
+          : "Animation removed from the collection.";
       context.notify("success", message);
       return true;
     } catch (error) {
       const message =
         error instanceof Error
-          ? userErrorMessage(error, "Animasi tidak dapat dihapus.")
-          : "Animasi tidak dapat dihapus.";
+          ? userErrorMessage(error, "The animation could not be removed.")
+          : "The animation could not be removed.";
       context.notify("error", message);
       return false;
     } finally {

@@ -8,7 +8,7 @@
 - macOS Intel: x86-64 `.dmg`.
 - Linux x86-64 and ARM64: `.AppImage`, Debian `.deb`, and RPM `.rpm`.
 
-Linux runs overlays directly in X11 sessions. In Wayland sessions, LumaDesk uses XWayland to keep always-on-top and click-through behavior consistent.
+Linux runs overlays directly in X11 sessions. In Wayland sessions, LumaDesk uses XWayland for transparent always-on-top windows and pointer interaction.
 
 ## Release process
 

@@ -18,7 +18,7 @@ export let ondismiss: () => void;
     {/if}
   </span>
   <p>{message}</p>
-  <button type="button" aria-label="Tutup pemberitahuan" onclick={ondismiss}><X size={16} /></button>
+  <button type="button" aria-label="Dismiss notification" onclick={ondismiss}><X size={16} /></button>
 </div>
 
 <style>
