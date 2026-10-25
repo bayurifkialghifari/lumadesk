@@ -80,7 +80,9 @@ Gradients are limited to the brand banner, empty-state illustration, and preview
 ## 5. Interaction and motion
 
 - Hover and press transitions run for 120–160 ms. Sheets and dialogs run for 180–220 ms.
+- Overlay edit chrome reveals over 140 ms and hides after 3,000 ms without interaction. Pointer presence or keyboard focus inside the toolbar suspends the idle timer.
 - Animate only `transform`, `opacity`, and `filter`.
+- Reduced-motion mode reveals overlay edit chrome with opacity only.
 - Dragging an overlay has no easing; releasing it uses a subtle 120 ms settle only if clamped to a visible boundary.
 - Import progress is determinate when byte progress exists and indeterminate otherwise.
 - Reduced-motion mode removes translation and scale while keeping short opacity changes.
@@ -89,7 +91,8 @@ Gradients are limited to the brand banner, empty-state illustration, and preview
 ## 6. Overlay controls
 
 - Every overlay accepts pointer input and can be dragged directly from the animation surface or toolbar grip.
-- A compact neutral toolbar and subtle boundary remain visible on every overlay.
+- The toolbar and subtle boundary start hidden. Pressing the animation reveals both, interaction restarts the idle timer, and they hide after 3,000 ms of inactivity.
+- The toolbar remains visible while its pointer or keyboard focus is inside the control surface.
 - The toolbar exposes drag, play/pause, flip, background removal, duplicate, and close. Detailed size, opacity, and speed controls live in the main-window inspector.
 - The **Remove background** effect uses a standard checkbox in the main-window inspector. Its supporting copy stays concise and explains that solid or near-solid backgrounds produce the best result.
 - Effect processing never modifies the managed source file. A checked state is persisted per overlay and remains distinguishable through text and control state without relying on color.

@@ -1,17 +1,43 @@
 <script lang="ts">
 import { Copy, Eraser, FlipHorizontal2, GripVertical, Pause, Play, X } from "@lucide/svelte";
 import type { OverlayInstance, OverlayPatch } from "../contracts";
+import type { OverlayControlsHold } from "../overlay-controls-visibility";
 
 export let overlay: OverlayInstance | null;
 export let busy = false;
 export let error: string | null = null;
+export let visible = false;
 export let onstartdrag: (event: MouseEvent) => void;
 export let onpatch: (patch: OverlayPatch) => void;
 export let onduplicate: () => void;
 export let onclose: () => void;
+export let onactivity: () => void;
+export let onhold: (reason: OverlayControlsHold) => void;
+export let onrelease: (reason: OverlayControlsHold) => void;
+
+let toolbar: HTMLDivElement;
+
+function handleFocusOut(): void {
+  queueMicrotask(() => {
+    if (!toolbar.matches(":focus-within")) onrelease("focus");
+  });
+}
 </script>
 
-<div class="overlay-toolbar" role="toolbar" aria-label="Overlay controls">
+<div
+  bind:this={toolbar}
+  class:visible
+  class="overlay-toolbar"
+  role="toolbar"
+  aria-label="Overlay controls"
+  aria-hidden={!visible}
+  onpointerenter={() => onhold("pointer")}
+  onpointerleave={() => onrelease("pointer")}
+  onpointerdown={onactivity}
+  onfocusin={() => onhold("focus")}
+  onfocusout={handleFocusOut}
+  onkeydown={onactivity}
+>
   <button type="button" aria-label="Move overlay" title="Move" disabled={busy} onmousedown={onstartdrag}>
     <GripVertical size={15} />
   </button>
@@ -68,8 +94,23 @@ export let onclose: () => void;
   border: 1px solid rgb(114 197 255 / 52%);
   border-radius: 6px;
   box-shadow: 0 6px 18px rgb(0 0 0 / 35%);
-  transform: translateX(-50%);
+  visibility: hidden;
+  opacity: 0;
+  pointer-events: none;
+  transform: translate(-50%, -4px);
+  transition:
+    opacity 140ms ease-out,
+    transform 140ms ease-out,
+    visibility 0s linear 140ms;
   backdrop-filter: blur(8px);
+}
+
+.overlay-toolbar.visible {
+  visibility: visible;
+  opacity: 1;
+  pointer-events: auto;
+  transform: translate(-50%, 0);
+  transition-delay: 0s;
 }
 
 .overlay-toolbar button {
@@ -105,5 +146,18 @@ export let onclose: () => void;
   white-space: nowrap;
   background: rgb(115 23 33 / 94%);
   border-radius: 4px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .overlay-toolbar {
+    transform: translateX(-50%);
+    transition:
+      opacity 120ms ease-out,
+      visibility 0s linear 120ms;
+  }
+  .overlay-toolbar.visible {
+    transform: translateX(-50%);
+    transition-delay: 0s;
+  }
 }
 </style>

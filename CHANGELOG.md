@@ -4,6 +4,10 @@ All notable changes to LumaDesk are documented here. The project follows Semanti
 
 ## [Unreleased]
 
+### Changed
+
+- Overlay edit controls and boundaries now appear when the animation is pressed and hide after three seconds without interaction.
+
 ## [0.2.1] - 2026-10-25
 
 ### Added
