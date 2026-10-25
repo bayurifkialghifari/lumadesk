@@ -1,20 +1,20 @@
-# Koleksi animasi
+# Animation library
 
-Halaman **Koleksi** adalah pusat semua animasi bawaan dan hasil impor di LumaDesk. Koleksi tersedia sebagai grid visual atau daftar ringkas; pilihan tampilan disimpan otomatis.
+The **Koleksi** (Collection) page contains every built-in and imported LumaDesk item. The library supports a visual grid and a compact list, and it remembers the selected view.
 
-## Mencari dan memfilter
+## Search and filters
 
-Kotak **Cari koleksi** mencocokkan nama dan tag. Filter dapat membatasi hasil ke item favorit, format tertentu, atau satu tag. Filter dapat digabung, misalnya hanya menampilkan WebP favorit dengan tag `pixel`.
+The **Cari koleksi** (Search collection) field matches names and tags. Filters can restrict results to favorites, a file format, or a tag. Filters can be combined, such as showing only favorite WebP items tagged `pixel`.
 
-## Detail item
+## Item details
 
-Pilih item untuk membuka panel detail. Panel menampilkan ukuran gambar, format, jumlah frame, durasi satu loop, tag, dan jumlah instance yang aktif di desktop. Klik dua kali pada item untuk langsung membuat overlay dengan pengaturan default.
+Select an item to open its detail panel. The panel shows image dimensions, format, frame count, loop duration, tags, and the number of active desktop instances. Double-click an item to create an overlay with the default settings.
 
-## Mengatur item
+## Managing items
 
-- **Ganti nama** hanya mengubah nama katalog. Nama file internal tidak berubah.
-- **Favorit** memasukkan item ke filter favorit.
-- **Tag** dapat ditambah dan dihapus tanpa mengubah file media.
-- **Hapus dari koleksi** menutup overlay terkait lalu menghapus salinan serta cache yang dikelola LumaDesk. File sumber asli tidak pernah dihapus.
+- **Ganti nama** (Rename) changes the catalog name only. The managed filename does not change.
+- **Favorit** (Favorite) adds or removes the item from the favorites filter.
+- Tags can be added and removed without changing the media file.
+- **Hapus dari koleksi** (Remove from collection) closes related overlays, then deletes the managed copy and caches. The original source file is never deleted.
 
-Penghapusan selalu meminta konfirmasi dan menjelaskan jumlah overlay yang akan ditutup.
+Deletion always requires confirmation and reports how many overlays will be closed.

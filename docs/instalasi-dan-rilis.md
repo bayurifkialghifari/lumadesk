@@ -1,17 +1,21 @@
-# Instalasi dan rilis
+# Installation and releases
 
-## Paket resmi
+## Official packages
 
-- Windows 10/11 x64: installer NSIS `.exe`.
-- macOS Apple Silicon dan Intel: universal `.dmg`.
-- Linux x86-64: AppImage dan paket Debian `.deb`.
+- Windows 10/11 x64: NSIS `.exe` installer.
+- Windows 11 ARM64: NSIS `.exe` installer.
+- macOS Apple Silicon: ARM64 `.dmg`.
+- macOS Intel: x86-64 `.dmg`.
+- Linux x86-64 and ARM64: `.AppImage`, Debian `.deb`, and RPM `.rpm`.
 
-Linux menjalankan overlay langsung pada sesi X11. Pada sesi Wayland, LumaDesk menggunakan XWayland agar perilaku always-on-top dan click-through konsisten.
+Linux runs overlays directly in X11 sessions. In Wayland sessions, LumaDesk uses XWayland to keep always-on-top and click-through behavior consistent.
 
-## Versi rilis
+## Release process
 
-Rilis mengikuti Semantic Versioning. Tag Git `vMAJOR.MINOR.PATCH` memicu build seluruh platform. Release baru diterbitkan setelah pemeriksaan, test, dan packaging semua platform selesai. Setiap installer disertai checksum SHA-256.
+Releases follow Semantic Versioning. A `vMAJOR.MINOR.PATCH` Git tag builds every supported package. A release is published only after checks, tests, and packaging succeed for every platform. Each release includes SHA-256 checksums.
 
-Versi pada tag, `package.json`, workspace Cargo, dan konfigurasi Tauri harus sama. Workflow menolak rilis ketika salah satunya berbeda. Artifact Linux, macOS, dan Windows dikumpulkan lebih dahulu, lalu GitHub Release beserta `SHA256SUMS.txt` diterbitkan hanya jika seluruh build berhasil.
+The tag, `package.json`, Cargo workspace, and Tauri configuration versions must match. The workflow rejects a release when any version differs. Linux, macOS, and Windows packages are collected first; the GitHub Release and `SHA256SUMS.txt` are published only after every build succeeds.
 
-Build publik awal belum ditandatangani. Code signing macOS dan Windows akan dikonfigurasi setelah certificate dan secret proyek tersedia.
+Manual GitHub Actions builds are downloaded as ZIP archives because GitHub wraps every workflow artifact in a ZIP. Extract the archive to access the installer inside. Tagged GitHub Releases expose each `.exe`, `.dmg`, `.AppImage`, `.deb`, and `.rpm` as a direct download.
+
+Early public builds are unsigned. Windows code signing and macOS signing and notarization will be configured after the project certificates and repository secrets are available.

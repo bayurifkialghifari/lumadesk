@@ -1,34 +1,34 @@
-# Overlay desktop
+# Desktop overlays
 
-Pilih item di Koleksi lalu tekan **Tampilkan di desktop**. Satu item dapat memiliki beberapa instance dengan posisi dan pengaturan masing-masing.
+Select an item in the Collection and choose **Tampilkan di desktop** (Show on desktop). One library item can have multiple instances with independent positions and settings.
 
-## Yang sudah tersedia
+## Available behavior
 
-- Overlay dibuat di tengah monitor utama dengan ukuran bawaan dari pengaturan.
-- Jendela transparan selalu berada di atas jendela biasa, tidak muncul di taskbar, dan meneruskan klik ke aplikasi di bawahnya.
-- GIF, APNG, dan WebP animasi diputar memakai timing frame asli. PNG dan JPEG statis dirender sekali tanpa scheduler animasi.
-- Pengaturan instance yang sudah tersimpan seperti ukuran, opasitas, kecepatan, balik horizontal, dan putar/jeda diterapkan oleh renderer.
-- Halaman **Aktif di Desktop** menampilkan seluruh instance aktif beserta media, monitor, ukuran, status, dan kontrolnya.
-- **Mode edit** mengaktifkan pointer pada semua overlay. Setiap overlay menampilkan batas tipis dan toolbar untuk menggeser, putar/jeda, balik horizontal, duplikat, dan tutup.
-- Posisi terakhir setelah overlay digeser disimpan secara lokal dalam koordinat logis.
-- Aksi massal dapat menjeda semua overlay yang sedang diputar atau menutup semua overlay setelah konfirmasi.
-- Overlay aktif dipulihkan saat LumaDesk dibuka kembali jika **Pulihkan overlay** diaktifkan.
-- Menghapus media dari Koleksi menutup semua window overlay miliknya sebelum data lokal dihapus. Window yang sempat ditutup dipulihkan jika penghapusan gagal.
-- Perubahan instance dipulihkan ke nilai sebelumnya jika window native gagal diperbarui. Penghapusan instance juga menutup window sebelum record lokal dihapus.
+- New overlays open in the center of the primary monitor using the configured default size.
+- Transparent windows stay above regular windows, remain hidden from the taskbar, and pass pointer input through to applications below them.
+- GIF, APNG, and animated WebP files use their original frame timing. Static PNG and JPEG files render once without an animation scheduler.
+- The renderer applies persisted size, opacity, speed, horizontal flip, and play or pause state for each instance.
+- The **Aktif di Desktop** (Active on Desktop) page lists every active instance with its media, monitor, size, status, and controls.
+- **Mode edit** (Edit mode) enables pointer input for every overlay. Each overlay displays a subtle boundary and a toolbar for moving, playing or pausing, flipping, duplicating, and closing it.
+- The latest dragged position is stored locally in logical coordinates.
+- Bulk actions can pause every playing overlay or close all overlays after confirmation.
+- Active overlays are restored when LumaDesk opens if **Pulihkan overlay** (Restore overlays) is enabled.
+- Removing media from the Collection closes its overlay windows before deleting local data. Closed windows are restored if deletion fails.
+- Instance changes return to their previous value if the native window cannot be updated. Removing an instance also closes its window before deleting the local record.
 
-## Kontrol instance
+## Instance controls
 
-- **Posisi:** seret overlay ketika Mode edit aktif.
-- **Ukuran:** mengubah lebar sambil mempertahankan rasio media.
-- **Opasitas:** 10% sampai 100%.
-- **Kecepatan:** 0,25× sampai 4×.
-- **Balik horizontal:** membalik visual tanpa mengubah media asli.
-- **Putar/Jeda:** mengontrol satu instance.
-- **Duplikat:** membuat instance baru dengan pengaturan serupa dan posisi sedikit bergeser.
-- **Tutup:** menghapus instance dari desktop tanpa menghapus item Koleksi.
+- **Position:** drag the overlay while Edit mode is active.
+- **Size:** change the width while preserving the media aspect ratio.
+- **Opacity:** 10% to 100%.
+- **Speed:** 0.25× to 4×.
+- **Horizontal flip:** mirror the visual without modifying the original media.
+- **Play/Pause:** control one instance.
+- **Duplicate:** create another instance with matching settings and a slightly offset position.
+- **Close:** remove the desktop instance without deleting the Collection item.
 
-Kontrol rinci tersedia pada halaman **Aktif di Desktop**. Toolbar yang menempel pada overlay sengaja lebih ringkas agar tidak menutupi animasi. Saat antarmuka dibuka di browser untuk pengembangan, halaman tetap dapat dipratinjau tetapi kontrol window native dinonaktifkan.
+Detailed controls are available on the **Active on Desktop** page. The toolbar attached to an overlay stays compact so it does not cover the animation. When the interface runs in a browser during development, the page remains available for preview while native window controls are disabled.
 
-## Banyak monitor
+## Multiple monitors
 
-LumaDesk menyimpan posisi dalam koordinat logis beserta identitas monitor tempat overlay terakhir digeser. Overlay baru ditempatkan di monitor utama. Pemulihan otomatis ke area terlihat ketika monitor tersimpan sudah tidak tersedia masih menjadi pekerjaan lanjutan.
+LumaDesk stores positions in logical coordinates together with the monitor identity from the latest drag operation. New overlays open on the primary monitor. Automatically moving an overlay into a visible area when its saved monitor is unavailable remains planned work.

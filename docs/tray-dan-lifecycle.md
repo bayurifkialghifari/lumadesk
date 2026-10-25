@@ -1,16 +1,16 @@
-# Tray dan lifecycle aplikasi
+# Tray and application lifecycle
 
-Menutup jendela utama menyembunyikan pengelola Koleksi tanpa menghentikan overlay. LumaDesk tetap dapat diakses melalui tray.
+Closing the main window hides the Collection manager without stopping desktop overlays. LumaDesk remains available from the system tray.
 
-## Menu tray
+## Tray menu
 
-- **Buka LumaDesk** menampilkan dan memfokuskan jendela utama.
-- **Mode edit** mengubah seluruh overlay antara mode tampil dan edit.
-- **Jeda semua** menghentikan atau melanjutkan playback seluruh instance.
-- **Keluar** menutup overlay dan proses aplikasi. Tata letak tetap tersimpan.
+- **Buka LumaDesk** (Open LumaDesk) shows and focuses the main window.
+- **Mode edit** (Edit mode) switches every overlay between display and edit modes.
+- **Jeda semua** (Pause all) pauses or resumes playback for every instance.
+- **Keluar** (Quit) closes all overlays and the application process while preserving the saved layout.
 
-LumaDesk berjalan sebagai satu instance aplikasi. Jika dibuka untuk kedua kalinya, proses yang sudah aktif menampilkan jendela utama.
+LumaDesk runs as a single application instance. Launching it again asks the existing process to show the main window.
 
-## Pemulihan tata letak
+## Layout restoration
 
-Opsi **Pulihkan susunan** mengaktifkan kembali overlay yang sebelumnya aktif saat LumaDesk dimulai. Opsi ini aktif secara bawaan. Autostart sistem merupakan pengaturan terpisah dan nonaktif secara bawaan.
+The **Pulihkan susunan** (Restore layout) option activates previously active overlays when LumaDesk starts. It is enabled by default. System autostart is a separate setting and is disabled by default.

@@ -1,17 +1,17 @@
-# Mengimpor media
+# Importing media
 
-LumaDesk menerima GIF, APNG, WebP animasi atau statis, PNG, dan JPG/JPEG. Video dan audio belum termasuk dalam versi awal.
+LumaDesk accepts GIF, APNG, animated or static WebP, PNG, and JPEG files. Video and audio are outside the initial release scope.
 
-## Cara mengimpor
+## Importing files
 
-Tekan **Impor animasi** lalu pilih satu atau beberapa file, atau seret file ke area Koleksi. Progres tampil untuk setiap file agar satu file bermasalah tidak menghalangi file lain.
+Select **Impor animasi** (Import animation), choose one or more files, or drag files onto the Collection area. Progress is reported for each file so one invalid file does not block the others.
 
-## Penyimpanan file
+## File storage
 
-LumaDesk menyalin media ke folder data aplikasi. File sumber tetap berada di lokasi semula. Nama tampilan berasal dari nama file dan dapat diganti setelah impor.
+LumaDesk copies imported media into its application data directory. The source file remains in its original location. The initial display name comes from the filename and can be changed after import.
 
-Setiap file dihitung hash SHA-256-nya. Jika isi file yang sama sudah ada, LumaDesk memilih item lama dan tidak membuat salinan kedua. File rusak, kosong, atau tidak didukung ditolak sebelum masuk ke database.
+Every file receives a SHA-256 content hash. If the same content already exists, LumaDesk selects the existing item instead of creating another copy. Corrupt, empty, and unsupported files are rejected before any database record is created.
 
-## Privasi
+## Privacy
 
-Proses impor, pembacaan metadata, pembuatan thumbnail, dan decoding frame dilakukan di perangkat. LumaDesk tidak mengunggah media ke layanan eksternal.
+Importing, metadata inspection, thumbnail generation, and frame decoding happen on the device. LumaDesk does not upload media to an external service.

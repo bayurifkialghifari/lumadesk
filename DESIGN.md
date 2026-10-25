@@ -1,7 +1,7 @@
 # LumaDesk Design System
 
 **Status:** implementation contract
-**Updated:** 24 October 2026
+**Updated:** 25 October 2026
 
 ## 0. Research log
 
@@ -90,13 +90,13 @@ Gradients are limited to the brand banner, empty-state illustration, and preview
 - Display mode is the default and ignores pointer events.
 - Edit mode adds a compact neutral toolbar near the selected overlay and a subtle bounding box.
 - The toolbar exposes drag, play/pause, flip, duplicate, and close. Detailed size, opacity, and speed controls live in the main-window inspector.
-- The **Aktif di Desktop** page owns global edit mode, live active/playing counts, pause-all, and confirmed close-all actions.
+- The **Active on Desktop** page owns global edit mode, live active and playing counts, pause-all, and confirmed close-all actions.
 - Overlay windows never display product chrome during display mode.
 
 ## 7. Content language
 
-- Initial interface language is Indonesian.
-- Prefer direct verbs: `Impor animasi`, `Tampilkan di desktop`, `Ganti nama`, `Hapus dari koleksi`.
+- The current interface language is Indonesian; public project documentation is English.
+- Prefer direct verbs. Current interface examples include `Impor animasi` (Import animation), `Tampilkan di desktop` (Show on desktop), `Ganti nama` (Rename), and `Hapus dari koleksi` (Remove from collection).
 - Explain file ownership precisely: deleting from LumaDesk removes its managed copy and never deletes the original source.
 - Error messages state what failed and one useful next step.
 
@@ -106,4 +106,4 @@ Gradients are limited to the brand banner, empty-state illustration, and preview
 - All controls are keyboard reachable and expose names to accessibility APIs.
 - Color never carries status alone.
 - Transparent overlay interaction is verified per operating system because accessibility and input behavior differ across window managers.
-- v0.1 supports Indonesian UI only. Localization infrastructure is deferred, but copy stays centralized so it can be added without redesign.
+- v0.1 supports an Indonesian UI only. Localization infrastructure is deferred, but copy stays centralized so additional languages can be added without redesign.

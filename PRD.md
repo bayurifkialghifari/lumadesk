@@ -1,7 +1,7 @@
 # LumaDesk Product Requirements
 
 **Status:** v0.1 implementation contract
-**Updated:** 24 October 2026
+**Updated:** 25 October 2026
 
 ## Product statement
 
@@ -58,14 +58,14 @@ LumaDesk is a local-first desktop animation library. It lets people collect tran
 - Library actions should feel immediate for collections of at least 1,000 items.
 - Decoding must be bounded by a frame cache; the app may not hold every frame of every active item indefinitely.
 - Database migrations are transactional and preserve user data.
-- Corrupt and unsupported files return a clear Indonesian error without creating partial catalog entries.
+- Corrupt and unsupported files return a clear user-facing error without creating partial catalog entries.
 - Keyboard navigation, visible focus, reduced motion, labels, contrast, and minimum 40 px interaction targets are required.
 
 ## Distribution and privacy
 
-- Linux x86-64: AppImage and Debian package.
-- Windows x86-64: NSIS installer.
-- macOS Apple Silicon and Intel: universal DMG.
+- Linux x86-64 and ARM64: AppImage, Debian, and RPM packages.
+- Windows x86-64 and ARM64: separate NSIS installers.
+- macOS Apple Silicon and Intel: separate DMG packages.
 - The app does not require an account, analytics, telemetry, cloud storage, or network access for core functionality.
 - Signing and notarization activate when repository secrets are provided; unsigned development artifacts remain identifiable as such.
 

@@ -1,23 +1,23 @@
-# Pengaturan dan data lokal
+# Settings and local data
 
-## Pengaturan umum
+## General settings
 
-- **Jalankan saat masuk:** memulai LumaDesk setelah pengguna login; nonaktif secara bawaan.
-- **Pulihkan susunan:** menghidupkan kembali overlay aktif ketika aplikasi dimulai.
-- **Tampilan koleksi:** grid atau daftar.
-- **Default overlay:** ukuran, opasitas, dan kecepatan untuk instance baru.
-- **Batas cache:** membatasi ruang thumbnail dan frame hasil decode.
+- **Jalankan saat masuk** (Launch at login): starts LumaDesk after the user signs in; disabled by default.
+- **Pulihkan susunan** (Restore layout): activates previously active overlays when the application starts.
+- **Collection view:** grid or list.
+- **Overlay defaults:** size, opacity, and speed for new instances.
+- **Cache limit:** bounds the storage used by thumbnails and decoded frames.
 
 ## Cache
 
-**Bersihkan cache** menghapus thumbnail dan frame hasil decode yang dapat dibuat ulang. Item Koleksi, tag, pengaturan, media terkelola, dan tata letak overlay tidak ikut terhapus.
+**Bersihkan cache** (Clear cache) removes thumbnails and decoded frames that LumaDesk can regenerate. Collection items, tags, settings, managed media, and overlay layouts remain intact.
 
-## Lokasi dan isi data
+## Data location and contents
 
-Menu **Buka folder data** membuka direktori aplikasi yang berisi:
+**Buka folder data** (Open data folder) opens the application directory containing:
 
-- database SQLite untuk metadata, tag, pengaturan, dan tata letak;
-- folder `media` untuk salinan file yang diimpor;
-- folder `thumbnails` dan `frames` untuk cache.
+- the SQLite database for metadata, tags, settings, and layouts;
+- the `media` directory for managed copies of imported files;
+- the `thumbnails` and `frames` cache directories.
 
-LumaDesk tidak membutuhkan akun, penyimpanan cloud, analitik, atau telemetri untuk fitur utamanya.
+LumaDesk does not require an account, cloud storage, analytics, or telemetry for its core features.

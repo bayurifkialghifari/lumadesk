@@ -3,7 +3,7 @@
 </picture>
 
 <p align="center">
-  Kelola GIF, APNG, WebP, dan gambar milikmu lalu tampilkan sebagai overlay ringan di desktop.
+  Organize your GIFs, APNGs, WebPs, and images, then place them on your desktop as lightweight overlays.
 </p>
 
 <p align="center">
@@ -12,35 +12,38 @@
   <a href="LICENSE"><img alt="MIT License" src="https://img.shields.io/badge/license-MIT-39a8ff?style=flat-square"></a>
 </p>
 
-## Yang bisa kamu lakukan
+## What you can do
 
-- Impor GIF, APNG, WebP, PNG, dan JPG melalui file picker atau drag-and-drop.
-- Cari, beri tag, favoritkan, ganti nama, dan hapus item dari koleksi lokal.
-- Buat beberapa overlay transparan dengan posisi, ukuran, opasitas, kecepatan, dan arah masing-masing.
-- Kelola seluruh overlay aktif, gunakan Mode edit untuk menggeser, lalu putar, jeda, duplikat, atau tutup setiap instance.
-- Pulihkan susunan overlay saat aplikasi dibuka kembali.
-- Simpan semuanya secara lokal tanpa akun dan tanpa telemetri.
+- Import GIF, APNG, WebP, PNG, and JPEG files through the native picker or drag and drop.
+- Search, tag, favorite, rename, and remove items from a local library.
+- Create multiple transparent overlays with independent position, size, opacity, speed, and direction.
+- Manage every active overlay, move it in edit mode, then play, pause, duplicate, or close each instance.
+- Restore your overlay layout when the application starts again.
+- Keep everything local, with no account and no telemetry.
 
-## Unduh
+## Download
 
-| Sistem | Paket |
+| System | Package |
 | --- | --- |
-| Windows 10/11 x64 | NSIS `.exe` |
-| macOS Apple Silicon + Intel | Universal `.dmg` |
-| Linux x86-64 | AppImage dan `.deb` |
+| Windows 10/11 x64 | NSIS `.exe` installer |
+| Windows 11 ARM64 | NSIS `.exe` installer |
+| macOS Apple Silicon | ARM64 `.dmg` |
+| macOS Intel | x86-64 `.dmg` |
+| Linux x86-64 | `.AppImage`, `.deb`, and `.rpm` |
+| Linux ARM64 | `.AppImage`, `.deb`, and `.rpm` |
 
-Installer akan tersedia di [GitHub Releases](https://github.com/bayurifkialghifari/lumadesk/releases) mulai rilis publik pertama. Build pengembangan dapat dijalankan dari sumber.
+Installers will be available from [GitHub Releases](https://github.com/bayurifkialghifari/lumadesk/releases) with the first public release. Development builds can be run from source.
 
-## Mulai mengembangkan
+## Development
 
-Prasyarat native mengikuti [Tauri 2](https://v2.tauri.app/start/prerequisites/) untuk sistem operasi masing-masing. Setelah dependensi sistem tersedia:
+Install the native prerequisites listed by [Tauri 2](https://v2.tauri.app/start/prerequisites/) for your operating system, then run:
 
 ```bash
 pnpm install
 pnpm tauri dev
 ```
 
-Pemeriksaan utama:
+Run the primary checks with:
 
 ```bash
 pnpm check
@@ -48,19 +51,19 @@ pnpm test
 cargo test --workspace
 ```
 
-## Dokumentasi
+## Documentation
 
-- [Koleksi animasi](docs/koleksi.md)
-- [Mengimpor media](docs/impor-media.md)
-- [Overlay desktop](docs/overlay-desktop.md)
-- [Tray dan lifecycle](docs/tray-dan-lifecycle.md)
-- [Pengaturan dan data lokal](docs/pengaturan-dan-data.md)
-- [Instalasi dan rilis](docs/instalasi-dan-rilis.md)
+- [Animation library](docs/koleksi.md)
+- [Importing media](docs/impor-media.md)
+- [Desktop overlays](docs/overlay-desktop.md)
+- [Tray and application lifecycle](docs/tray-dan-lifecycle.md)
+- [Settings and local data](docs/pengaturan-dan-data.md)
+- [Installation and releases](docs/instalasi-dan-rilis.md)
 - [Product requirements](PRD.md)
 - [Design system](DESIGN.md)
 - [Architecture](architecture.md)
 - [Changelog](CHANGELOG.md)
 
-## Lisensi
+## License
 
-LumaDesk tersedia di bawah [MIT License](LICENSE). Aset starter pihak ketiga selalu menyertakan catatan lisensinya sendiri.
+LumaDesk is available under the [MIT License](LICENSE). Third-party starter assets always include their own license records.

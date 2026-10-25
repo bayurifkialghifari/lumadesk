@@ -77,7 +77,7 @@ The frontend calls serializable commands with typed inputs and outputs:
 - `get_settings() -> AppSettings`
 - `update_settings(settings) -> AppSettings`
 
-The native layer emits `overlay:state` to the matching overlay window after persisted state changes, `overlay:edit-mode` when pointer interaction changes, and `overlay:catalog-changed` when the management view must refresh. A failed native update restores the previous persisted state, while overlay and media removal close dependent windows before deleting their records. If persistence fails, closed windows are restored from the captured state. Inputs are validated once at the command boundary. Domain failures map to stable error codes plus Indonesian user messages.
+The native layer emits `overlay:state` to the matching overlay window after persisted state changes, `overlay:edit-mode` when pointer interaction changes, and `overlay:catalog-changed` when the management view must refresh. A failed native update restores the previous persisted state, while overlay and media removal close dependent windows before deleting their records. If persistence fails, closed windows are restored from the captured state. Inputs are validated once at the command boundary. Domain failures map to stable error codes plus localized user messages.
 
 ## File ownership
 
@@ -100,4 +100,4 @@ Each active overlay is an undecorated, transparent, always-on-top Tauri window. 
 
 ## Release architecture
 
-Pull requests and main-branch pushes run formatting, linting, type checks, tests, and platform builds. Tags matching `vMAJOR.MINOR.PATCH` run the same checks, package all targets, calculate SHA-256 files, and publish a GitHub Release using the matching CHANGELOG section. Publishing requires all platform jobs to succeed. Signing and notarization use protected repository secrets when configured.
+Pull requests and main-branch pushes run formatting, linting, type checks, and tests. The release workflow can package Windows x86-64 and ARM64, macOS Apple Silicon and Intel, and Linux x86-64 and ARM64 without publishing when started manually. Tags matching `vMAJOR.MINOR.PATCH` package the same targets, calculate SHA-256 checksums, and publish a GitHub Release. Publishing requires every platform job to succeed. Signing and notarization use protected repository secrets when configured.
