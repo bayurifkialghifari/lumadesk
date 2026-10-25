@@ -54,7 +54,8 @@
       "appimage": {
         "bundleMediaFramework": false
       },
-      "deb": {}
+      "deb": {},
+      "rpm": {}
     },
     "macOS": {
       "dmg": {}
