@@ -50,13 +50,14 @@ LumaDesk is a local-first desktop animation library. It lets people collect tran
 ### Desktop lifecycle
 
 - Run as a single application instance. Reopening focuses the library window.
-- Provide Hide, Minimize, Maximize/Restore, and Close controls in the custom title bar.
+- Provide Minimize, Maximize/Restore, and Close controls in the custom title bar.
+- Keep the application running in the system tray or menu bar when the main window closes by default. The tray menu provides Show and Quit actions, while disabling `closeToTray` restores normal close behavior.
 - Autostart is opt-in and disabled by default.
 - Linux targets X11 directly and XWayland automatically when launched in a Wayland session.
 
 ### Settings
 
-- Persist theme, library view, default overlay size, default speed, default opacity, restore-layout preference, autostart preference, and cache limit.
+- Persist theme, library view, default overlay size, default speed, default opacity, restore-layout preference, close-to-tray preference, autostart preference, and cache limit.
 - Provide cache cleanup and a link that opens the application data directory.
 
 ## Quality requirements

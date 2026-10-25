@@ -4,6 +4,7 @@
 
 - **Launch at login:** starts LumaDesk after the user signs in; disabled by default.
 - **Restore layout:** activates previously active overlays when the application starts.
+- **Close to tray:** keeps LumaDesk running in the system tray or menu bar when the main window closes; enabled by default.
 - **Collection view:** grid or list.
 - **Overlay defaults:** size, opacity, and speed for new instances.
 - **Cache limit:** bounds the storage used by thumbnails and decoded frames.

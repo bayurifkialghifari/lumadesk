@@ -1,5 +1,6 @@
 //! Native application adapter for `LumaDesk`.
 
+mod app_lifecycle;
 mod command_error;
 mod commands;
 mod overlay_windows;
@@ -15,13 +16,8 @@ pub fn run() {
     tauri::Builder::default()
         .plugin(tauri_plugin_single_instance::init(
             |application, _arguments, _cwd| {
-                if let Some(window) = application.get_webview_window("main") {
-                    if let Err(error) = window.show() {
-                        eprintln!("failed to show main window: {error}");
-                    }
-                    if let Err(error) = window.set_focus() {
-                        eprintln!("failed to focus main window: {error}");
-                    }
+                if let Err(error) = app_lifecycle::show_main_window(application) {
+                    eprintln!("failed to restore main window: {error}");
                 }
             },
         ))
@@ -46,6 +42,7 @@ pub fn run() {
                 Vec::new()
             };
             application.manage(AppState::new(library));
+            app_lifecycle::install_tray(application.handle())?;
             for (overlay, media) in overlays {
                 if let Err(error) = overlay_windows::sync(application.handle(), &overlay, &media) {
                     eprintln!("failed to restore overlay {}: {error}", overlay.id);
@@ -53,6 +50,7 @@ pub fn run() {
             }
             Ok(())
         })
+        .on_window_event(app_lifecycle::handle_window_event)
         .invoke_handler(tauri::generate_handler![
             commands::catalog::list_media,
             commands::catalog::import_media,

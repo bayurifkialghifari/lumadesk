@@ -7,6 +7,7 @@ All notable changes to LumaDesk are documented here. The project follows Semanti
 ### Added
 
 - Added a **Discover GIFs** Collection action that opens Tenor in the default browser and carries over the current search text.
+- Added a system tray or menu-bar lifecycle with **Show LumaDesk** and **Quit LumaDesk** actions. Closing the main window now hides it to the tray by default while overlays continue running.
 
 ### Changed
 

@@ -18,7 +18,7 @@ flowchart LR
 ## Repository boundaries
 
 - `src/`: Svelte application, typed command client, stores, pages, components, and CSS tokens.
-- `src-tauri/src/`: Tauri adapter, commands, single-instance handling, and native window coordination.
+- `src-tauri/src/`: Tauri adapter, commands, single-instance and tray lifecycle handling, and native window coordination.
 - `crates/lumadesk-core/`: platform-independent domain, SQLite repositories, import pipeline, hashing, and media metadata.
 - `assets/starter/`: redistributable starter animation sources and license records.
 - `docs/`: user-facing feature and contribution guides.
@@ -91,7 +91,7 @@ Automatic background removal runs as a non-destructive canvas effect owned by ea
 
 Each active overlay is an undecorated, transparent, always-on-top Tauri window. Its label is derived from an internal instance UUID. Overlay windows always accept pointer input, display a compact toolbar and boundary, start native window dragging from either the animation surface or drag handle, and persist the latest logical position through a debounced serial writer. The management window lists active instances and exposes size, opacity, speed, playback, flip, background removal, duplicate, close, pause-all, and close-all controls. Active instances are restored at startup when `restore_overlays` is enabled, and deleting media also destroys its native windows. macOS builds enable the required private transparent-window API and are distributed directly rather than through the App Store.
 
-The main window uses a custom title bar. Tauri window APIs provide Hide, Minimize, Maximize/Restore, and Close actions, while the remaining title-bar area acts as a native drag region.
+The main window uses a custom title bar. Tauri window APIs provide Minimize, Maximize/Restore, and Close actions, while the remaining title-bar area acts as a native drag region. A dedicated lifecycle module intercepts close requests only for the main window, reads the persisted `close_to_tray` preference, and hides the window by default. The tray or menu-bar icon restores the main window or exits the process; single-instance launches use the same restore path. Overlay windows bypass this handler.
 
 ## Migrations and compatibility
 

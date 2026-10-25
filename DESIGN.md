@@ -56,7 +56,8 @@ Gradients are limited to the brand banner, empty-state illustration, and preview
 ## 3. Application shell
 
 - The top title strip is 40 px and reserves native drag regions.
-- Its right edge contains Hide, Minimize, Maximize/Restore, and Close controls with familiar desktop hover states.
+- Its right edge contains Minimize, Maximize/Restore, and Close controls with familiar desktop hover states.
+- Closing the main window hides it to the system tray or menu bar by default. The tray menu uses the application icon and exposes **Show LumaDesk** and **Quit LumaDesk**; a supported left click restores and focuses the window.
 - The left rail is fixed on desktop and becomes a bottom navigation bar below 760 px.
 - The main content column owns vertical scrolling. Navigation and inspector stay fixed within the viewport.
 - At widths below 1,100 px, the inspector becomes a modal sheet.

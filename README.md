@@ -19,7 +19,7 @@
 - Search, tag, favorite, rename, and remove items from a local library.
 - Create multiple overlays with independent position, size, opacity, speed, horizontal flip, and automatic background removal.
 - Drag overlays directly on the desktop, then play, pause, flip, duplicate, or close them from the always-visible toolbar.
-- Use familiar Hide, Minimize, Maximize/Restore, and Close controls in the custom title bar.
+- Use familiar Minimize, Maximize/Restore, and Close controls in the custom title bar. Closing the library keeps LumaDesk available from the system tray or menu bar.
 - Restore your overlay layout when the application starts again.
 - Keep everything local, with no account and no telemetry.
 
