@@ -4,6 +4,8 @@ All notable changes to LumaDesk are documented here. The project follows Semanti
 
 ## [Unreleased]
 
+## [0.2.1] - 2026-10-25
+
 ### Added
 
 - Added a background-removal toggle directly to every desktop overlay while keeping the matching control in **Active on Desktop**.
@@ -50,6 +52,7 @@ All notable changes to LumaDesk are documented here. The project follows Semanti
 - **Active on Desktop** workspace with live instance counts, responsive cards, browser-preview states, per-instance controls, and pause-all or confirmed close-all actions.
 - GitHub Actions checks and tagged release builds for Windows x86-64 and ARM64, macOS Apple Silicon and Intel, and Linux x86-64 and ARM64.
 
-[Unreleased]: https://github.com/bayurifkialghifari/lumadesk/compare/v0.2.0...HEAD
+[Unreleased]: https://github.com/bayurifkialghifari/lumadesk/compare/v0.2.1...HEAD
+[0.2.1]: https://github.com/bayurifkialghifari/lumadesk/compare/v0.2.0...v0.2.1
 [0.2.0]: https://github.com/bayurifkialghifari/lumadesk/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/bayurifkialghifari/lumadesk/releases/tag/v0.1.0
