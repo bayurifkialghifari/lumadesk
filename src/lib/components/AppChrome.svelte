@@ -1,9 +1,10 @@
 <script lang="ts">
-import { Copy, EyeOff, Minus, Sparkles, Square, X } from "@lucide/svelte";
+import { Copy, Minus, Sparkles, Square, X } from "@lucide/svelte";
 import { isTauri } from "@tauri-apps/api/core";
 import type { UnlistenFn } from "@tauri-apps/api/event";
 import { getCurrentWindow } from "@tauri-apps/api/window";
 import { onMount } from "svelte";
+import packageMetadata from "../../../package.json";
 import { type NavigationId, navigation } from "../navigation";
 
 export let activePage: NavigationId;
@@ -67,10 +68,9 @@ async function toggleMaximize(): Promise<void> {
     <span data-tauri-drag-region>LumaDesk</span>
   </div>
   <div class="titlebar-end">
-    <span class="version" data-tauri-drag-region>v0.1.0</span>
+    <span class="version" data-tauri-drag-region>v{packageMetadata.version}</span>
     {#if nativeWindow !== null}
       <div class="window-controls" aria-label="Window controls">
-        <button type="button" aria-label="Hide window" title="Hide" disabled={windowBusy} onclick={() => void runWindowAction(() => nativeWindow.hide())}><EyeOff size={14} /></button>
         <button type="button" aria-label="Minimize window" title="Minimize" disabled={windowBusy} onclick={() => void runWindowAction(() => nativeWindow.minimize())}><Minus size={15} /></button>
         <button type="button" aria-label={maximized ? "Restore window" : "Maximize window"} title={maximized ? "Restore" : "Maximize"} disabled={windowBusy} onclick={() => void toggleMaximize()}>
           {#if maximized}<Copy size={13} />{:else}<Square size={13} />{/if}

@@ -4,6 +4,14 @@ All notable changes to LumaDesk are documented here. The project follows Semanti
 
 ## [Unreleased]
 
+### Fixed
+
+- The title bar now reads the application version from package metadata instead of displaying a stale hardcoded value.
+
+### Removed
+
+- Removed the nonstandard Hide title-bar action; window controls now use Minimize, Maximize/Restore, and Close.
+
 ## [0.2.0] - 2026-10-25
 
 ### Added
