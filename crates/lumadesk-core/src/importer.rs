@@ -8,9 +8,10 @@ use scopeguard::{ScopeGuard, guard};
 use sha2::{Digest, Sha256};
 
 use crate::{
-    ApiError, AppSettings, CoreError, DeleteReport, FrameBatch, FrameBatchRequest, ImportFailure,
-    ImportOutcome, ImportReport, LibraryQuery, MediaId, MediaItem, MediaPage, NewOverlay,
-    OverlayId, OverlayInstance, OverlayPatch,
+    ApiError, AppSettings, CoreError, DeleteReport, EditRecipe, EditRecipePatch, FrameBatch,
+    FrameBatchRequest, ImportFailure, ImportOutcome, ImportReport, LibraryQuery, MediaId,
+    MediaItem, MediaPage, MediaVariant, NewOverlay, OverlayId, OverlayInstance, OverlayPatch,
+    SpriteSequence, SpriteSequenceInput,
     database::Database,
     domain::{NewMediaItem, display_name},
     frame_cache::FrameCache,
@@ -105,7 +106,7 @@ impl Library {
 
         let metadata = media::inspect(&temporary)?;
         let id = MediaId::new();
-        let managed_path = format!("{}.{}", id, metadata.kind.extension());
+        let managed_path = format!("{}.{}", id, metadata.format.extension());
         let final_path = self.media_root.join(&managed_path);
         fs::rename(&temporary, &final_path)?;
         *cleanup = final_path;
@@ -115,7 +116,8 @@ impl Library {
             content_hash,
             display_name: display_name(source),
             managed_path,
-            media_kind: metadata.kind,
+            asset_kind: metadata.asset_kind,
+            media_format: metadata.format,
             width: metadata.width,
             height: metadata.height,
             frame_count: metadata.frame_count,
@@ -185,6 +187,61 @@ impl Library {
     /// Returns an error when the item is missing or stored data is invalid.
     pub fn media_item(&self, id: MediaId) -> Result<MediaItem, CoreError> {
         self.database.media_by_id(id)
+    }
+
+    /// Returns the non-destructive edit recipe for an asset.
+    ///
+    /// # Errors
+    /// Returns an error when the asset or stored recipe is unavailable.
+    pub fn edit_recipe(&self, id: MediaId) -> Result<EditRecipe, CoreError> {
+        self.database.edit_recipe(id)
+    }
+
+    /// Applies validated, non-destructive edits without changing source bytes.
+    ///
+    /// # Errors
+    /// Returns an error when values are invalid or persistence fails.
+    pub fn update_edit_recipe(
+        &mut self,
+        id: MediaId,
+        patch: &EditRecipePatch,
+    ) -> Result<EditRecipe, CoreError> {
+        self.database.update_edit_recipe(id, patch)
+    }
+
+    /// Returns sprite-sheet playback metadata when configured.
+    ///
+    /// # Errors
+    /// Returns an error when the asset or stored metadata is invalid.
+    pub fn sprite_sequence(&self, id: MediaId) -> Result<Option<SpriteSequence>, CoreError> {
+        self.database.sprite_sequence(id)
+    }
+
+    /// Creates or replaces sprite-sheet playback metadata.
+    ///
+    /// # Errors
+    /// Returns an error when the grid is invalid or persistence fails.
+    pub fn set_sprite_sequence(
+        &mut self,
+        sequence: &SpriteSequenceInput,
+    ) -> Result<SpriteSequence, CoreError> {
+        self.database.set_sprite_sequence(sequence)
+    }
+
+    /// Removes sprite-sheet playback metadata and restores still-image behavior.
+    ///
+    /// # Errors
+    /// Returns an error when the asset is missing or persistence fails.
+    pub fn clear_sprite_sequence(&mut self, id: MediaId) -> Result<(), CoreError> {
+        self.database.clear_sprite_sequence(id)
+    }
+
+    /// Lists generated derivatives while keeping the imported source immutable.
+    ///
+    /// # Errors
+    /// Returns an error when the asset or stored variant metadata is invalid.
+    pub fn media_variants(&self, id: MediaId) -> Result<Vec<MediaVariant>, CoreError> {
+        self.database.media_variants(id)
     }
 
     /// Resolves an internal media identifier to its managed local path.

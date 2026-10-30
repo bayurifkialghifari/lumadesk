@@ -80,7 +80,7 @@ impl FrameCache {
             .join(format!(".frames-{}-{}", item.id, uuid::Uuid::new_v4()));
         fs::create_dir(&temporary)?;
         let cleanup = guard(temporary, |path| drop(fs::remove_dir_all(path)));
-        let decoded = frame_decoder::decode_to(source, item.media_kind, &cleanup)?;
+        let decoded = frame_decoder::decode_to(source, item.media_format, &cleanup)?;
         let manifest = FrameManifest::from_durations(item, decoded.durations_ms)?;
         manifest.write(&cleanup)?;
         fs::rename(&*cleanup, cache_dir)?;

@@ -5,7 +5,9 @@ use image::{
     codecs::gif::{GifEncoder, Repeat},
 };
 use lumadesk_core::{
-    ImportOutcome, Library, LibraryQuery, MediaItem, MediaKind, NewOverlay, OverlayPatch,
+    AssetKind, BackgroundRemovalMode, CropRect, EditRecipePatch, ImportOutcome, Library,
+    LibraryQuery, MediaFormat, MediaItem, NewOverlay, OverlayPatch, SpritePlaybackMode,
+    SpriteSequenceInput,
 };
 use tempfile::TempDir;
 
@@ -48,9 +50,11 @@ fn imports_static_and_animated_media_with_real_metadata() -> Result<(), Box<dyn 
     let gif_item = imported(library.import_file(&gif)?)?;
 
     assert_eq!((png_item.width, png_item.height), (4, 3));
-    assert_eq!(png_item.media_kind, MediaKind::Png);
+    assert_eq!(png_item.asset_kind, AssetKind::Still);
+    assert_eq!(png_item.media_format, MediaFormat::Png);
     assert_eq!(png_item.frame_count, 1);
-    assert_eq!(gif_item.media_kind, MediaKind::Gif);
+    assert_eq!(gif_item.asset_kind, AssetKind::Animation);
+    assert_eq!(gif_item.media_format, MediaFormat::Gif);
     assert_eq!(gif_item.frame_count, 2);
     assert_eq!(gif_item.duration_ms, 160);
     assert!(library.managed_media_path(gif_item.id)?.exists());
@@ -202,10 +206,64 @@ fn catalog_edits_preserve_managed_file_and_drive_filters() -> Result<(), Box<dyn
     };
     assert_eq!(library.list_media(&by_tag)?.total, 1);
     let favorites = LibraryQuery {
-        media_kind: Some(MediaKind::Png),
+        media_format: Some(MediaFormat::Png),
         favorite_only: true,
         ..LibraryQuery::default()
     };
     assert_eq!(library.list_media(&favorites)?.total, 1);
+    Ok(())
+}
+
+#[test]
+fn edit_recipes_and_sprite_metadata_preserve_imported_source() -> Result<(), Box<dyn Error>> {
+    let temp = TempDir::new()?;
+    let source = temp.path().join("sheet.png");
+    write_png(&source)?;
+    let source_bytes = fs::read(&source)?;
+    let mut library = Library::open(temp.path().join("data"))?;
+    let item = imported(library.import_file(&source)?)?;
+    let managed_path = library.managed_media_path(item.id)?;
+    let managed_bytes = fs::read(&managed_path)?;
+
+    let recipe = library.update_edit_recipe(
+        item.id,
+        &EditRecipePatch {
+            crop: Some(Some(CropRect {
+                x: 0.0,
+                y: 0.0,
+                width: 2.0,
+                height: 2.0,
+            })),
+            rotation_degrees: Some(90),
+            flip_horizontal: Some(true),
+            background_removal: Some(BackgroundRemovalMode::Edge),
+            brightness: Some(1.2),
+            contrast: Some(0.8),
+            saturation: Some(1.4),
+        },
+    )?;
+    assert_eq!(library.edit_recipe(item.id)?, recipe);
+
+    let sequence = library.set_sprite_sequence(&SpriteSequenceInput {
+        media_id: item.id,
+        columns: 2,
+        rows: 2,
+        frame_count: 4,
+        frame_duration_ms: 125,
+        playback_mode: SpritePlaybackMode::PingPong,
+    })?;
+    assert_eq!(library.sprite_sequence(item.id)?, Some(sequence));
+    let sprite_item = library.media_item(item.id)?;
+    assert_eq!(sprite_item.asset_kind, AssetKind::SpriteSheet);
+    assert_eq!(sprite_item.frame_count, 4);
+    assert_eq!(sprite_item.duration_ms, 500);
+
+    assert_eq!(fs::read(&source)?, source_bytes);
+    assert_eq!(fs::read(&managed_path)?, managed_bytes);
+    assert!(library.media_variants(item.id)?.is_empty());
+
+    library.clear_sprite_sequence(item.id)?;
+    assert_eq!(library.sprite_sequence(item.id)?, None);
+    assert_eq!(library.media_item(item.id)?.asset_kind, AssetKind::Still);
     Ok(())
 }

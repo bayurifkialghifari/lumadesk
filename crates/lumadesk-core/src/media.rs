@@ -5,11 +5,12 @@ use image::{
     codecs::{gif::GifDecoder, png::PngDecoder, webp::WebPDecoder},
 };
 
-use crate::{CoreError, MediaKind};
+use crate::{AssetKind, CoreError, MediaFormat};
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub(crate) struct MediaMetadata {
-    pub kind: MediaKind,
+    pub asset_kind: AssetKind,
+    pub format: MediaFormat,
     pub width: u32,
     pub height: u32,
     pub frame_count: u32,
@@ -22,7 +23,7 @@ pub(crate) fn inspect(path: &Path) -> Result<MediaMetadata, CoreError> {
         ImageFormat::Gif => inspect_gif(path),
         ImageFormat::Png => inspect_png(path),
         ImageFormat::WebP => inspect_webp(path),
-        ImageFormat::Jpeg => inspect_static(path, MediaKind::Jpeg),
+        ImageFormat::Jpeg => inspect_static(path, MediaFormat::Jpeg),
         _ => Err(CoreError::UnsupportedMedia),
     }
 }
@@ -31,7 +32,7 @@ fn inspect_gif(path: &Path) -> Result<MediaMetadata, CoreError> {
     let decoder = GifDecoder::new(BufReader::new(File::open(path)?)).map_err(image_error)?;
     let (width, height) = decoder.dimensions();
     let (frame_count, duration_ms) = frame_metadata(decoder.into_frames())?;
-    metadata(MediaKind::Gif, width, height, frame_count, duration_ms)
+    metadata(MediaFormat::Gif, width, height, frame_count, duration_ms)
 }
 
 fn inspect_png(path: &Path) -> Result<MediaMetadata, CoreError> {
@@ -40,9 +41,9 @@ fn inspect_png(path: &Path) -> Result<MediaMetadata, CoreError> {
         let (width, height) = decoder.dimensions();
         let apng = decoder.apng().map_err(image_error)?;
         let (frame_count, duration_ms) = frame_metadata(apng.into_frames())?;
-        metadata(MediaKind::Apng, width, height, frame_count, duration_ms)
+        metadata(MediaFormat::Apng, width, height, frame_count, duration_ms)
     } else {
-        inspect_static(path, MediaKind::Png)
+        inspect_static(path, MediaFormat::Png)
     }
 }
 
@@ -51,18 +52,18 @@ fn inspect_webp(path: &Path) -> Result<MediaMetadata, CoreError> {
     if decoder.has_animation() {
         let (width, height) = decoder.dimensions();
         let (frame_count, duration_ms) = frame_metadata(decoder.into_frames())?;
-        metadata(MediaKind::Webp, width, height, frame_count, duration_ms)
+        metadata(MediaFormat::Webp, width, height, frame_count, duration_ms)
     } else {
-        inspect_static(path, MediaKind::Webp)
+        inspect_static(path, MediaFormat::Webp)
     }
 }
 
-fn inspect_static(path: &Path, kind: MediaKind) -> Result<MediaMetadata, CoreError> {
+fn inspect_static(path: &Path, format: MediaFormat) -> Result<MediaMetadata, CoreError> {
     let image = ImageReader::open(path)?
         .with_guessed_format()?
         .decode()
         .map_err(image_error)?;
-    metadata(kind, image.width(), image.height(), 1, 0)
+    metadata(format, image.width(), image.height(), 1, 0)
 }
 
 fn frame_metadata<'a>(
@@ -84,7 +85,7 @@ fn frame_metadata<'a>(
 }
 
 fn metadata(
-    kind: MediaKind,
+    format: MediaFormat,
     width: u32,
     height: u32,
     frame_count: u32,
@@ -96,7 +97,12 @@ fn metadata(
         ));
     }
     Ok(MediaMetadata {
-        kind,
+        asset_kind: if frame_count > 1 {
+            AssetKind::Animation
+        } else {
+            AssetKind::Still
+        },
+        format,
         width,
         height,
         frame_count,

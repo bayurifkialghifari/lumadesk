@@ -6,7 +6,7 @@ use image::{
     save_buffer_with_format,
 };
 
-use crate::{CoreError, MediaKind, media};
+use crate::{CoreError, MediaFormat, media};
 
 #[derive(Debug)]
 pub(crate) struct DecodedFrames {
@@ -15,14 +15,19 @@ pub(crate) struct DecodedFrames {
 
 pub(crate) fn decode_to(
     source: &Path,
-    kind: MediaKind,
+    format: MediaFormat,
     destination: &Path,
 ) -> Result<DecodedFrames, CoreError> {
-    match kind {
-        MediaKind::Gif => decode_gif(source, destination),
-        MediaKind::Apng => decode_apng(source, destination),
-        MediaKind::Webp => decode_webp(source, destination),
-        MediaKind::Png | MediaKind::Jpeg => decode_static(source, destination),
+    match format {
+        MediaFormat::Gif => decode_gif(source, destination),
+        MediaFormat::Apng => decode_apng(source, destination),
+        MediaFormat::Webp => decode_webp(source, destination),
+        MediaFormat::Png | MediaFormat::Jpeg => decode_static(source, destination),
+        MediaFormat::Mp4
+        | MediaFormat::Webm
+        | MediaFormat::Mp3
+        | MediaFormat::Wav
+        | MediaFormat::Ogg => Err(CoreError::UnsupportedMedia),
     }
 }
 

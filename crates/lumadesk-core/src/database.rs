@@ -4,7 +4,7 @@ use rusqlite::{Connection, OptionalExtension, TransactionBehavior};
 
 use crate::CoreError;
 
-pub const SCHEMA_VERSION: u32 = 2;
+pub const SCHEMA_VERSION: u32 = 3;
 
 #[derive(Debug)]
 pub(crate) struct Database {
@@ -58,6 +58,9 @@ impl Database {
         if current < 2 {
             migration_v2(&transaction)?;
         }
+        if current < 3 {
+            migration_v3(&transaction)?;
+        }
         if current < SCHEMA_VERSION {
             transaction.execute("DELETE FROM schema_version", [])?;
             transaction.execute(
@@ -76,6 +79,10 @@ fn migration_v1(transaction: &rusqlite::Transaction<'_>) -> Result<(), rusqlite:
 
 fn migration_v2(transaction: &rusqlite::Transaction<'_>) -> Result<(), rusqlite::Error> {
     transaction.execute_batch(include_str!("schema_v2.sql"))
+}
+
+fn migration_v3(transaction: &rusqlite::Transaction<'_>) -> Result<(), rusqlite::Error> {
+    transaction.execute_batch(include_str!("schema_v3.sql"))
 }
 
 #[cfg(test)]
@@ -129,7 +136,29 @@ mod tests {
                 })?;
 
         assert!(!remove_background);
-        assert_eq!(version, 2);
+        assert_eq!(version, 3);
+        Ok(())
+    }
+
+    #[test]
+    fn migration_v3_splits_asset_kind_from_media_format() -> Result<(), Box<dyn Error>> {
+        let connection = Connection::open_in_memory()?;
+        let database = Database::initialize(connection)?;
+        let columns = database
+            .connection
+            .prepare("SELECT name FROM pragma_table_info('media_items') ORDER BY cid")?
+            .query_map([], |row| row.get::<_, String>(0))?
+            .collect::<Result<Vec<_>, _>>()?;
+
+        assert!(columns.contains(&"asset_kind".to_owned()));
+        assert!(columns.contains(&"media_format".to_owned()));
+        assert_eq!(
+            database
+                .connection
+                .query_row("SELECT version FROM schema_version", [], |row| row
+                    .get::<_, u32>(0))?,
+            3
+        );
         Ok(())
     }
 }

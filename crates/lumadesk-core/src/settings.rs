@@ -42,6 +42,11 @@ impl Database {
 }
 
 fn validate_settings(settings: &AppSettings) -> Result<(), CoreError> {
+    if !matches!(settings.theme.as_str(), "dark" | "system") {
+        return Err(CoreError::InvalidInput(
+            "The theme must be dark or system.".into(),
+        ));
+    }
     if !matches!(settings.collection_view.as_str(), "grid" | "list") {
         return Err(CoreError::InvalidInput(
             "The collection view must be grid or list.".into(),
@@ -65,6 +70,11 @@ fn validate_settings(settings: &AppSettings) -> Result<(), CoreError> {
     if !(64..=16_384).contains(&settings.cache_limit_mb) {
         return Err(CoreError::InvalidInput(
             "The cache limit must be 64–16384 MB.".into(),
+        ));
+    }
+    if !matches!(settings.ai_model.as_str(), "none" | "fast" | "quality") {
+        return Err(CoreError::InvalidInput(
+            "The background model must be none, fast, or quality.".into(),
         ));
     }
     Ok(())

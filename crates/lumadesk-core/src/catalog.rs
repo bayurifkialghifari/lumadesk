@@ -3,7 +3,7 @@ use rusqlite::{OptionalExtension, Row, params};
 use uuid::Uuid;
 
 use crate::{
-    CoreError, DeleteReport, LibraryQuery, MediaId, MediaItem, MediaKind, MediaPage,
+    AssetKind, CoreError, DeleteReport, LibraryQuery, MediaFormat, MediaId, MediaItem, MediaPage,
     database::Database,
     domain::NewMediaItem,
     validation::{validate_name, validate_tags},
@@ -15,7 +15,8 @@ struct RawMediaItem {
     content_hash: String,
     display_name: String,
     managed_path: String,
-    media_kind: String,
+    asset_kind: String,
+    media_format: String,
     width: i64,
     height: i64,
     frame_count: i64,
@@ -29,34 +30,45 @@ impl Database {
     pub(crate) fn list_media(&self, query: &LibraryQuery) -> Result<MediaPage, CoreError> {
         let search = normalized_optional(query.search.as_deref());
         let tag = normalized_optional(query.tag.as_deref());
-        let kind = query.media_kind.map(MediaKind::as_str);
+        let asset_kind = query.asset_kind.map(AssetKind::as_str);
+        let media_format = query.media_format.map(MediaFormat::as_str);
         let favorite = i64::from(query.favorite_only);
         let limit = i64::from(query.limit.unwrap_or(100).clamp(1, 500));
         let offset = i64::from(query.offset);
         let where_clause = "(?1 IS NULL OR instr(lower(m.display_name), lower(?1)) > 0
             OR EXISTS (SELECT 1 FROM media_tags mt JOIN tags t ON t.id = mt.tag_id
                        WHERE mt.media_id = m.id AND instr(lower(t.name), lower(?1)) > 0))
-            AND (?2 IS NULL OR m.media_kind = ?2)
-            AND (?3 = 0 OR m.is_favorite = 1)
-            AND (?4 IS NULL OR EXISTS (SELECT 1 FROM media_tags mt JOIN tags t ON t.id = mt.tag_id
-                       WHERE mt.media_id = m.id AND t.name = ?4 COLLATE NOCASE))";
+            AND (?2 IS NULL OR m.asset_kind = ?2)
+            AND (?3 IS NULL OR m.media_format = ?3)
+            AND (?4 = 0 OR m.is_favorite = 1)
+            AND (?5 IS NULL OR EXISTS (SELECT 1 FROM media_tags mt JOIN tags t ON t.id = mt.tag_id
+                       WHERE mt.media_id = m.id AND t.name = ?5 COLLATE NOCASE))";
         let total_sql = format!("SELECT COUNT(*) FROM media_items m WHERE {where_clause}");
-        let total =
-            self.connection
-                .query_row(&total_sql, params![search, kind, favorite, tag], |row| {
-                    row.get::<_, i64>(0)
-                })?;
+        let total = self.connection.query_row(
+            &total_sql,
+            params![search, asset_kind, media_format, favorite, tag],
+            |row| row.get::<_, i64>(0),
+        )?;
         let total = u64::try_from(total).map_err(|_| invalid_data("media count"))?;
         let list_sql = format!(
-            "SELECT m.id, m.content_hash, m.display_name, m.managed_path, m.media_kind,
+            "SELECT m.id, m.content_hash, m.display_name, m.managed_path, m.asset_kind,
+                    m.media_format,
                     m.width, m.height, m.frame_count, m.duration_ms, m.is_favorite,
                     m.created_at, m.updated_at
              FROM media_items m WHERE {where_clause}
-             ORDER BY m.created_at DESC, m.id ASC LIMIT ?5 OFFSET ?6"
+             ORDER BY m.created_at DESC, m.id ASC LIMIT ?6 OFFSET ?7"
         );
         let mut statement = self.connection.prepare(&list_sql)?;
         let rows = statement.query_map(
-            params![search, kind, favorite, tag, limit, offset],
+            params![
+                search,
+                asset_kind,
+                media_format,
+                favorite,
+                tag,
+                limit,
+                offset
+            ],
             read_raw_media,
         )?;
         let mut items = Vec::new();
@@ -82,17 +94,20 @@ impl Database {
         let now = Utc::now().timestamp_millis();
         let duration_ms = i64::try_from(new.duration_ms)
             .map_err(|_| CoreError::InvalidInput("The media duration is too long.".into()))?;
-        self.connection.execute(
+        let transaction = self.connection.transaction()?;
+        transaction.execute(
             "INSERT INTO media_items
-             (id, content_hash, display_name, managed_path, media_kind, width, height,
-              frame_count, duration_ms, is_favorite, created_at, updated_at)
-             VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, 0, ?10, ?10)",
+             (id, content_hash, display_name, managed_path, media_kind, asset_kind, media_format,
+              width, height, frame_count, duration_ms, is_favorite, created_at, updated_at)
+             VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, 0, ?12, ?12)",
             params![
                 new.id.to_string(),
                 new.content_hash,
                 new.display_name,
                 new.managed_path,
-                new.media_kind.as_str(),
+                new.media_format.as_str(),
+                new.asset_kind.as_str(),
+                new.media_format.as_str(),
                 new.width,
                 new.height,
                 new.frame_count,
@@ -100,6 +115,11 @@ impl Database {
                 now
             ],
         )?;
+        transaction.execute(
+            "INSERT INTO edit_recipes (media_id, updated_at) VALUES (?1, ?2)",
+            params![new.id.to_string(), now],
+        )?;
+        transaction.commit()?;
         self.media_by_id(new.id)
     }
 
@@ -173,7 +193,8 @@ impl Database {
 
     fn find_media(&self, condition: &str, value: String) -> Result<Option<MediaItem>, CoreError> {
         let sql = format!(
-            "SELECT m.id, m.content_hash, m.display_name, m.managed_path, m.media_kind,
+            "SELECT m.id, m.content_hash, m.display_name, m.managed_path, m.asset_kind,
+                    m.media_format,
                     m.width, m.height, m.frame_count, m.duration_ms, m.is_favorite,
                     m.created_at, m.updated_at FROM media_items m WHERE {condition}"
         );
@@ -192,8 +213,10 @@ impl Database {
             content_hash: raw.content_hash,
             display_name: raw.display_name,
             managed_path: raw.managed_path,
-            media_kind: MediaKind::parse(&raw.media_kind)
-                .ok_or_else(|| invalid_data("media kind"))?,
+            asset_kind: AssetKind::parse(&raw.asset_kind)
+                .ok_or_else(|| invalid_data("asset kind"))?,
+            media_format: MediaFormat::parse(&raw.media_format)
+                .ok_or_else(|| invalid_data("media format"))?,
             width: to_u32(raw.width, "width")?,
             height: to_u32(raw.height, "height")?,
             frame_count: to_u32(raw.frame_count, "frame count")?,
@@ -221,14 +244,15 @@ fn read_raw_media(row: &Row<'_>) -> rusqlite::Result<RawMediaItem> {
         content_hash: row.get(1)?,
         display_name: row.get(2)?,
         managed_path: row.get(3)?,
-        media_kind: row.get(4)?,
-        width: row.get(5)?,
-        height: row.get(6)?,
-        frame_count: row.get(7)?,
-        duration_ms: row.get(8)?,
-        is_favorite: row.get(9)?,
-        created_at: row.get(10)?,
-        updated_at: row.get(11)?,
+        asset_kind: row.get(4)?,
+        media_format: row.get(5)?,
+        width: row.get(6)?,
+        height: row.get(7)?,
+        frame_count: row.get(8)?,
+        duration_ms: row.get(9)?,
+        is_favorite: row.get(10)?,
+        created_at: row.get(11)?,
+        updated_at: row.get(12)?,
     })
 }
 
