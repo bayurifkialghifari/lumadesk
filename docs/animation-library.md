@@ -8,13 +8,14 @@ The **Search collection** field matches names and tags. Filters can restrict res
 
 ## Item details
 
-Select an item to open its detail panel. The panel shows image dimensions, format, frame count, loop duration, tags, and the number of active desktop instances. Double-click an item to create an overlay with the default settings.
+Select an item to open its detail panel. The panel shows image dimensions, asset kind, format, frame count, loop duration, tags, and the number of active desktop instances. Double-click an item to create an overlay with the default settings. Open **Creator Studio** to save non-destructive presentation and sprite settings for the item.
 
 ## Managing items
 
 - **Rename** changes the catalog name only. The managed filename does not change.
 - **Favorite** adds or removes the item from the favorites filter.
 - Tags can be added and removed without changing the media file.
+- Creator recipes can be reset or replaced without changing the media file.
 - **Remove from collection** closes related overlays, then deletes the managed copy and caches. The original source file is never deleted.
 
 Deletion always requires confirmation and reports how many overlays will be closed.

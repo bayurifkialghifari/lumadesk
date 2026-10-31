@@ -1,16 +1,14 @@
 # LumaDesk Design System
 
 **Status:** implementation contract
-**Updated:** 25 October 2026
+**Updated:** 31 October 2026
 
-## 0. Research log
+## 0. Design goals
 
 - Product shell: dense desktop-library navigation, media shelves, restrained controls, and clear ownership of the center scroll region.
-- README direction: original theme-aware banner, one-line promise, compact badges, authentic product capture, early download table, and links to deeper documentation.
+- README direction: theme-aware banner, one-line promise, compact badges, an early download table, and links to deeper documentation.
 - Spatial pattern: fixed 224 px navigation rail, flexible content canvas, and 320 px contextual inspector on wide screens.
 - Accessibility review: selected states use tonal surfaces plus icon/text changes; keyboard focus uses an explicit blue focus ring; motion follows `prefers-reduced-motion`.
-
-External product names and assets are research material only. LumaDesk ships its own identity, copy, icons, and layouts.
 
 ## 1. Character
 
@@ -38,6 +36,8 @@ LumaDesk feels like a focused media console: dark, compact, calm, and slightly l
 | `danger-400` | `#ff6b75` | destructive action and error |
 
 Gradients are limited to the brand banner, empty-state illustration, and preview ambience. Controls and content surfaces use solid token colors.
+
+When **Follow system** is selected, the dark tokens remain active for a dark operating-system theme. A light operating-system theme maps the same token names to cool gray canvases, white content surfaces, navy text, and a darker blue accent. Overlay windows keep a transparent canvas in both modes.
 
 ### Typography
 
@@ -100,14 +100,30 @@ Gradients are limited to the brand banner, empty-state illustration, and preview
 - Effect processing never modifies the managed source file. A checked state is persisted per overlay and remains distinguishable through text and control state without relying on color.
 - The **Active on Desktop** page shows live active and playing counts plus pause-all and confirmed close-all actions.
 
-## 7. Content language
+## 7. Creator Studio
+
+- The Creator workspace uses a three-column desktop layout: a compact asset rail, a large live preview, and grouped editing controls. At narrower widths, controls move below the preview and the asset rail becomes a short horizontal region.
+- Transform controls stay close to the preview toolbar. Numeric crop controls use the dimensions of one sprite cell when sprite playback is enabled.
+- Brightness, contrast, and saturation use live range controls with visible numeric output. Rotation, flip, and reset have labeled tooltips and accessible names.
+- Background choices use a four-option segmented control: **Original**, **Edge**, **AI fast**, and **AI quality**. Model requirements appear only when an AI mode is selected.
+- Sprite controls show grid dimensions, frame count, frame duration, and playback mode. Animated source formats disable sprite setup because they already contain a frame sequence.
+- Changes remain provisional until **Save changes** is pressed. A successful save updates the preview and active overlays; a failed save leaves the persisted recipe unchanged.
+
+## 8. Settings
+
+- Settings uses compact two-column sections for appearance, desktop behavior, overlay defaults, and storage. The local-model section spans the full content width.
+- Every setting uses a native form control with a visible label and current value. Settings are written only through **Save settings**.
+- Model cards distinguish built-in edge removal from downloadable Fast and Quality models. Download, installed, removing, and error states use text and icons in addition to color.
+- Destructive model removal uses a direct labeled action. Generated masks for that model are removed with it.
+
+## 9. Content language
 
 - The interface and public project documentation use English.
 - Prefer direct verbs. Interface examples include `Import animation`, `Show on desktop`, `Rename`, and `Remove from collection`.
 - Explain file ownership precisely: deleting from LumaDesk removes its managed copy and never deletes the original source.
 - Error messages state what failed and one useful next step.
 
-## 8. Accessibility constraints and accepted debt
+## 10. Accessibility constraints and accepted debt
 
 - Text contrast targets WCAG AA; focus indicators remain visible against every surface.
 - All controls are keyboard reachable and expose names to accessibility APIs.

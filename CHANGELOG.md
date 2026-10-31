@@ -4,6 +4,28 @@ All notable changes to LumaDesk are documented here. The project follows Semanti
 
 ## [Unreleased]
 
+## [0.4.0] - 2026-10-31
+
+### Added
+
+- Added Creator Studio with non-destructive crop, quarter-turn rotation, horizontal flip, brightness, contrast, saturation, background modes, live preview, reset, and explicit save.
+- Added sprite-sheet setup with configurable grids, frame counts, timing, and loop, once, or ping-pong playback across previews and desktop overlays.
+- Added functional Settings for theme, Collection view, startup behavior, overlay defaults, and storage actions.
+- Added optional local U²-NetP and U²-Net background models with verified downloads, removable model storage, bounded mask generation, and local ONNX inference.
+- Added SQLite edit recipes, sprite sequences, generated media variants, and transactional Creator saves.
+
+### Changed
+
+- Collection previews and desktop overlays now apply saved edit recipes and sprite playback.
+- Generated-media operations now coordinate cache cleanup, model removal, media deletion, Creator updates, and mask generation to prevent conflicting file changes.
+- Cache cleanup now removes generated previews, decoded frames, and segmentation masks while preserving installed models and source media.
+- Creator crop bounds now use one decoded sprite frame, and changing the sprite grid clamps the crop to the new cell dimensions.
+
+### Fixed
+
+- Invalid sprite metadata can no longer leave a recipe partially saved.
+- Storage actions now always leave their busy state after success or failure.
+
 ## [0.3.0] - 2026-10-25
 
 ### Added
@@ -63,7 +85,8 @@ All notable changes to LumaDesk are documented here. The project follows Semanti
 - **Active on Desktop** workspace with live instance counts, responsive cards, browser-preview states, per-instance controls, and pause-all or confirmed close-all actions.
 - GitHub Actions checks and tagged release builds for Windows x86-64 and ARM64, macOS Apple Silicon and Intel, and Linux x86-64 and ARM64.
 
-[Unreleased]: https://github.com/bayurifkialghifari/lumadesk/compare/v0.3.0...HEAD
+[Unreleased]: https://github.com/bayurifkialghifari/lumadesk/compare/v0.4.0...HEAD
+[0.4.0]: https://github.com/bayurifkialghifari/lumadesk/compare/v0.3.0...v0.4.0
 [0.3.0]: https://github.com/bayurifkialghifari/lumadesk/compare/v0.2.1...v0.3.0
 [0.2.1]: https://github.com/bayurifkialghifari/lumadesk/compare/v0.2.0...v0.2.1
 [0.2.0]: https://github.com/bayurifkialghifari/lumadesk/compare/v0.1.0...v0.2.0

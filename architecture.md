@@ -2,104 +2,103 @@
 
 ## System shape
 
-LumaDesk is a Tauri 2 desktop application. Svelte 5 renders the management window and small overlay control surfaces. Rust owns trusted boundaries: files, SQLite, media decoding, cache management, application lifecycle, and native windows.
+LumaDesk is a Tauri 2 desktop application. Svelte 5 renders the management window and overlay control surfaces. Rust owns trusted boundaries: files, SQLite, media decoding, edit validation, model management, generated caches, application lifecycle, and native windows.
 
 ```mermaid
 flowchart LR
   UI[Svelte management UI] -->|typed Tauri commands| APP[Rust application layer]
   APP --> DB[(SQLite catalog)]
   APP --> MEDIA[Managed media store]
-  APP --> CACHE[Thumbnail and frame cache]
+  APP --> CACHE[Frame and mask caches]
+  APP --> AI[Optional ONNX models]
   APP --> WINDOWS[Native overlay windows]
-  WINDOWS --> RENDER[Canvas frame renderer]
-  APP --> LIFECYCLE[Window lifecycle]
+  WINDOWS --> RENDER[Canvas recipe renderer]
+  APP --> LIFECYCLE[Tray and window lifecycle]
 ```
 
 ## Repository boundaries
 
-- `src/`: Svelte application, typed command client, stores, pages, components, and CSS tokens.
-- `src-tauri/src/`: Tauri adapter, commands, single-instance and tray lifecycle handling, and native window coordination.
-- `crates/lumadesk-core/`: platform-independent domain, SQLite repositories, import pipeline, hashing, and media metadata.
-- `assets/starter/`: redistributable starter animation sources and license records.
-- `docs/`: user-facing feature and contribution guides.
+- `src/`: Svelte application, runtime schemas, typed command client, controllers, pages, components, and CSS tokens.
+- `src-tauri/src/`: Tauri commands, native window coordination, local model inference, single-instance behavior, and tray lifecycle.
+- `crates/lumadesk-core/`: platform-independent domain types, SQLite repositories, import pipeline, edit validation, frame decoding, and generated-media records.
+- `assets/starter/`: redistributable starter media and license records.
+- `docs/`: one English guide per user-facing feature.
 
-The core crate has no Tauri dependency. Its database and import behavior can run in tests without a graphical session.
+The core crate has no Tauri dependency. Database, editing, importing, sprite decoding, and cache behavior run in tests without a graphical session.
 
 ## Data model
 
 ### `media_items`
 
-| Field | Meaning |
-| --- | --- |
-| `id` | UUID primary key |
-| `content_hash` | unique SHA-256 of imported bytes |
-| `display_name` | user-editable catalog name |
-| `managed_path` | relative path inside the media root |
-| `media_kind` | gif, apng, webp, png, or jpeg |
-| `width`, `height` | decoded pixel dimensions |
-| `frame_count` | number of decoded frames |
-| `duration_ms` | total loop duration |
-| `is_favorite` | favorite filter state |
-| `created_at`, `updated_at` | UTC timestamps |
+Each item stores its UUID, unique SHA-256 content hash, display name, managed path, asset kind, media format, dimensions, frame metadata, favorite state, and timestamps. Tags use `tags` and `media_tags`. The backend resolves managed paths from item IDs; arbitrary frontend paths are never accepted for catalog operations.
 
-Tags use `tags` and `media_tags` tables. `managed_path` is never accepted from the frontend; the backend resolves it from the item ID.
+### `edit_recipes`
+
+One recipe belongs to each media item. It stores an optional crop, quarter-turn rotation, horizontal flip, background-removal mode, brightness, contrast, saturation, and update timestamp. The recipe describes presentation and never rewrites the source file.
+
+### `sprite_sequences`
+
+An optional row stores columns, rows, frame count, frame duration, and loop, once, or ping-pong playback. Setting a sequence changes the item's asset kind to `sprite_sheet`; clearing it returns the item to its source-derived kind.
+
+### `media_variants`
+
+Generated assets are registered with a media ID, variant kind, validated relative path, dimensions, and creation time. AI masks use the `segmentation_mask` kind. The table lets cache cleanup, media deletion, sprite changes, and model removal delete both files and database records consistently.
 
 ### `overlay_instances`
 
-Each record references a media item and stores logical x/y position, monitor identity, width, opacity, speed, horizontal flip, background-removal state, playback state, z-order, and active state. Logical coordinates avoid DPI-dependent persistence.
+Each instance references a media item and stores logical position, monitor identity, width, opacity, speed, horizontal flip, immediate edge-removal state, playback state, z-order, and active state. Logical coordinates avoid DPI-dependent persistence. The media recipe and sprite sequence apply in addition to these per-instance controls.
 
 ### `settings`
 
-A key/value table stores typed application preferences. The application layer parses every value into a typed settings structure before exposing it.
+A key/value table stores theme, startup behavior, overlay restoration, close-to-tray behavior, Collection view, and overlay defaults. The application layer parses and validates the complete typed settings object before exposing it.
+
+## Creator save transaction
+
+`save_creator_changes` validates the recipe and the proposed sprite sequence against the same effective frame dimensions. It then writes both records in one SQLite transaction. Invalid sprite metadata or an out-of-bounds crop cannot leave a partially updated recipe.
+
+After a successful sprite change, the application removes decoded frames and segmentation variants whose dimensions or source key are now stale, then emits an update to active overlay windows. Generated-media operations share an async lock so Creator saves, model removal, mask generation, media deletion, and cache cleanup do not race over the same files.
 
 ## Command surface
 
-The frontend calls serializable commands with typed inputs and outputs:
+The frontend calls serializable commands whose responses are checked again with Zod schemas. Major groups include:
 
-- `list_media(query) -> MediaPage`
-- `import_media(paths) -> ImportReport`
-- `rename_media(input) -> MediaItem`
-- `set_favorite(input) -> MediaItem`
-- `replace_tags(input) -> MediaItem`
-- `delete_media(input) -> DeleteReport`
-- `resolve_media_path(id) -> string`
-- `get_frame_batch(id, offset, limit) -> FrameBatch`
-- `list_overlays() -> OverlayInstance[]`
-- `list_desktop_overlays() -> DesktopOverlay[]`
-- `create_overlay(input) -> OverlayInstance`
-- `show_media_overlay(id) -> OverlayInstance`
-- `update_overlay(input) -> OverlayInstance`
-- `move_overlay(id, monitor_id, x, y) -> OverlayInstance`
-- `duplicate_overlay(id) -> OverlayInstance`
-- `remove_overlay(id) -> void`
-- `get_settings() -> AppSettings`
-- `update_settings(settings) -> AppSettings`
+- catalog: list, import, rename, favorite, tag, remove, resolve asset URL, and get frame batches;
+- Creator: get or update recipes, atomically save Creator changes, and get, set, or clear sprite sequences;
+- overlays: list, create, show, move, update, duplicate, remove, pause all, and close all;
+- settings: get, update, open the data directory, and clear generated caches;
+- local AI: list model status, download, remove, and request a bounded mask batch.
 
-The native layer emits `overlay:state` to the matching overlay window after persisted state changes and `overlay:catalog-changed` when the management view must refresh. A failed native update restores the previous persisted state, while overlay and media removal close dependent windows before deleting their records. If persistence fails, closed windows are restored from the captured state. Inputs are validated once at the command boundary. Domain failures map to stable error codes plus English user messages.
+Inputs are validated at the command boundary. Domain failures map to stable error codes with English messages. If a native overlay update fails, persisted instance state is rolled back. Overlay and media removal close dependent windows before deleting records and restore captured windows when persistence fails.
 
 ## File ownership
 
-Application data contains `lumadesk.sqlite3`, `media/`, `thumbnails/`, and `frames/`. Import writes to a temporary file, hashes and decodes it, moves it atomically into `media/`, then commits the database row. A scope guard removes temporary data if any stage fails.
+Application data contains `lumadesk.sqlite3`, `media/`, `thumbnails/`, `frames/`, `masks/`, and `models/`. Import writes to a temporary file, hashes and decodes it, moves it atomically into `media/`, then commits the catalog row. A scope guard removes temporary data if any stage fails.
 
-The frontend receives asset URLs only for managed media and cache roots. It cannot request arbitrary local paths. Deletion removes the catalog record and dependent overlay records transactionally, then removes managed media and regenerable cache data. A managed file is quarantined before the transaction, restored if that transaction fails, and stale quarantine files are cleared at startup.
+Model downloads use a `.part` file and become available only after exact length and SHA-256 verification. Fast and Quality model files remain optional and removable. Clearing generated cache removes previews, decoded frames, and masks while preserving the database, managed source media, settings, and installed models.
 
-## Rendering and windows
+The frontend receives asset URLs only for approved media and cache roots. Deletion quarantines a managed file before the database transaction, restores it on failure, and clears stale quarantine files at startup.
 
-Rust reads animation metadata and generates a persistent frame cache atomically. The frontend requests batches of 32 frames, prefetches near the active batch boundary, and retains at most the current and next batch in memory. The transparent canvas renderer uses original frame timing adjusted by the persisted speed multiplier. Static images render once without starting a playback scheduler.
+## Rendering and playback
 
-Automatic background removal runs as a non-destructive canvas effect owned by each overlay renderer. It estimates the dominant edge color, flood-fills only similar pixels connected to frame boundaries, feathers their alpha, and preserves existing transparent pixels. Processed canvases are created lazily per frame and leave memory when their bounded playback batch is evicted. The managed source and persistent decoded frame cache remain unchanged.
+Rust generates a persistent frame cache atomically. The frontend requests bounded frame batches, prefetches near a batch boundary, and keeps only the current and next batch in memory. Static images render once without a scheduler. Sprite sheets are decoded cell by cell according to their saved sequence and expose normalized playback frames for the same player.
 
-Each active overlay is an undecorated, transparent, always-on-top Tauri window. Its label is derived from an internal instance UUID. Overlay windows always accept pointer input, display a compact toolbar and boundary, start native window dragging from either the animation surface or drag handle, and persist the latest logical position through a debounced serial writer. The management window lists active instances and exposes size, opacity, speed, playback, flip, background removal, duplicate, close, pause-all, and close-all controls. Active instances are restored at startup when `restore_overlays` is enabled, and deleting media also destroys its native windows. macOS builds enable the required private transparent-window API and are distributed directly rather than through the App Store.
+The preview and overlay renderers apply crop, rotation, recipe flip, color filters, and the selected background mode. Loop, once, and ping-pong sequences share the same timing controller. The per-instance flip combines with the recipe flip without changing stored media.
 
-The main window uses a custom title bar. Tauri window APIs provide Minimize, Maximize/Restore, and Close actions, while the remaining title-bar area acts as a native drag region. A dedicated lifecycle module intercepts close requests only for the main window, reads the persisted `close_to_tray` preference, and hides the window by default. The tray or menu-bar icon restores the main window or exits the process; single-instance launches use the same restore path. Overlay windows bypass this handler.
+Edge removal flood-fills similar pixels connected to frame boundaries and feathers their alpha. AI modes request masks generated by U²-NetP or U²-Net through `tract-onnx`. Masks are keyed by media content and sprite metadata, stored as regenerable PNG variants, and composited through a bounded canvas cache.
+
+## Native windows and lifecycle
+
+Each active overlay is an undecorated, transparent, always-on-top Tauri window whose label derives from an internal instance UUID. Pressing the animation reveals its compact toolbar and boundary. Native dragging starts from the animation or drag handle, and a debounced serial writer persists logical position.
+
+The management window uses a custom title bar with Minimize, Maximize/Restore, and Close. Closing hides it to the tray or menu bar when `close_to_tray` is enabled. Tray actions restore the window or quit the process, and single-instance launches use the same restore path. Overlay windows bypass the main-window close handler.
 
 ## Migrations and compatibility
 
 - SQL migrations are embedded in the core crate and run in one transaction at startup.
-- Schema version is monotonic; downgrade is unsupported.
-- Unknown newer schema versions fail closed with a backup instruction.
-- Settings added in later versions receive explicit defaults.
+- Schema versions increase monotonically; downgrade is unsupported.
+- A newer unknown schema fails closed with a backup instruction.
+- Settings introduced in later versions receive explicit defaults.
 
 ## Release architecture
 
-Pull requests and main-branch pushes run formatting, linting, type checks, and tests. The release workflow can package Windows x86-64 and ARM64, macOS Apple Silicon and Intel, and Linux x86-64 and ARM64 without publishing when started manually. Tags matching `vMAJOR.MINOR.PATCH` package the same targets, calculate SHA-256 checksums, and publish a GitHub Release. Publishing requires every platform job to succeed. Signing and notarization use protected repository secrets when configured.
+Pushes and pull requests run frontend types, tests, lint, build, Rust formatting, workspace tests, and Clippy. Tags matching `vMAJOR.MINOR.PATCH` build Windows x86-64 and ARM64 NSIS installers, macOS Apple Silicon and Intel DMGs, and Linux x86-64 and ARM64 AppImage, Debian, and RPM packages. Publishing starts only after every platform job succeeds and includes `SHA256SUMS.txt`. Signing and notarization use protected repository secrets when configured.

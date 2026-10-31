@@ -1,6 +1,6 @@
 # Importing media
 
-LumaDesk accepts GIF, APNG, animated or static WebP, PNG, and JPEG files. Video and audio are outside the initial release scope.
+LumaDesk accepts GIF, APNG, animated or static WebP, PNG, and JPEG files. A still image can be configured as a sprite sheet after import. Video and audio are not currently supported.
 
 ## Importing files
 

@@ -18,4 +18,4 @@ LumaDesk runs as a single application instance. Launching it again asks the exis
 
 ## Layout restoration
 
-The **Restore layout** option activates previously active overlays when LumaDesk starts. It is enabled by default. System autostart is a separate setting and is disabled by default.
+The **Restore overlays** option activates previously active overlays when LumaDesk starts. It is enabled by default. System autostart is a separate setting and is disabled by default.

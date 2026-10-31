@@ -1,24 +1,33 @@
 # Settings and local data
 
-## General settings
+Settings are grouped by appearance, desktop behavior, overlay defaults, storage, and local AI models. Changes are applied when **Save settings** is selected.
 
-- **Launch at login:** starts LumaDesk after the user signs in; disabled by default.
-- **Restore layout:** activates previously active overlays when the application starts.
-- **Close to tray:** keeps LumaDesk running in the system tray or menu bar when the main window closes; enabled by default.
-- **Collection view:** grid or list.
-- **Overlay defaults:** size, opacity, and speed for new instances.
-- **Cache limit:** bounds the storage used by thumbnails and decoded frames.
+## Appearance
 
-## Cache
+- **Theme:** use the LumaDesk dark theme or follow the operating-system color preference.
+- **Collection view:** choose the visual grid or compact list used by the library.
 
-**Clear cache** removes thumbnails and decoded frames that LumaDesk can regenerate. Collection items, tags, settings, managed media, and overlay layouts remain intact.
+## Desktop behavior
 
-## Data location and contents
+- **Launch at login:** start LumaDesk after the user signs in; disabled by default.
+- **Close to tray:** keep overlays running after the management window closes; enabled by default.
+- **Restore overlays:** reopen the last active desktop layout at launch.
 
-**Open data folder** opens the application directory containing:
+## Overlay defaults
 
-- the SQLite database for metadata, tags, settings, and layouts;
-- the `media` directory for managed copies of imported files;
-- the `thumbnails` and `frames` cache directories.
+Width, opacity, and playback speed become the starting values for new desktop instances. Existing instances keep their own saved values.
 
-LumaDesk does not require an account, cloud storage, analytics, or telemetry for its core features.
+## Storage
+
+**Clear cache** removes generated previews, decoded frames, and background masks. Collection records, tags, edit recipes, sprite settings, managed media, overlays, application settings, and installed AI models remain intact.
+
+**Open data folder** opens the operating system's application-data directory containing:
+
+- `lumadesk.sqlite3` for the catalog, tags, recipes, variants, settings, and layouts;
+- `media/` for managed copies of imported files;
+- `thumbnails/`, `frames/`, and `masks/` for regenerable output;
+- `models/` for optional downloaded ONNX models.
+
+## Local AI models
+
+Edge removal is built in. Fast and Quality AI models can be installed or removed independently. Every download is verified before use. Removing a model deletes that model file and its generated masks while preserving source media and Creator recipes.
