@@ -2,8 +2,11 @@ import type { Readable } from "svelte/store";
 import type { CollectionNotice, ToastTone } from "./collection-model";
 import type {
   DesktopOverlay,
+  DesktopSceneId,
+  DesktopSceneSummary,
   EditRecipe,
   MediaItem,
+  MonitorDescriptor,
   OverlayId,
   OverlayInstance,
   OverlayPatch,
@@ -18,10 +21,13 @@ export interface DesktopState {
   readonly loading: boolean;
   readonly refreshing: boolean;
   readonly overlays: readonly DesktopOverlay[];
+  readonly scenes: readonly DesktopSceneSummary[];
+  readonly monitors: readonly MonitorDescriptor[];
   readonly assetUrls: Readonly<Record<string, string>>;
   readonly editRecipes: Readonly<Record<string, EditRecipe>>;
   readonly busyIds: ReadonlySet<OverlayId>;
   readonly batchBusy: boolean;
+  readonly sceneBusy: boolean;
   readonly loadError: string | null;
   readonly notice: CollectionNotice | null;
 }
@@ -30,10 +36,22 @@ export interface DesktopController extends Readable<DesktopState> {
   readonly initialize: () => Promise<void>;
   readonly reload: () => Promise<void>;
   readonly update: (id: OverlayId, patch: OverlayPatch) => Promise<void>;
+  readonly moveToMonitor: (id: OverlayId, monitorName: string) => Promise<void>;
   readonly duplicate: (id: OverlayId) => Promise<void>;
   readonly close: (id: OverlayId) => Promise<void>;
+  readonly showAll: () => Promise<void>;
+  readonly hideAll: () => Promise<void>;
+  readonly playAll: () => Promise<void>;
   readonly pauseAll: () => Promise<void>;
+  readonly lockAll: () => Promise<void>;
+  readonly unlockAll: () => Promise<void>;
   readonly closeAll: () => Promise<void>;
+  readonly createScene: (name: string) => Promise<void>;
+  readonly applyScene: (id: DesktopSceneId) => Promise<void>;
+  readonly updateScene: (id: DesktopSceneId) => Promise<void>;
+  readonly renameScene: (id: DesktopSceneId, name: string) => Promise<void>;
+  readonly duplicateScene: (id: DesktopSceneId) => Promise<void>;
+  readonly deleteScene: (id: DesktopSceneId) => Promise<void>;
   readonly notify: (tone: ToastTone, message: string) => void;
   readonly dismissNotice: () => void;
   readonly destroy: () => void;

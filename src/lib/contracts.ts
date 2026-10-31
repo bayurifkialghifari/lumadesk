@@ -24,6 +24,9 @@ export type MediaId = z.infer<typeof mediaIdSchema>;
 export const overlayIdSchema = z.string().uuid().brand<"OverlayId">();
 export type OverlayId = z.infer<typeof overlayIdSchema>;
 
+export const desktopSceneIdSchema = z.string().uuid().brand<"DesktopSceneId">();
+export type DesktopSceneId = z.infer<typeof desktopSceneIdSchema>;
+
 export const variantIdSchema = z.string().uuid().brand<"VariantId">();
 export type VariantId = z.infer<typeof variantIdSchema>;
 
@@ -169,6 +172,7 @@ export const overlaySchema = z.object({
   speed: z.number().min(0.25).max(4),
   flipHorizontal: z.boolean(),
   removeBackground: z.boolean(),
+  clickThrough: z.boolean(),
   isPlaying: z.boolean(),
   zOrder: z.number().int(),
   isActive: z.boolean(),
@@ -182,6 +186,54 @@ export const desktopOverlaySchema = z.object({
   media: mediaItemSchema,
 });
 export type DesktopOverlay = z.infer<typeof desktopOverlaySchema>;
+
+export const desktopSceneItemSchema = z.object({
+  mediaId: mediaIdSchema,
+  monitorName: z.string().min(1).nullable(),
+  monitorWidth: z.number().finite().positive(),
+  monitorHeight: z.number().finite().positive(),
+  normalizedX: z.number().finite(),
+  normalizedY: z.number().finite(),
+  width: z.number().finite().positive(),
+  opacity: z.number().min(0).max(1),
+  speed: z.number().min(0.25).max(4),
+  flipHorizontal: z.boolean(),
+  removeBackground: z.boolean(),
+  isPlaying: z.boolean(),
+  clickThrough: z.boolean(),
+  zOrder: z.number().int(),
+  isActive: z.boolean(),
+});
+export type DesktopSceneItem = z.infer<typeof desktopSceneItemSchema>;
+
+export const desktopSceneSchema = z.object({
+  id: desktopSceneIdSchema,
+  name: z.string().min(1).max(80),
+  items: z.array(desktopSceneItemSchema),
+  createdAt: z.string().datetime({ offset: true }),
+  updatedAt: z.string().datetime({ offset: true }),
+});
+export type DesktopScene = z.infer<typeof desktopSceneSchema>;
+
+export const desktopSceneSummarySchema = z.object({
+  id: desktopSceneIdSchema,
+  name: z.string().min(1).max(80),
+  itemCount: z.number().int().nonnegative(),
+  createdAt: z.string().datetime({ offset: true }),
+  updatedAt: z.string().datetime({ offset: true }),
+});
+export type DesktopSceneSummary = z.infer<typeof desktopSceneSummarySchema>;
+
+export const monitorDescriptorSchema = z.object({
+  name: z.string().min(1),
+  x: z.number().finite(),
+  y: z.number().finite(),
+  width: z.number().finite().positive(),
+  height: z.number().finite().positive(),
+  scaleFactor: z.number().finite().positive(),
+  isPrimary: z.boolean(),
+});
+export type MonitorDescriptor = z.infer<typeof monitorDescriptorSchema>;
 
 export const settingsSchema = z.object({
   theme: z.enum(["dark", "system"]),
@@ -268,7 +320,14 @@ export interface OverlayPatch {
   readonly speed?: number;
   readonly flipHorizontal?: boolean;
   readonly removeBackground?: boolean;
+  readonly clickThrough?: boolean;
   readonly isPlaying?: boolean;
   readonly zOrder?: number;
   readonly isActive?: boolean;
+}
+
+export interface OverlayBatchPatch {
+  readonly isPlaying?: boolean;
+  readonly isActive?: boolean;
+  readonly clickThrough?: boolean;
 }

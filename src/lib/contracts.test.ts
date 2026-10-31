@@ -3,6 +3,7 @@ import {
   aiMaskBatchSchema,
   aiModelStatusSchema,
   desktopOverlaySchema,
+  desktopSceneSchema,
   mediaItemSchema,
   settingsSchema,
 } from "./contracts";
@@ -81,6 +82,7 @@ describe("native command contracts", () => {
       speed: 1.25,
       flipHorizontal: false,
       removeBackground: true,
+      clickThrough: false,
       isPlaying: true,
       zOrder: 0,
       isActive: true,
@@ -92,5 +94,36 @@ describe("native command contracts", () => {
     expect(() =>
       desktopOverlaySchema.parse({ overlay: { ...overlay, opacity: 1.1 }, media }),
     ).toThrow();
+  });
+
+  it("validates monitor-aware desktop scenes", () => {
+    const scene = {
+      id: "49ea2727-5237-4842-9d26-179074952d33",
+      name: "Streaming",
+      items: [
+        {
+          mediaId: media.id,
+          monitorName: "Primary",
+          monitorWidth: 1920,
+          monitorHeight: 1080,
+          normalizedX: 0.25,
+          normalizedY: 0.5,
+          width: 320,
+          opacity: 0.8,
+          speed: 1.25,
+          flipHorizontal: false,
+          removeBackground: true,
+          isPlaying: true,
+          clickThrough: true,
+          zOrder: 0,
+          isActive: false,
+        },
+      ],
+      createdAt: "2026-10-31T08:00:00Z",
+      updatedAt: "2026-10-31T08:00:00Z",
+    };
+
+    expect(desktopSceneSchema.parse(scene)).toEqual(scene);
+    expect(() => desktopSceneSchema.parse({ ...scene, name: "" })).toThrow();
   });
 });

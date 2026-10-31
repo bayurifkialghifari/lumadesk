@@ -1,5 +1,15 @@
 <script lang="ts">
-import { Copy, Eraser, FlipHorizontal2, GripVertical, Pause, Play, X } from "@lucide/svelte";
+import {
+  Copy,
+  Eraser,
+  FlipHorizontal2,
+  GripVertical,
+  Lock,
+  Pause,
+  Play,
+  Unlock,
+  X,
+} from "@lucide/svelte";
 import type { OverlayInstance, OverlayPatch } from "../contracts";
 import type { OverlayControlsHold } from "../overlay-controls-visibility";
 
@@ -70,6 +80,17 @@ function handleFocusOut(): void {
   >
     <Eraser size={15} />
   </button>
+  <button
+    class:active={overlay?.clickThrough === true}
+    type="button"
+    aria-label={overlay?.clickThrough === true ? "Disable click-through" : "Enable click-through"}
+    aria-pressed={overlay?.clickThrough === true}
+    title={overlay?.clickThrough === true ? "Disable click-through" : "Enable click-through"}
+    disabled={busy || overlay === null}
+    onclick={() => onpatch({ clickThrough: overlay?.clickThrough !== true })}
+  >
+    {#if overlay?.clickThrough === true}<Unlock size={15} />{:else}<Lock size={15} />{/if}
+  </button>
   <button type="button" aria-label="Duplicate overlay" title="Duplicate" disabled={busy || overlay === null} onclick={onduplicate}>
     <Copy size={15} />
   </button>
@@ -87,7 +108,7 @@ function handleFocusOut(): void {
   top: 5px;
   left: 50%;
   display: grid;
-  grid-template-columns: repeat(6, 30px);
+  grid-template-columns: repeat(7, 30px);
   gap: 2px;
   padding: 3px;
   background: rgb(8 17 28 / 92%);

@@ -216,10 +216,22 @@ async function clearCache(): Promise<void> {
       <DesktopWorkspace
         state={$desktop}
         onupdate={(id, patch) => void desktop.update(id, patch)}
+        onmovetomonitor={(id, monitorName) => void desktop.moveToMonitor(id, monitorName)}
         onduplicate={(id) => void desktop.duplicate(id)}
         onclose={(id) => void desktop.close(id)}
+        onshowall={() => void desktop.showAll()}
+        onhideall={() => void desktop.hideAll()}
+        onplayall={() => void desktop.playAll()}
         onpauseall={() => void desktop.pauseAll()}
+        onlockall={() => void desktop.lockAll()}
+        onunlockall={() => void desktop.unlockAll()}
         oncloseall={() => void desktop.closeAll()}
+        oncreatescene={(name) => void desktop.createScene(name)}
+        onapplyscene={(id) => void desktop.applyScene(id)}
+        onupdatescene={(id) => void desktop.updateScene(id)}
+        onrenamescene={(id, name) => void desktop.renameScene(id, name)}
+        onduplicatescene={(id) => void desktop.duplicateScene(id)}
+        ondeletescene={(id) => void desktop.deleteScene(id)}
         onreload={() => void desktop.reload()}
         oncollection={() => (activePage = "collection")}
       />

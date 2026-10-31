@@ -14,8 +14,13 @@ import {
   creatorChangesSchema,
   type DeleteReport,
   type DesktopOverlay,
+  type DesktopScene,
+  type DesktopSceneId,
+  type DesktopSceneSummary,
   deleteReportSchema,
   desktopOverlaySchema,
+  desktopSceneSchema,
+  desktopSceneSummarySchema,
   type EditRecipe,
   type EditRecipePatch,
   editRecipeSchema,
@@ -28,10 +33,13 @@ import {
   type MediaItem,
   type MediaPage,
   type MediaVariant,
+  type MonitorDescriptor,
   mediaItemSchema,
   mediaPageSchema,
   mediaVariantSchema,
+  monitorDescriptorSchema,
   type NewOverlay,
+  type OverlayBatchPatch,
   type OverlayId,
   type OverlayInstance,
   type OverlayPatch,
@@ -181,12 +189,52 @@ export function moveOverlay(
   return invokeParsed("move_overlay", overlaySchema, { id, monitorId, x, y });
 }
 
+export function moveOverlayToMonitor(id: OverlayId, monitorName: string): Promise<OverlayInstance> {
+  return invokeParsed("move_overlay_to_monitor", overlaySchema, { id, monitorName });
+}
+
 export function duplicateOverlay(id: OverlayId): Promise<OverlayInstance> {
   return invokeParsed("duplicate_overlay", overlaySchema, { id });
 }
 
 export async function removeOverlay(id: OverlayId): Promise<void> {
   await invokeParsed("remove_overlay", z.null(), { id });
+}
+
+export function listMonitors(): Promise<MonitorDescriptor[]> {
+  return invokeParsed("list_monitors", z.array(monitorDescriptorSchema));
+}
+
+export function listDesktopScenes(): Promise<DesktopSceneSummary[]> {
+  return invokeParsed("list_desktop_scenes", z.array(desktopSceneSummarySchema));
+}
+
+export function createDesktopScene(name: string): Promise<DesktopScene> {
+  return invokeParsed("create_desktop_scene", desktopSceneSchema, { name });
+}
+
+export function updateDesktopScene(id: DesktopSceneId): Promise<DesktopScene> {
+  return invokeParsed("update_desktop_scene", desktopSceneSchema, { id });
+}
+
+export function renameDesktopScene(id: DesktopSceneId, name: string): Promise<DesktopScene> {
+  return invokeParsed("rename_desktop_scene", desktopSceneSchema, { id, name });
+}
+
+export function duplicateDesktopScene(id: DesktopSceneId): Promise<DesktopScene> {
+  return invokeParsed("duplicate_desktop_scene", desktopSceneSchema, { id });
+}
+
+export async function deleteDesktopScene(id: DesktopSceneId): Promise<void> {
+  await invokeParsed("delete_desktop_scene", z.null(), { id });
+}
+
+export function applyDesktopScene(id: DesktopSceneId): Promise<OverlayInstance[]> {
+  return invokeParsed("apply_desktop_scene", z.array(overlaySchema), { id });
+}
+
+export function patchAllOverlays(patch: OverlayBatchPatch): Promise<OverlayInstance[]> {
+  return invokeParsed("patch_all_overlays", z.array(overlaySchema), { patch });
 }
 
 export function getSettings(): Promise<AppSettings> {

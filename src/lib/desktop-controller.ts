@@ -1,6 +1,12 @@
 import { listen, type UnlistenFn } from "@tauri-apps/api/event";
 import { writable } from "svelte/store";
-import { getEditRecipe, listDesktopOverlays, mediaAssetUrl } from "./api";
+import {
+  getEditRecipe,
+  listDesktopOverlays,
+  listDesktopScenes,
+  listMonitors,
+  mediaAssetUrl,
+} from "./api";
 import type { ToastTone } from "./collection-model";
 import type { DesktopOverlay, EditRecipe } from "./contracts";
 import { createDesktopActions } from "./desktop-actions";
@@ -18,10 +24,13 @@ export function createDesktopController(nativeAvailable: boolean): DesktopContro
     loading: false,
     refreshing: false,
     overlays: [],
+    scenes: [],
+    monitors: [],
     assetUrls: {},
     editRecipes: {},
     busyIds: new Set(),
     batchBusy: false,
+    sceneBusy: false,
     loadError: null,
     notice: null,
   });
@@ -88,7 +97,11 @@ export function createDesktopController(nativeAvailable: boolean): DesktopContro
       loadError: null,
     }));
     try {
-      const overlays = await listDesktopOverlays();
+      const [overlays, scenes, monitors] = await Promise.all([
+        listDesktopOverlays(),
+        listDesktopScenes(),
+        listMonitors(),
+      ]);
       const [assetUrls, editRecipes] = await Promise.all([
         resolveAssetUrls(overlays),
         resolveEditRecipes(overlays),
@@ -100,6 +113,8 @@ export function createDesktopController(nativeAvailable: boolean): DesktopContro
         loading: false,
         refreshing: false,
         overlays,
+        scenes,
+        monitors,
         assetUrls,
         editRecipes,
       }));
