@@ -31,6 +31,53 @@ pub(crate) fn show_main_window<R: Runtime>(application: &AppHandle<R>) -> tauri:
     window.set_focus()
 }
 
+fn handle_tray_menu_event(application: &AppHandle, event_id: &str) {
+    if event_id == SHOW_MENU_ID {
+        if let Err(error) = show_main_window(application) {
+            eprintln!("failed to show main window from tray: {error}");
+        }
+        return;
+    }
+    if event_id == QUIT_MENU_ID {
+        application.exit(0);
+        return;
+    }
+
+    let patch = match event_id {
+        SHOW_ALL_MENU_ID => OverlayBatchPatch {
+            is_active: Some(true),
+            ..OverlayBatchPatch::default()
+        },
+        HIDE_ALL_MENU_ID => OverlayBatchPatch {
+            is_active: Some(false),
+            ..OverlayBatchPatch::default()
+        },
+        PLAY_ALL_MENU_ID => OverlayBatchPatch {
+            is_playing: Some(true),
+            ..OverlayBatchPatch::default()
+        },
+        PAUSE_ALL_MENU_ID => OverlayBatchPatch {
+            is_playing: Some(false),
+            ..OverlayBatchPatch::default()
+        },
+        LOCK_ALL_MENU_ID => OverlayBatchPatch {
+            click_through: Some(true),
+            ..OverlayBatchPatch::default()
+        },
+        UNLOCK_ALL_MENU_ID => OverlayBatchPatch {
+            click_through: Some(false),
+            ..OverlayBatchPatch::default()
+        },
+        _ => return,
+    };
+    let application = application.clone();
+    tauri::async_runtime::spawn(async move {
+        if let Err(error) = patch_all_overlays_impl(&application, patch).await {
+            eprintln!("failed to update overlays from tray: {error:?}");
+        }
+    });
+}
+
 /// Installs the cross-platform tray or menu-bar icon and its application menu.
 pub(crate) fn install_tray(application: &AppHandle) -> tauri::Result<()> {
     let show_item = MenuItem::with_id(
@@ -106,56 +153,11 @@ pub(crate) fn install_tray(application: &AppHandle) -> tauri::Result<()> {
             &quit_item,
         ],
     )?;
-    let show_id = show_item.id().clone();
-    let quit_id = quit_item.id().clone();
-
     let mut builder = TrayIconBuilder::new()
         .menu(&menu)
         .tooltip("LumaDesk")
         .show_menu_on_left_click(false)
-        .on_menu_event(move |app, event| {
-            if event.id() == &show_id {
-                if let Err(error) = show_main_window(app) {
-                    eprintln!("failed to show main window from tray: {error}");
-                }
-            } else if event.id() == &quit_id {
-                app.exit(0);
-            } else {
-                let patch = match event.id().as_ref() {
-                    SHOW_ALL_MENU_ID => OverlayBatchPatch {
-                        is_active: Some(true),
-                        ..OverlayBatchPatch::default()
-                    },
-                    HIDE_ALL_MENU_ID => OverlayBatchPatch {
-                        is_active: Some(false),
-                        ..OverlayBatchPatch::default()
-                    },
-                    PLAY_ALL_MENU_ID => OverlayBatchPatch {
-                        is_playing: Some(true),
-                        ..OverlayBatchPatch::default()
-                    },
-                    PAUSE_ALL_MENU_ID => OverlayBatchPatch {
-                        is_playing: Some(false),
-                        ..OverlayBatchPatch::default()
-                    },
-                    LOCK_ALL_MENU_ID => OverlayBatchPatch {
-                        click_through: Some(true),
-                        ..OverlayBatchPatch::default()
-                    },
-                    UNLOCK_ALL_MENU_ID => OverlayBatchPatch {
-                        click_through: Some(false),
-                        ..OverlayBatchPatch::default()
-                    },
-                    _ => return,
-                };
-                let application = app.clone();
-                tauri::async_runtime::spawn(async move {
-                    if let Err(error) = patch_all_overlays_impl(&application, patch).await {
-                        eprintln!("failed to update overlays from tray: {error:?}");
-                    }
-                });
-            }
-        })
+        .on_menu_event(|app, event| handle_tray_menu_event(app, event.id().as_ref()))
         .on_tray_icon_event(|tray, event| match event {
             TrayIconEvent::Click {
                 button: MouseButton::Left,

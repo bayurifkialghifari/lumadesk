@@ -266,7 +266,7 @@ fn deleting_media_cascades_scene_items_but_keeps_the_scene() -> Result<(), Box<d
 
     library.delete_media(media.id)?;
 
-    assert!(library.desktop_scene(scene.id)?.items.is_empty());
+    assert_eq!(library.desktop_scene(scene.id)?.items, Vec::new());
     assert_eq!(library.list_desktop_scenes()?[0].item_count, 0);
     Ok(())
 }
@@ -316,8 +316,8 @@ fn replacing_and_batch_patching_overlays_are_atomic() -> Result<(), Box<dyn Erro
     assert!(!patched[0].is_active);
     assert!(patched[0].click_through);
 
-    assert!(library.replace_overlays(&[])?.is_empty());
-    assert!(library.list_overlays()?.is_empty());
+    assert_eq!(library.replace_overlays(&[])?, Vec::new());
+    assert_eq!(library.list_overlays()?, Vec::new());
     Ok(())
 }
 

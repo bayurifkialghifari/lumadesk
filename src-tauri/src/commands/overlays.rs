@@ -241,6 +241,10 @@ pub(crate) async fn remove_overlay(
 }
 
 #[tauri::command]
+#[expect(
+    clippy::needless_pass_by_value,
+    reason = "Tauri command injection provides AppHandle as an owned command argument"
+)]
 pub(crate) fn list_monitors(app: AppHandle) -> Result<Vec<MonitorDescriptor>, CommandError> {
     monitor_descriptors(&app)
 }
