@@ -4,6 +4,16 @@ All notable changes to LumaDesk are documented here. The project follows Semanti
 
 ## [Unreleased]
 
+## [0.7.0] - 2026-10-31
+
+### Added
+
+- Added a searchable Community Gallery backed by a versioned static catalog with author, source, license, tag, format, and installed-state metadata.
+- Added verified one-click Gallery imports and direct HTTPS URL imports through the managed, duplicate-aware media pipeline.
+- Added four original CC0 animated starter assets with offline preview and import support.
+- Added network, disk-cache, and bundled catalog fallbacks plus exact byte-size and SHA-256 verification for Gallery assets.
+- Added a strict Gallery catalog validator to local tooling and CI.
+
 ## [0.6.2] - 2026-10-31
 
 ### Added
@@ -152,7 +162,8 @@ All notable changes to LumaDesk are documented here. The project follows Semanti
 - **Active on Desktop** workspace with live instance counts, responsive cards, browser-preview states, per-instance controls, and pause-all or confirmed close-all actions.
 - GitHub Actions checks and tagged release builds for Windows x86-64 and ARM64, macOS Apple Silicon and Intel, and Linux x86-64 and ARM64.
 
-[Unreleased]: https://github.com/bayurifkialghifari/lumadesk/compare/v0.6.2...HEAD
+[Unreleased]: https://github.com/bayurifkialghifari/lumadesk/compare/v0.7.0...HEAD
+[0.7.0]: https://github.com/bayurifkialghifari/lumadesk/compare/v0.6.2...v0.7.0
 [0.6.2]: https://github.com/bayurifkialghifari/lumadesk/compare/v0.6.1...v0.6.2
 [0.6.1]: https://github.com/bayurifkialghifari/lumadesk/compare/v0.6.0...v0.6.1
 [0.6.0]: https://github.com/bayurifkialghifari/lumadesk/compare/v0.5.1...v0.6.0
