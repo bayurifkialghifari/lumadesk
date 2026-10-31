@@ -109,10 +109,10 @@ actual_rpm_architecture="$(rpm --query --package --queryformat '%{ARCH}' "$rpm_p
   exit 1
 }
 rpm_root="$temporary_directory/rpm"
-mkdir "$rpm_root"
+mkdir -p "$rpm_root/usr/bin"
 (
   cd "$rpm_root"
-  rpm2cpio "$OLDPWD/$rpm_package" | cpio --extract --make-directories --quiet
+  rpm2cpio "$OLDPWD/$rpm_package" | cpio --extract --quiet ./usr/bin/lumadesk
 )
 [[ -x "$rpm_root/usr/bin/lumadesk" ]] || {
   echo "RPM package does not contain usr/bin/lumadesk." >&2
