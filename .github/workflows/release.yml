@@ -251,10 +251,30 @@ jobs:
         if: runner.os == 'macOS'
         shell: bash
         env:
-          APPLE_CERTIFICATE: ${{ secrets.APPLE_CERTIFICATE }}
-          APPLE_ID: ${{ secrets.APPLE_ID }}
+          APPLE_CERTIFICATE_SECRET: ${{ secrets.APPLE_CERTIFICATE }}
+          APPLE_CERTIFICATE_PASSWORD_SECRET: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
+          APPLE_SIGNING_IDENTITY_SECRET: ${{ secrets.APPLE_SIGNING_IDENTITY }}
+          APPLE_ID_SECRET: ${{ secrets.APPLE_ID }}
+          APPLE_PASSWORD_SECRET: ${{ secrets.APPLE_PASSWORD }}
+          APPLE_TEAM_ID_SECRET: ${{ secrets.APPLE_TEAM_ID }}
         run: |
-          if [[ -n "$APPLE_CERTIFICATE" ]]; then
+          write_github_env() {
+            local name="$1"
+            local value="$2"
+            local delimiter="LUMADESK_$(uuidgen)"
+            {
+              printf '%s<<%s\n' "$name" "$delimiter"
+              printf '%s\n' "$value"
+              printf '%s\n' "$delimiter"
+            } >> "$GITHUB_ENV"
+          }
+
+          if [[ -n "$APPLE_CERTIFICATE_SECRET" ]]; then
+            write_github_env APPLE_CERTIFICATE "$APPLE_CERTIFICATE_SECRET"
+            write_github_env APPLE_CERTIFICATE_PASSWORD "$APPLE_CERTIFICATE_PASSWORD_SECRET"
+            if [[ -n "$APPLE_SIGNING_IDENTITY_SECRET" ]]; then
+              write_github_env APPLE_SIGNING_IDENTITY "$APPLE_SIGNING_IDENTITY_SECRET"
+            fi
             echo "MACOS_SIGNING_ENABLED=true" >> "$GITHUB_ENV"
             echo "Apple code signing is enabled."
           else
@@ -262,7 +282,10 @@ jobs:
             echo "Apple code signing is disabled."
           fi
 
-          if [[ -n "$APPLE_ID" ]]; then
+          if [[ -n "$APPLE_ID_SECRET" ]]; then
+            write_github_env APPLE_ID "$APPLE_ID_SECRET"
+            write_github_env APPLE_PASSWORD "$APPLE_PASSWORD_SECRET"
+            write_github_env APPLE_TEAM_ID "$APPLE_TEAM_ID_SECRET"
             echo "MACOS_NOTARIZATION_ENABLED=true" >> "$GITHUB_ENV"
             echo "Apple notarization is enabled."
           else
@@ -275,12 +298,6 @@ jobs:
         env:
           TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
           TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
-          APPLE_CERTIFICATE: ${{ secrets.APPLE_CERTIFICATE }}
-          APPLE_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
-          APPLE_SIGNING_IDENTITY: ${{ secrets.APPLE_SIGNING_IDENTITY }}
-          APPLE_ID: ${{ secrets.APPLE_ID }}
-          APPLE_PASSWORD: ${{ secrets.APPLE_PASSWORD }}
-          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
         with:
           args: ${{ matrix.tauri_args }} ${{ steps.windows_signing.outputs.tauri_release_args }}
 
