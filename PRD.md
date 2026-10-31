@@ -1,6 +1,6 @@
 # LumaDesk Product Requirements
 
-**Status:** v0.6.1 implementation contract
+**Status:** v0.6.2 implementation contract
 **Updated:** 31 October 2026
 
 ## Product statement
@@ -13,7 +13,7 @@ LumaDesk is a desktop animation library and editor. It organizes local media, ap
 - Artists want to prepare GIF, APNG, WebP, still-image, and sprite-sheet assets while preserving their source files.
 - Collectors want a searchable library with names, tags, favorites, duplicate detection, and predictable local ownership.
 
-## v0.6.1 outcomes
+## v0.6.2 outcomes
 
 1. Users can import GIF, APNG, animated or static WebP, PNG, and JPEG files through a native picker or drag and drop.
 2. Imported media appears in a searchable library and can be previewed, renamed, tagged, favorited, or removed.
@@ -28,6 +28,8 @@ LumaDesk is a desktop animation library and editor. It organizes local media, ap
 11. The manager and tray can show, hide, play, pause, lock, or unlock every persisted overlay in one action.
 12. Click-through overlays pass pointer input to windows below and remain recoverable from the manager and tray.
 13. Installed builds check GitHub Releases for signed updates and offer one-click installation from the title bar.
+14. Failed update downloads or installations remain recoverable through retry and direct-release actions without restarting the workspace.
+15. Release automation verifies native package identity, architecture, signatures, checksums, and the complete public asset inventory before publication.
 
 ## Functional requirements
 
@@ -102,6 +104,7 @@ LumaDesk is a desktop animation library and editor. It organizes local media, ap
 - Replace the title-bar version label with an update action when a newer signed release is available.
 - Show determinate download progress when the package size is known, install only after a user action, verify the package signature, and relaunch after installation.
 - Treat an unavailable update service as a quiet offline state and report installation failures through the standard application toast.
+- Keep a failed update available for retry, expose its GitHub Release as a manual recovery path, and preserve a restart-only action after installation when relaunch fails.
 
 ## Quality requirements
 
@@ -118,10 +121,10 @@ LumaDesk is a desktop animation library and editor. It organizes local media, ap
 - Windows x86-64 and ARM64: separate NSIS `.exe` installers.
 - macOS Apple Silicon and Intel: separate `.dmg` packages.
 - Linux x86-64 and ARM64: `.AppImage`, `.deb`, and `.rpm` packages.
-- Every tagged release includes signed native updater payloads and a static update manifest that distinguishes each platform, architecture, and Linux installer type.
+- Every tagged release includes ten signed native updater payloads, ten detached signatures, two macOS disk images, `latest.json`, and `SHA256SUMS.txt`.
 - Core library, editing, playback, and edge removal do not require an account or network connection.
 - Network access is limited to update checks, user-initiated external discovery, optional model downloads, and downloading an update after user confirmation.
-- Signing and notarization activate when repository secrets are configured.
+- Updater signing credentials are mandatory. Windows Authenticode signing, Apple code signing, and Apple notarization activate only when each complete optional credential group is configured.
 
 ## Deferred
 
@@ -133,11 +136,12 @@ LumaDesk is a desktop animation library and editor. It organizes local media, ap
 
 ## Acceptance criteria
 
-- Deterministic v0.6.1 behavior passes Rust and frontend tests.
+- Deterministic v0.6.2 behavior passes Rust and frontend tests.
 - Invalid Creator input cannot partially save an edit recipe.
 - A downloaded model must pass size and SHA-256 checks before it is reported as installed.
-- A tagged release publishes direct installer files, signed updater payloads, `latest.json`, and `SHA256SUMS.txt` for every supported target.
+- A tagged release publishes exactly 24 validated assets: ten updater payloads, ten detached signatures, two DMGs, `latest.json`, and `SHA256SUMS.txt`.
 - The tag, Cargo workspace, `package.json`, Tauri configuration, title-bar version, changelog, and release title agree.
 - Applying a scene preserves hidden state, maps missing displays to the primary monitor, and never leaves the database and native windows on different layouts.
 - A click-through overlay can always be unlocked from the management window or tray.
 - A newer valid release appears as a title-bar update action; its package is verified before installation and the app relaunches when installation completes.
+- A manual release workflow run from `main` builds and validates all six native targets without publishing a GitHub Release.
