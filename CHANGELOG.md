@@ -4,6 +4,8 @@ All notable changes to LumaDesk are documented here. The project follows Semanti
 
 ## [Unreleased]
 
+## [0.6.0] - 2026-10-31
+
 ### Added
 
 - Added startup update checks and a title-bar action that downloads, verifies, installs, and relaunches into a newer release.
@@ -129,7 +131,8 @@ All notable changes to LumaDesk are documented here. The project follows Semanti
 - **Active on Desktop** workspace with live instance counts, responsive cards, browser-preview states, per-instance controls, and pause-all or confirmed close-all actions.
 - GitHub Actions checks and tagged release builds for Windows x86-64 and ARM64, macOS Apple Silicon and Intel, and Linux x86-64 and ARM64.
 
-[Unreleased]: https://github.com/bayurifkialghifari/lumadesk/compare/v0.5.1...HEAD
+[Unreleased]: https://github.com/bayurifkialghifari/lumadesk/compare/v0.6.0...HEAD
+[0.6.0]: https://github.com/bayurifkialghifari/lumadesk/compare/v0.5.1...v0.6.0
 [0.5.1]: https://github.com/bayurifkialghifari/lumadesk/compare/v0.5.0...v0.5.1
 [0.5.0]: https://github.com/bayurifkialghifari/lumadesk/compare/v0.4.0...v0.5.0
 [0.4.0]: https://github.com/bayurifkialghifari/lumadesk/compare/v0.3.0...v0.4.0
