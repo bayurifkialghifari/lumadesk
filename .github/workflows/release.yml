@@ -79,7 +79,7 @@ jobs:
             rust_targets: x86_64-unknown-linux-gnu
             tauri_args: --target x86_64-unknown-linux-gnu --bundles appimage,deb,rpm
             artifact_paths: |
-              target/x86_64-unknown-linux-gnu/release/bundle/appimage/*.AppImage
+              target/x86_64-unknown-linux-gnu/release/bundle/appimage/*.AppImage*
               target/x86_64-unknown-linux-gnu/release/bundle/deb/*.deb
               target/x86_64-unknown-linux-gnu/release/bundle/rpm/*.rpm
           - platform: ubuntu-22.04-arm
@@ -87,29 +87,37 @@ jobs:
             rust_targets: aarch64-unknown-linux-gnu
             tauri_args: --target aarch64-unknown-linux-gnu --bundles appimage,deb,rpm
             artifact_paths: |
-              target/aarch64-unknown-linux-gnu/release/bundle/appimage/*.AppImage
+              target/aarch64-unknown-linux-gnu/release/bundle/appimage/*.AppImage*
               target/aarch64-unknown-linux-gnu/release/bundle/deb/*.deb
               target/aarch64-unknown-linux-gnu/release/bundle/rpm/*.rpm
           - platform: macos-latest
             artifact_name: macos-aarch64
             rust_targets: aarch64-apple-darwin
             tauri_args: --target aarch64-apple-darwin --bundles dmg
-            artifact_paths: target/aarch64-apple-darwin/release/bundle/dmg/*.dmg
+            artifact_paths: |
+              target/aarch64-apple-darwin/release/bundle/dmg/*.dmg
+              target/aarch64-apple-darwin/release/bundle/macos/*.app.tar.gz*
           - platform: macos-latest
             artifact_name: macos-x86_64
             rust_targets: x86_64-apple-darwin
             tauri_args: --target x86_64-apple-darwin --bundles dmg
-            artifact_paths: target/x86_64-apple-darwin/release/bundle/dmg/*.dmg
+            artifact_paths: |
+              target/x86_64-apple-darwin/release/bundle/dmg/*.dmg
+              target/x86_64-apple-darwin/release/bundle/macos/*.app.tar.gz*
           - platform: windows-latest
             artifact_name: windows-x86_64
             rust_targets: x86_64-pc-windows-msvc
             tauri_args: --target x86_64-pc-windows-msvc --bundles nsis
-            artifact_paths: target/x86_64-pc-windows-msvc/release/bundle/nsis/*.exe
+            artifact_paths: |
+              target/x86_64-pc-windows-msvc/release/bundle/nsis/*.exe
+              target/x86_64-pc-windows-msvc/release/bundle/nsis/*.nsis.zip*
           - platform: windows-latest
             artifact_name: windows-aarch64
             rust_targets: aarch64-pc-windows-msvc
             tauri_args: --target aarch64-pc-windows-msvc --bundles nsis
-            artifact_paths: target/aarch64-pc-windows-msvc/release/bundle/nsis/*.exe
+            artifact_paths: |
+              target/aarch64-pc-windows-msvc/release/bundle/nsis/*.exe
+              target/aarch64-pc-windows-msvc/release/bundle/nsis/*.nsis.zip*
 
     steps:
       - name: Check out repository
@@ -158,6 +166,9 @@ jobs:
 
       - name: Build desktop bundle
         uses: tauri-apps/tauri-action@v1
+        env:
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
         with:
           args: ${{ matrix.tauri_args }}
 
@@ -182,11 +193,15 @@ jobs:
       - name: Check out repository
         uses: actions/checkout@v7
 
+      - name: Set up Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: 24
+
       - name: Download desktop bundles
         uses: actions/download-artifact@v8
         with:
           path: release-assets
-          merge-multiple: true
 
       - name: Prepare release files and checksums
         run: |
@@ -206,6 +221,13 @@ jobs:
             echo "No release files were downloaded." >&2
             exit 1
           fi
+
+          node scripts/create-updater-manifest.mjs \
+            --artifacts release-assets \
+            --output release-files/latest.json \
+            --repository "$GITHUB_REPOSITORY" \
+            --tag "$GITHUB_REF_NAME" \
+            --version "${GITHUB_REF_NAME#v}"
 
           (
             cd release-files
