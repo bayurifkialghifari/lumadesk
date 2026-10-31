@@ -12,6 +12,43 @@
   <a href="LICENSE"><img alt="MIT License" src="https://img.shields.io/badge/license-MIT-39a8ff?style=flat-square"></a>
 </p>
 
+## See LumaDesk in action
+
+<p align="center">
+  <img alt="LumaDesk Collection with imported animations" src="docs/assets/showcase/collection.png" width="100%">
+  <br>
+  <sub><strong>Collection</strong> — keep animated media searchable, organized, and ready for the desktop.</sub>
+</p>
+
+<table>
+  <tr>
+    <td width="50%" valign="top">
+      <img alt="LumaDesk Creator Studio" src="docs/assets/showcase/creator-studio.png" width="100%">
+      <p align="center"><sub><strong>Creator Studio</strong> — shape color, framing, playback, and transparency without replacing the source.</sub></p>
+    </td>
+    <td width="50%" valign="top">
+      <img alt="LumaDesk Overlay Console" src="docs/assets/showcase/overlay-console.png" width="100%">
+      <p align="center"><sub><strong>Overlay Console</strong> — control instances, displays, scenes, playback, and interaction from one place.</sub></p>
+    </td>
+  </tr>
+  <tr>
+    <td width="50%" valign="top">
+      <img alt="LumaDesk animation details inspector" src="docs/assets/showcase/media-inspector.png" width="100%">
+      <p align="center"><sub><strong>Animation details</strong> — inspect media and send it to the desktop in one click.</sub></p>
+    </td>
+    <td width="50%" valign="top">
+      <p align="center"><img alt="LumaDesk desktop overlay controls" src="docs/assets/showcase/desktop-overlay.png" width="72%"></p>
+      <p align="center"><sub><strong>Desktop overlay</strong> — direct manipulation with controls that disappear when idle.</sub></p>
+    </td>
+  </tr>
+</table>
+
+<p align="center">
+  <img alt="LumaDesk Settings workspace" src="docs/assets/showcase/settings.png" width="100%">
+  <br>
+  <sub><strong>Settings</strong> — tune startup, overlay defaults, appearance, local storage, and optional AI models.</sub>
+</p>
+
 ## A compact studio for desktop animation
 
 LumaDesk combines a searchable media library, a non-destructive Creator Studio, and native transparent overlays in one cross-platform app. Import a GIF or image, prepare it once, then create as many independently controlled desktop instances as you want.
