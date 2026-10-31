@@ -4,6 +4,17 @@ All notable changes to LumaDesk are documented here. The project follows Semanti
 
 ## [Unreleased]
 
+## [0.5.1] - 2026-10-31
+
+### Added
+
+- Added a visual product showcase to the README with the Collection, Creator Studio, Overlay Console, animation details, desktop overlay, and Settings workspaces.
+
+### Fixed
+
+- Background removal can read GIF and image pixels from Tauri asset URLs again on Windows, macOS, and Linux.
+- Frame loading now keeps its image fallback origin-clean when bitmap decoding is unavailable.
+
 ## [0.5.0] - 2026-10-31
 
 ### Added
@@ -106,7 +117,8 @@ All notable changes to LumaDesk are documented here. The project follows Semanti
 - **Active on Desktop** workspace with live instance counts, responsive cards, browser-preview states, per-instance controls, and pause-all or confirmed close-all actions.
 - GitHub Actions checks and tagged release builds for Windows x86-64 and ARM64, macOS Apple Silicon and Intel, and Linux x86-64 and ARM64.
 
-[Unreleased]: https://github.com/bayurifkialghifari/lumadesk/compare/v0.5.0...HEAD
+[Unreleased]: https://github.com/bayurifkialghifari/lumadesk/compare/v0.5.1...HEAD
+[0.5.1]: https://github.com/bayurifkialghifari/lumadesk/compare/v0.5.0...v0.5.1
 [0.5.0]: https://github.com/bayurifkialghifari/lumadesk/compare/v0.4.0...v0.5.0
 [0.4.0]: https://github.com/bayurifkialghifari/lumadesk/compare/v0.3.0...v0.4.0
 [0.3.0]: https://github.com/bayurifkialghifari/lumadesk/compare/v0.2.1...v0.3.0
