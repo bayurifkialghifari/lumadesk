@@ -66,6 +66,9 @@ jobs:
       - name: Install frontend dependencies
         run: pnpm install --frozen-lockfile
 
+      - name: Validate Community Gallery catalog
+        run: pnpm validate:gallery
+
       - name: Check frontend types
         run: pnpm check
 
