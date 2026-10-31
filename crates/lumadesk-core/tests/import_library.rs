@@ -198,6 +198,7 @@ fn scene_item(media_id: MediaId) -> DesktopSceneItem {
         is_playing: false,
         click_through: true,
         z_order: 3,
+        is_active: false,
     }
 }
 

@@ -428,6 +428,7 @@ pub struct DesktopSceneItem {
     pub is_playing: bool,
     pub click_through: bool,
     pub z_order: i32,
+    pub is_active: bool,
 }
 
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]

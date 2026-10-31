@@ -4,7 +4,7 @@ use rusqlite::{Connection, OptionalExtension, TransactionBehavior};
 
 use crate::CoreError;
 
-pub const SCHEMA_VERSION: u32 = 4;
+pub const SCHEMA_VERSION: u32 = 5;
 
 #[derive(Debug)]
 pub(crate) struct Database {
@@ -64,6 +64,9 @@ impl Database {
         if current < 4 {
             migration_v4(&transaction)?;
         }
+        if current < 5 {
+            migration_v5(&transaction)?;
+        }
         if current < SCHEMA_VERSION {
             transaction.execute("DELETE FROM schema_version", [])?;
             transaction.execute(
@@ -92,6 +95,10 @@ fn migration_v4(transaction: &rusqlite::Transaction<'_>) -> Result<(), rusqlite:
     transaction.execute_batch(include_str!("schema_v4.sql"))
 }
 
+fn migration_v5(transaction: &rusqlite::Transaction<'_>) -> Result<(), rusqlite::Error> {
+    transaction.execute_batch(include_str!("schema_v5.sql"))
+}
+
 #[cfg(test)]
 mod tests {
     use std::error::Error;
@@ -99,7 +106,7 @@ mod tests {
     use rusqlite::Connection;
     use uuid::Uuid;
 
-    use super::{Database, migration_v1};
+    use super::{Database, migration_v1, migration_v2, migration_v3, migration_v4};
 
     #[test]
     fn migration_v2_defaults_existing_overlays_to_original_background() -> Result<(), Box<dyn Error>>
@@ -143,7 +150,7 @@ mod tests {
                 })?;
 
         assert!(!remove_background);
-        assert_eq!(version, 4);
+        assert_eq!(version, 5);
         Ok(())
     }
 
@@ -164,7 +171,7 @@ mod tests {
                 .connection
                 .query_row("SELECT version FROM schema_version", [], |row| row
                     .get::<_, u32>(0))?,
-            4
+            5
         );
         Ok(())
     }
@@ -209,7 +216,62 @@ mod tests {
                 .connection
                 .query_row("SELECT version FROM schema_version", [], |row| row
                     .get::<_, u32>(0))?,
-            4
+            5
+        );
+        Ok(())
+    }
+
+    #[test]
+    fn migration_v5_defaults_existing_scene_items_to_visible() -> Result<(), Box<dyn Error>> {
+        let mut connection = Connection::open_in_memory()?;
+        connection.execute_batch(
+            "CREATE TABLE schema_version (version INTEGER NOT NULL);
+             INSERT INTO schema_version (version) VALUES (4);",
+        )?;
+        let transaction = connection.transaction()?;
+        migration_v1(&transaction)?;
+        migration_v2(&transaction)?;
+        migration_v3(&transaction)?;
+        migration_v4(&transaction)?;
+        transaction.commit()?;
+
+        let media_id = Uuid::new_v4().to_string();
+        let scene_id = Uuid::new_v4().to_string();
+        connection.execute(
+            "INSERT INTO media_items
+             (id, content_hash, display_name, managed_path, media_kind, asset_kind, media_format,
+              width, height, frame_count, duration_ms, is_favorite, created_at, updated_at)
+             VALUES (?1, ?2, 'Fixture', 'fixture.png', 'png', 'still', 'png',
+                     4, 3, 1, 0, 0, 1, 1)",
+            rusqlite::params![media_id, "c".repeat(64)],
+        )?;
+        connection.execute(
+            "INSERT INTO desktop_scenes (id, name, created_at, updated_at)
+             VALUES (?1, 'Existing scene', 1, 1)",
+            [scene_id.clone()],
+        )?;
+        connection.execute(
+            "INSERT INTO desktop_scene_items
+             (scene_id, media_id, monitor_width, monitor_height, normalized_x, normalized_y,
+              width, opacity, speed)
+             VALUES (?1, ?2, 1920, 1080, 0.25, 0.5, 320, 1, 1)",
+            rusqlite::params![scene_id, media_id],
+        )?;
+
+        let database = Database::initialize(connection)?;
+        let is_active = database.connection.query_row(
+            "SELECT is_active FROM desktop_scene_items LIMIT 1",
+            [],
+            |row| row.get::<_, bool>(0),
+        )?;
+
+        assert!(is_active);
+        assert_eq!(
+            database
+                .connection
+                .query_row("SELECT version FROM schema_version", [], |row| row
+                    .get::<_, u32>(0))?,
+            5
         );
         Ok(())
     }

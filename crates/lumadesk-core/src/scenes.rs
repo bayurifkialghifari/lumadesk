@@ -129,7 +129,7 @@ impl Database {
         let mut statement = self.connection.prepare(
             "SELECT media_id, monitor_name, monitor_width, monitor_height, normalized_x,
                     normalized_y, width, opacity, speed, flip_horizontal, remove_background,
-                    is_playing, click_through, z_order
+                    is_playing, click_through, z_order, is_active
              FROM desktop_scene_items WHERE scene_id = ?1 ORDER BY z_order ASC, id ASC",
         )?;
         let rows = statement.query_map([id.to_string()], read_item)?;
@@ -193,6 +193,7 @@ struct RawSceneItem {
     is_playing: bool,
     click_through: bool,
     z_order: i32,
+    is_active: bool,
 }
 
 fn insert_items(
@@ -205,8 +206,8 @@ fn insert_items(
             "INSERT INTO desktop_scene_items
              (scene_id, media_id, monitor_name, monitor_width, monitor_height, normalized_x,
               normalized_y, width, opacity, speed, flip_horizontal, remove_background,
-              is_playing, click_through, z_order)
-             VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?14, ?15)",
+              is_playing, click_through, z_order, is_active)
+             VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?14, ?15, ?16)",
             params![
                 scene_id.to_string(),
                 item.media_id.to_string(),
@@ -222,7 +223,8 @@ fn insert_items(
                 item.remove_background,
                 item.is_playing,
                 item.click_through,
-                item.z_order
+                item.z_order,
+                item.is_active
             ],
         )?;
     }
@@ -302,6 +304,7 @@ fn read_item(row: &Row<'_>) -> rusqlite::Result<RawSceneItem> {
         is_playing: row.get(11)?,
         click_through: row.get(12)?,
         z_order: row.get(13)?,
+        is_active: row.get(14)?,
     })
 }
 
@@ -341,6 +344,7 @@ fn hydrate_item(raw: RawSceneItem) -> Result<DesktopSceneItem, CoreError> {
         is_playing: raw.is_playing,
         click_through: raw.click_through,
         z_order: raw.z_order,
+        is_active: raw.is_active,
     })
 }
 
