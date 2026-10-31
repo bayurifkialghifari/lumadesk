@@ -12,7 +12,9 @@ When a newer compatible release exists, the version label becomes **Update vX.Y.
 
 After the update action is pressed, the title bar shows download progress when the server provides a package size. An activity state is shown when the total size is unknown. The native updater verifies the downloaded package with the public key embedded in LumaDesk before installing it. A package with a missing or invalid signature is rejected.
 
-LumaDesk changes the title-bar status to **Installing** after the download completes. Successful installation relaunches the application into the new version. If downloading or installation fails, the update action becomes available again and an English error toast asks the user to retry. If installation succeeds but the operating system prevents the relaunch, the title bar shows **Restart to finish update** so the relaunch can be retried without downloading the package again.
+LumaDesk changes the title-bar status to **Installing** after the download completes. Successful installation relaunches the application into the new version. If downloading or installation fails, the discovered release stays available and an English error toast explains the failure. The title-bar control then offers **Retry update** and **Download manually**; retry repeats the signed installation path, while manual download opens the matching GitHub Release in the system browser. If installation succeeds but the operating system prevents the relaunch, the title bar shows **Restart to finish update** so relaunch can be retried without downloading the package again.
+
+Closing or hiding the management window does not allow a late update request to overwrite a newer state. When the window is restored, the updater can check again normally.
 
 ## Release source
 

@@ -57,7 +57,7 @@ When **Follow system** is selected, the dark tokens remain active for a dark ope
 
 - The top title strip is 40 px and reserves native drag regions.
 - Its right edge contains Minimize, Maximize/Restore, and Close controls with familiar desktop hover states.
-- The current version sits immediately before the window controls. When a signed update is available, that quiet label becomes a compact **Update vX.Y.Z** action in the same space. Download progress replaces the action label until installation begins.
+- The current version sits immediately before the window controls. When a signed update is available, that quiet label becomes a compact **Update vX.Y.Z** action in the same space. Download progress replaces the action label until installation begins. A recoverable failure exposes **Retry update** and **Download manually** actions; a completed install that could not relaunch exposes **Restart to finish update**.
 - Closing the main window hides it to the system tray or menu bar by default. The tray menu uses the application icon and exposes **Show LumaDesk** and **Quit LumaDesk**; a supported left click restores and focuses the window.
 - The left rail is fixed on desktop and becomes a bottom navigation bar below 760 px.
 - The main content column owns vertical scrolling. Navigation and inspector stay fixed within the viewport.
@@ -80,7 +80,7 @@ When **Follow system** is selected, the dark tokens remain active for a dark ope
 - **Toast:** status icon and one sentence; errors may add a single recovery action.
 - **EmptyState:** original LumaDesk mark, direct explanation, one primary action.
 - **GlobalActionBar:** horizontally scrollable desktop-wide controls grouped by visibility, playback, interaction, and destructive actions.
-- **UpdateAction:** a compact title-bar control with available, downloading, and installing states. It uses the brand tonal surface, a download or progress glyph, explicit text, and an accessible status label.
+- **UpdateAction:** a compact title-bar control with available, downloading, installing, failed, and restart-required states. It uses the brand tonal surface, a download or progress glyph, explicit text, and an accessible status label.
 - **SceneManager:** compact save form, selectable scene list, selected-scene actions, and inline confirmation for deletion.
 - **StateBadge:** short text plus status color for visible, hidden, playing, paused, and locked states.
 
@@ -92,7 +92,7 @@ When **Follow system** is selected, the dark tokens remain active for a dark ope
 - Reduced-motion mode reveals overlay edit chrome with opacity only.
 - Dragging an overlay has no easing; releasing it uses a subtle 120 ms settle only if clamped to a visible boundary.
 - Import progress is determinate when byte progress exists and indeterminate otherwise.
-- Update checks run without interrupting the workspace. Installation starts only after the user presses the title-bar update action; known download size produces integer progress, and an unknown size uses a short activity label.
+- Update checks run without interrupting the workspace. Installation starts only after the user presses the title-bar update action; known download size produces integer progress, and an unknown size uses a short activity label. Failed operations return focus to a retry action and keep a direct-release fallback in the same control.
 - Reduced-motion mode removes translation and scale while keeping short opacity changes.
 - Destructive operations always require explicit confirmation and return focus to a logical element afterward.
 
