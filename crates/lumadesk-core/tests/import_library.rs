@@ -260,7 +260,7 @@ fn edit_recipes_and_sprite_metadata_preserve_imported_source() -> Result<(), Box
 
     assert_eq!(fs::read(&source)?, source_bytes);
     assert_eq!(fs::read(&managed_path)?, managed_bytes);
-    assert!(library.media_variants(item.id)?.is_empty());
+    assert_eq!(library.media_variants(item.id)?, Vec::new());
 
     library.clear_sprite_sequence(item.id)?;
     assert_eq!(library.sprite_sequence(item.id)?, None);
