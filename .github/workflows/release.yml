@@ -15,12 +15,24 @@ concurrency:
 
 env:
   CARGO_TERM_COLOR: always
+  TAURI_RELEASE_ARGS: ""
 
 jobs:
-  verify-version:
-    name: Verify release version
+  verify-release:
+    name: Verify release configuration
     runs-on: ubuntu-latest
     timeout-minutes: 10
+    env:
+      TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+      TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
+      WINDOWS_CERTIFICATE: ${{ secrets.WINDOWS_CERTIFICATE }}
+      WINDOWS_CERTIFICATE_PASSWORD: ${{ secrets.WINDOWS_CERTIFICATE_PASSWORD }}
+      APPLE_CERTIFICATE: ${{ secrets.APPLE_CERTIFICATE }}
+      APPLE_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
+      APPLE_SIGNING_IDENTITY: ${{ secrets.APPLE_SIGNING_IDENTITY }}
+      APPLE_ID: ${{ secrets.APPLE_ID }}
+      APPLE_PASSWORD: ${{ secrets.APPLE_PASSWORD }}
+      APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
 
     steps:
       - name: Check out repository
@@ -31,13 +43,26 @@ jobs:
         with:
           node-version: 24
 
-      - name: Check application and tag versions
+      - name: Check versions and signing groups
         run: |
           node --input-type=module <<'NODE'
           import { readFileSync } from "node:fs";
 
-          const tag = process.env.GITHUB_REF_NAME;
-          const refType = process.env.GITHUB_REF_TYPE;
+          const present = (name) => (process.env[name] ?? "").trim().length > 0;
+          const requireAll = (names, label) => {
+            const configured = names.filter(present);
+            if (configured.length !== names.length) {
+              throw new Error(label + " requires " + names.join(", ") + ".");
+            }
+          };
+          const requireAllOrNone = (names, label) => {
+            const configured = names.filter(present);
+            if (configured.length > 0 && configured.length !== names.length) {
+              throw new Error(label + " must configure all of " + names.join(", ") + " or none of them.");
+            }
+            return configured.length === names.length;
+          };
+
           const packageVersion = JSON.parse(readFileSync("package.json", "utf8")).version;
           const tauriVersion = JSON.parse(
             readFileSync("src-tauri/tauri.conf.json", "utf8"),
@@ -49,25 +74,60 @@ jobs:
 
           if (tauriVersion !== packageVersion || cargoVersion !== packageVersion) {
             throw new Error(
-              `Application versions do not match: package=${packageVersion}, tauri=${tauriVersion}, cargo=${cargoVersion}.`,
+              "Application versions do not match: package=" + packageVersion +
+                ", tauri=" + tauriVersion + ", cargo=" + cargoVersion + ".",
             );
           }
 
-          if (refType === "tag") {
-            if (!/^v\d+\.\d+\.\d+$/.test(tag)) {
-              throw new Error(`Tag ${tag} must use the vMAJOR.MINOR.PATCH format.`);
+          const refName = process.env.GITHUB_REF_NAME ?? "";
+          if (process.env.GITHUB_REF_TYPE === "tag") {
+            if (!/^v\d+\.\d+\.\d+$/.test(refName)) {
+              throw new Error("Tag " + refName + " must use vMAJOR.MINOR.PATCH.");
             }
-
-            const expectedTag = `v${packageVersion}`;
-            if (tag !== expectedTag) {
-              throw new Error(`Tag ${tag} must match the application version ${expectedTag}.`);
+            if (refName !== "v" + packageVersion) {
+              throw new Error(
+                "Tag " + refName + " must match application version v" + packageVersion + ".",
+              );
             }
+          } else if (
+            process.env.GITHUB_EVENT_NAME !== "workflow_dispatch" ||
+            refName !== "main"
+          ) {
+            throw new Error("Manual release validation must run from main.");
           }
+
+          requireAll(
+            ["TAURI_SIGNING_PRIVATE_KEY", "TAURI_SIGNING_PRIVATE_KEY_PASSWORD"],
+            "Updater signing",
+          );
+          const windowsSigning = requireAllOrNone(
+            ["WINDOWS_CERTIFICATE", "WINDOWS_CERTIFICATE_PASSWORD"],
+            "Windows Authenticode signing",
+          );
+          const appleSigning = requireAllOrNone(
+            ["APPLE_CERTIFICATE", "APPLE_CERTIFICATE_PASSWORD"],
+            "Apple code signing",
+          );
+          const appleNotarization = requireAllOrNone(
+            ["APPLE_ID", "APPLE_PASSWORD", "APPLE_TEAM_ID"],
+            "Apple notarization",
+          );
+          if (present("APPLE_SIGNING_IDENTITY") && !appleSigning) {
+            throw new Error("APPLE_SIGNING_IDENTITY requires Apple code-signing credentials.");
+          }
+          if (appleNotarization && !appleSigning) {
+            throw new Error("Apple notarization requires Apple code-signing credentials.");
+          }
+
+          console.log("Updater signing: enabled");
+          console.log("Windows Authenticode signing: " + (windowsSigning ? "enabled" : "disabled"));
+          console.log("Apple code signing: " + (appleSigning ? "enabled" : "disabled"));
+          console.log("Apple notarization: " + (appleNotarization ? "enabled" : "disabled"));
           NODE
 
   build:
     name: Build ${{ matrix.artifact_name }}
-    needs: verify-version
+    needs: verify-release
     runs-on: ${{ matrix.platform }}
     timeout-minutes: 90
     strategy:
@@ -76,7 +136,8 @@ jobs:
         include:
           - platform: ubuntu-22.04
             artifact_name: linux-x86_64
-            rust_targets: x86_64-unknown-linux-gnu
+            architecture: x86_64
+            rust_target: x86_64-unknown-linux-gnu
             tauri_args: --target x86_64-unknown-linux-gnu --bundles appimage,deb,rpm
             artifact_paths: |
               target/x86_64-unknown-linux-gnu/release/bundle/appimage/*.AppImage*
@@ -84,7 +145,8 @@ jobs:
               target/x86_64-unknown-linux-gnu/release/bundle/rpm/*.rpm*
           - platform: ubuntu-22.04-arm
             artifact_name: linux-aarch64
-            rust_targets: aarch64-unknown-linux-gnu
+            architecture: aarch64
+            rust_target: aarch64-unknown-linux-gnu
             tauri_args: --target aarch64-unknown-linux-gnu --bundles appimage,deb,rpm
             artifact_paths: |
               target/aarch64-unknown-linux-gnu/release/bundle/appimage/*.AppImage*
@@ -92,7 +154,8 @@ jobs:
               target/aarch64-unknown-linux-gnu/release/bundle/rpm/*.rpm*
           - platform: macos-latest
             artifact_name: macos-aarch64
-            rust_targets: aarch64-apple-darwin
+            architecture: aarch64
+            rust_target: aarch64-apple-darwin
             tauri_args: --target aarch64-apple-darwin --bundles app,dmg
             updater_archive_name: LumaDesk_aarch64.app.tar.gz
             artifact_paths: |
@@ -100,7 +163,8 @@ jobs:
               target/aarch64-apple-darwin/release/bundle/macos/LumaDesk_aarch64.app.tar.gz*
           - platform: macos-latest
             artifact_name: macos-x86_64
-            rust_targets: x86_64-apple-darwin
+            architecture: x86_64
+            rust_target: x86_64-apple-darwin
             tauri_args: --target x86_64-apple-darwin --bundles app,dmg
             updater_archive_name: LumaDesk_x86_64.app.tar.gz
             artifact_paths: |
@@ -108,13 +172,15 @@ jobs:
               target/x86_64-apple-darwin/release/bundle/macos/LumaDesk_x86_64.app.tar.gz*
           - platform: windows-latest
             artifact_name: windows-x86_64
-            rust_targets: x86_64-pc-windows-msvc
+            architecture: x86_64
+            rust_target: x86_64-pc-windows-msvc
             tauri_args: --target x86_64-pc-windows-msvc --bundles nsis
             artifact_paths: |
               target/x86_64-pc-windows-msvc/release/bundle/nsis/*.exe*
           - platform: windows-latest
             artifact_name: windows-aarch64
-            rust_targets: aarch64-pc-windows-msvc
+            architecture: aarch64
+            rust_target: aarch64-pc-windows-msvc
             tauri_args: --target aarch64-pc-windows-msvc --bundles nsis
             artifact_paths: |
               target/aarch64-pc-windows-msvc/release/bundle/nsis/*.exe*
@@ -129,6 +195,7 @@ jobs:
           sudo apt-get update
           sudo apt-get install --yes \
             build-essential \
+            cpio \
             curl \
             file \
             libayatana-appindicator3-dev \
@@ -137,6 +204,7 @@ jobs:
             libwebkit2gtk-4.1-dev \
             libxdo-dev \
             patchelf \
+            rpm \
             wget
 
       - name: Set up Node.js
@@ -153,7 +221,7 @@ jobs:
       - name: Set up Rust
         uses: dtolnay/rust-toolchain@stable
         with:
-          targets: ${{ matrix.rust_targets }}
+          targets: ${{ matrix.rust_target }}
 
       - name: Restore Rust cache
         uses: Swatinem/rust-cache@v2
@@ -164,19 +232,61 @@ jobs:
       - name: Install frontend dependencies
         run: pnpm install --frozen-lockfile
 
+      - name: Read application version
+        shell: bash
+        run: echo "APP_VERSION=$(node -p \"require('./package.json').version\")" >> "$GITHUB_ENV"
+
+      - name: Prepare Windows Authenticode signing
+        id: windows_signing
+        if: runner.os == 'Windows'
+        shell: pwsh
+        env:
+          WINDOWS_CERTIFICATE: ${{ secrets.WINDOWS_CERTIFICATE }}
+          WINDOWS_CERTIFICATE_PASSWORD: ${{ secrets.WINDOWS_CERTIFICATE_PASSWORD }}
+        run: scripts/prepare-windows-signing.ps1
+
+      - name: Prepare Apple trust signing
+        if: runner.os == 'macOS'
+        shell: bash
+        env:
+          APPLE_CERTIFICATE: ${{ secrets.APPLE_CERTIFICATE }}
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+        run: |
+          if [[ -n "$APPLE_CERTIFICATE" ]]; then
+            echo "MACOS_SIGNING_ENABLED=true" >> "$GITHUB_ENV"
+            echo "Apple code signing is enabled."
+          else
+            echo "MACOS_SIGNING_ENABLED=false" >> "$GITHUB_ENV"
+            echo "Apple code signing is disabled."
+          fi
+
+          if [[ -n "$APPLE_ID" ]]; then
+            echo "MACOS_NOTARIZATION_ENABLED=true" >> "$GITHUB_ENV"
+            echo "Apple notarization is enabled."
+          else
+            echo "MACOS_NOTARIZATION_ENABLED=false" >> "$GITHUB_ENV"
+            echo "Apple notarization is disabled."
+          fi
+
       - name: Build desktop bundle
         uses: tauri-apps/tauri-action@v1
         env:
           TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
           TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
+          APPLE_CERTIFICATE: ${{ secrets.APPLE_CERTIFICATE }}
+          APPLE_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
+          APPLE_SIGNING_IDENTITY: ${{ secrets.APPLE_SIGNING_IDENTITY }}
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+          APPLE_PASSWORD: ${{ secrets.APPLE_PASSWORD }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
         with:
-          args: ${{ matrix.tauri_args }}
+          args: ${{ matrix.tauri_args }} ${{ steps.windows_signing.outputs.tauri_release_args }}
 
       - name: Name macOS updater archive
         if: runner.os == 'macOS'
         shell: bash
         env:
-          RUST_TARGET: ${{ matrix.rust_targets }}
+          RUST_TARGET: ${{ matrix.rust_target }}
           UPDATER_ARCHIVE_NAME: ${{ matrix.updater_archive_name }}
         run: |
           set -euo pipefail
@@ -188,13 +298,39 @@ jobs:
           fi
 
           archive="$(find "$bundle_directory" -maxdepth 1 -type f -name '*.app.tar.gz' -print)"
-          if [[ ! -f "$archive.sig" ]]; then
-            echo "Missing updater signature for $archive." >&2
-            exit 1
-          fi
-
+          [[ -s "$archive.sig" ]] || { echo "Missing updater signature for $archive." >&2; exit 1; }
           mv "$archive" "$bundle_directory/$UPDATER_ARCHIVE_NAME"
           mv "$archive.sig" "$bundle_directory/$UPDATER_ARCHIVE_NAME.sig"
+
+      - name: Verify Linux packages
+        if: runner.os == 'Linux'
+        shell: bash
+        run: scripts/verify-linux-package.sh "${{ matrix.rust_target }}" "${{ matrix.architecture }}" "$APP_VERSION"
+
+      - name: Verify macOS packages
+        if: runner.os == 'macOS'
+        shell: bash
+        run: >-
+          scripts/verify-macos-package.sh
+          "${{ matrix.rust_target }}"
+          "${{ matrix.architecture }}"
+          "$APP_VERSION"
+          "$MACOS_SIGNING_ENABLED"
+          "$MACOS_NOTARIZATION_ENABLED"
+
+      - name: Verify Windows package
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          $arguments = @{
+            Target = "${{ matrix.rust_target }}"
+            Architecture = "${{ matrix.architecture }}"
+            Version = $env:APP_VERSION
+          }
+          if ($env:WINDOWS_SIGNING_ENABLED -eq "true") {
+            $arguments.RequireAuthenticode = $true
+          }
+          & scripts/verify-windows-package.ps1 @arguments
 
       - name: Store desktop bundle
         uses: actions/upload-artifact@v7
@@ -204,14 +340,11 @@ jobs:
           if-no-files-found: error
           compression-level: 0
 
-  publish:
-    name: Publish GitHub release
+  assemble:
+    name: Assemble and validate release
     needs: build
-    if: startsWith(github.ref, 'refs/tags/v')
     runs-on: ubuntu-latest
     timeout-minutes: 15
-    permissions:
-      contents: write
 
     steps:
       - name: Check out repository
@@ -225,48 +358,101 @@ jobs:
       - name: Download desktop bundles
         uses: actions/download-artifact@v8
         with:
-          path: release-assets
+          path: release-artifacts
 
-      - name: Prepare release files and checksums
+      - name: Read release identity
         run: |
-          set -euo pipefail
-          mkdir release-files
+          version="$(node -p "require('./package.json').version")"
+          echo "RELEASE_VERSION=$version" >> "$GITHUB_ENV"
+          echo "RELEASE_TAG=v$version" >> "$GITHUB_ENV"
 
-          while IFS= read -r -d '' asset; do
-            destination="release-files/$(basename "$asset")"
-            if [[ -e "$destination" ]]; then
-              echo "Duplicate release filename: $destination" >&2
-              exit 1
-            fi
-            cp "$asset" "$destination"
-          done < <(find release-assets -type f -print0)
+      - name: Assemble release files
+        run: >-
+          node scripts/assemble-release.mjs
+          --artifacts release-artifacts
+          --output release-files
+          --repository "$GITHUB_REPOSITORY"
+          --tag "$RELEASE_TAG"
+          --version "$RELEASE_VERSION"
 
-          if ! find release-files -type f -print -quit | grep -q .; then
-            echo "No release files were downloaded." >&2
+      - name: Validate release files
+        run: >-
+          node scripts/validate-release.mjs
+          --directory release-files
+          --repository "$GITHUB_REPOSITORY"
+          --tag "$RELEASE_TAG"
+          --version "$RELEASE_VERSION"
+
+      - name: Store release-ready assets
+        uses: actions/upload-artifact@v7
+        with:
+          name: release-ready
+          path: release-files
+          if-no-files-found: error
+          compression-level: 0
+          retention-days: 7
+
+  publish:
+    name: Publish verified GitHub release
+    needs: assemble
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: write
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v7
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: 24
+
+      - name: Download release-ready assets
+        uses: actions/download-artifact@v8
+        with:
+          name: release-ready
+          path: release-files
+
+      - name: Validate release-ready assets
+        run: >-
+          node scripts/validate-release.mjs
+          --directory release-files
+          --repository "$GITHUB_REPOSITORY"
+          --tag "$GITHUB_REF_NAME"
+          --version "${GITHUB_REF_NAME#v}"
+
+      - name: Create draft release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if gh release view "$GITHUB_REF_NAME" >/dev/null 2>&1; then
+            echo "A GitHub Release already exists for $GITHUB_REF_NAME." >&2
             exit 1
           fi
+          mapfile -d '' assets < <(find release-files -maxdepth 1 -type f -print0 | sort -z)
+          gh release create "$GITHUB_REF_NAME" "${assets[@]}" \
+            --draft \
+            --generate-notes \
+            --title "LumaDesk ${GITHUB_REF_NAME#v}" \
+            --verify-tag
 
-          node scripts/create-updater-manifest.mjs \
-            --artifacts release-assets \
-            --output release-files/latest.json \
+      - name: Download and revalidate draft assets
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          mkdir downloaded-release
+          gh release download "$GITHUB_REF_NAME" --dir downloaded-release
+          node scripts/validate-release.mjs \
+            --directory release-files \
+            --compare downloaded-release \
             --repository "$GITHUB_REPOSITORY" \
             --tag "$GITHUB_REF_NAME" \
             --version "${GITHUB_REF_NAME#v}"
 
-          (
-            cd release-files
-            find . -maxdepth 1 -type f ! -name SHA256SUMS.txt -printf '%P\0' \
-              | sort -z \
-              | xargs -0 sha256sum > SHA256SUMS.txt
-          )
-
-      - name: Create GitHub release
+      - name: Publish draft release
         env:
           GH_TOKEN: ${{ github.token }}
-        run: |
-          set -euo pipefail
-          mapfile -d '' assets < <(find release-files -maxdepth 1 -type f -print0 | sort -z)
-          gh release create "$GITHUB_REF_NAME" "${assets[@]}" \
-            --generate-notes \
-            --title "LumaDesk ${GITHUB_REF_NAME#v}" \
-            --verify-tag
+        run: gh release edit "$GITHUB_REF_NAME" --draft=false

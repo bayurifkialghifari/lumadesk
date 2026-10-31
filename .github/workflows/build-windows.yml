@@ -12,20 +12,26 @@ concurrency:
 
 env:
   CARGO_TERM_COLOR: always
+  TAURI_RELEASE_ARGS: ""
 
 jobs:
   build:
     name: Build Windows ${{ matrix.label }}
     runs-on: windows-latest
     timeout-minutes: 90
+    env:
+      TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+      TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
     strategy:
       fail-fast: false
       matrix:
         include:
           - label: x86_64
+            architecture: x86_64
             target: x86_64-pc-windows-msvc
             artifact_name: lumadesk-windows-x86_64
           - label: ARM64
+            architecture: aarch64
             target: aarch64-pc-windows-msvc
             artifact_name: lumadesk-windows-aarch64
 
@@ -58,10 +64,47 @@ jobs:
       - name: Install frontend dependencies
         run: pnpm install --frozen-lockfile
 
+      - name: Verify updater signing credentials
+        shell: pwsh
+        run: |
+          if (
+            [string]::IsNullOrWhiteSpace($env:TAURI_SIGNING_PRIVATE_KEY) -or
+            [string]::IsNullOrWhiteSpace($env:TAURI_SIGNING_PRIVATE_KEY_PASSWORD)
+          ) {
+            throw "Windows packages require TAURI_SIGNING_PRIVATE_KEY and TAURI_SIGNING_PRIVATE_KEY_PASSWORD."
+          }
+
+      - name: Read application version
+        shell: pwsh
+        run: |
+          $version = node -p "require('./package.json').version"
+          "APP_VERSION=$version" | Out-File -FilePath $env:GITHUB_ENV -Append
+
+      - name: Prepare optional Authenticode signing
+        id: windows_signing
+        shell: pwsh
+        env:
+          WINDOWS_CERTIFICATE: ${{ secrets.WINDOWS_CERTIFICATE }}
+          WINDOWS_CERTIFICATE_PASSWORD: ${{ secrets.WINDOWS_CERTIFICATE_PASSWORD }}
+        run: scripts/prepare-windows-signing.ps1
+
       - name: Build Windows bundle
         uses: tauri-apps/tauri-action@v1
         with:
-          args: --target ${{ matrix.target }} --bundles nsis
+          args: --target ${{ matrix.target }} --bundles nsis ${{ steps.windows_signing.outputs.tauri_release_args }}
+
+      - name: Verify Windows package
+        shell: pwsh
+        run: |
+          $arguments = @{
+            Target = "${{ matrix.target }}"
+            Architecture = "${{ matrix.architecture }}"
+            Version = $env:APP_VERSION
+          }
+          if ($env:WINDOWS_SIGNING_ENABLED -eq "true") {
+            $arguments.RequireAuthenticode = $true
+          }
+          & scripts/verify-windows-package.ps1 @arguments
 
       - name: Store Windows bundle
         uses: actions/upload-artifact@v7
@@ -69,7 +112,7 @@ jobs:
           name: ${{ matrix.artifact_name }}
           path: |
             target/${{ matrix.target }}/release/lumadesk.exe
-            target/${{ matrix.target }}/release/bundle/nsis/*.exe
+            target/${{ matrix.target }}/release/bundle/nsis/*.exe*
           if-no-files-found: error
           compression-level: 0
 

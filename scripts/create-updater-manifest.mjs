@@ -1,39 +1,12 @@
-import { mkdir, readFile, readdir, writeFile } from "node:fs/promises";
+import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { basename, dirname, join, resolve } from "node:path";
 import { pathToFileURL } from "node:url";
-
-const targets = [
-  { directory: "linux-x86_64", platform: "linux-x86_64-appimage", suffix: ".AppImage" },
-  { directory: "linux-x86_64", platform: "linux-x86_64-deb", suffix: ".deb" },
-  { directory: "linux-x86_64", platform: "linux-x86_64-rpm", suffix: ".rpm" },
-  { directory: "linux-aarch64", platform: "linux-aarch64-appimage", suffix: ".AppImage" },
-  { directory: "linux-aarch64", platform: "linux-aarch64-deb", suffix: ".deb" },
-  { directory: "linux-aarch64", platform: "linux-aarch64-rpm", suffix: ".rpm" },
-  { directory: "macos-aarch64", platform: "darwin-aarch64-app", suffix: ".app.tar.gz" },
-  { directory: "macos-x86_64", platform: "darwin-x86_64-app", suffix: ".app.tar.gz" },
-  { directory: "windows-x86_64", platform: "windows-x86_64-nsis", suffix: ".exe" },
-  { directory: "windows-aarch64", platform: "windows-aarch64-nsis", suffix: ".exe" },
-];
-
-async function listFiles(directory) {
-  const entries = await readdir(directory, { withFileTypes: true });
-  const nested = await Promise.all(
-    entries.map((entry) => {
-      const path = join(directory, entry.name);
-      return entry.isDirectory() ? listFiles(path) : [path];
-    }),
-  );
-  return nested.flat();
-}
-
-function requiredArgument(args, name) {
-  const index = args.indexOf(name);
-  const value = index === -1 ? undefined : args[index + 1];
-  if (value === undefined || value.startsWith("--")) {
-    throw new Error(`Missing required argument ${name}.`);
-  }
-  return value;
-}
+import { RELEASE_TARGETS } from "./release-targets.mjs";
+import {
+  listFiles,
+  requiredArgument,
+  validateReleaseIdentity,
+} from "./release-utils.mjs";
 
 export async function createUpdaterManifest({
   artifactsDirectory,
@@ -43,30 +16,28 @@ export async function createUpdaterManifest({
   version,
   pubDate = new Date().toISOString(),
 }) {
-  if (!/^[^/\s]+\/[^/\s]+$/.test(repository)) {
-    throw new Error(`Invalid GitHub repository ${repository}.`);
-  }
-  if (tag !== `v${version}`) {
-    throw new Error(`Tag ${tag} does not match version ${version}.`);
-  }
+  validateReleaseIdentity({ repository, tag, version });
 
   const platforms = {};
   const payloadNames = new Set();
 
-  for (const target of targets) {
-    const targetDirectory = join(artifactsDirectory, target.directory);
+  for (const target of RELEASE_TARGETS) {
+    const targetDirectory = join(artifactsDirectory, target.artifactDirectory);
     const files = await listFiles(targetDirectory);
-    const payloads = files.filter((file) => file.endsWith(target.suffix));
+    const expectedName = target.payloadName(version);
+    const payloads = files.filter((file) => basename(file) === expectedName);
     if (payloads.length !== 1) {
       throw new Error(
-        `Expected exactly one ${target.suffix} updater payload in ${target.directory}, found ${payloads.length}.`,
+        `Expected exactly one updater payload ${expectedName} in ${target.artifactDirectory}, found ${payloads.length}.`,
       );
     }
 
     const payload = payloads[0];
     const signaturePath = `${payload}.sig`;
     if (!files.includes(signaturePath)) {
-      throw new Error(`Missing updater signature ${basename(signaturePath)} in ${target.directory}.`);
+      throw new Error(
+        `Missing updater signature ${basename(signaturePath)} in ${target.artifactDirectory}.`,
+      );
     }
 
     const payloadName = basename(payload);
