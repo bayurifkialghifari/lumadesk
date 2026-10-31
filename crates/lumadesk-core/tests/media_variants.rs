@@ -109,7 +109,7 @@ fn sprite_changes_remove_cached_masks_and_variant_records() -> Result<(), Box<dy
     })?;
 
     assert!(!data_root.join(relative_path).exists());
-    assert!(library.media_variants(item.id)?.is_empty());
+    assert_eq!(library.media_variants(item.id)?, Vec::new());
     Ok(())
 }
 
@@ -128,7 +128,7 @@ fn clearing_generated_cache_removes_mask_files_and_records() -> Result<(), Box<d
     library.clear_generated_cache()?;
 
     assert!(data_root.join("masks").read_dir()?.next().is_none());
-    assert!(library.media_variants(item.id)?.is_empty());
+    assert_eq!(library.media_variants(item.id)?, Vec::new());
     assert!(library.managed_media_path(item.id)?.is_file());
     Ok(())
 }
