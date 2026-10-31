@@ -2341,7 +2341,7 @@ checksum = "4050469837a6ff301cd14c1f8f24f88549e6d548f24f64e2148eb0f72cebc51f"
 
 [[package]]
 name = "lumadesk"
-version = "0.4.0"
+version = "0.5.0"
 dependencies = [
  "async-lock",
  "chrono",
@@ -2363,7 +2363,7 @@ dependencies = [
 
 [[package]]
 name = "lumadesk-core"
-version = "0.4.0"
+version = "0.5.0"
 dependencies = [
  "chrono",
  "image",
