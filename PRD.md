@@ -1,6 +1,6 @@
 # LumaDesk Product Requirements
 
-**Status:** v0.6.0 implementation contract
+**Status:** v0.6.1 implementation contract
 **Updated:** 31 October 2026
 
 ## Product statement
@@ -13,7 +13,7 @@ LumaDesk is a desktop animation library and editor. It organizes local media, ap
 - Artists want to prepare GIF, APNG, WebP, still-image, and sprite-sheet assets while preserving their source files.
 - Collectors want a searchable library with names, tags, favorites, duplicate detection, and predictable local ownership.
 
-## v0.6.0 outcomes
+## v0.6.1 outcomes
 
 1. Users can import GIF, APNG, animated or static WebP, PNG, and JPEG files through a native picker or drag and drop.
 2. Imported media appears in a searchable library and can be previewed, renamed, tagged, favorited, or removed.
@@ -133,7 +133,7 @@ LumaDesk is a desktop animation library and editor. It organizes local media, ap
 
 ## Acceptance criteria
 
-- Deterministic v0.6.0 behavior passes Rust and frontend tests.
+- Deterministic v0.6.1 behavior passes Rust and frontend tests.
 - Invalid Creator input cannot partially save an edit recipe.
 - A downloaded model must pass size and SHA-256 checks before it is reported as installed.
 - A tagged release publishes direct installer files, signed updater payloads, `latest.json`, and `SHA256SUMS.txt` for every supported target.

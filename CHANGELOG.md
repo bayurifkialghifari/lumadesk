@@ -4,6 +4,8 @@ All notable changes to LumaDesk are documented here. The project follows Semanti
 
 ## [Unreleased]
 
+## [0.6.1] - 2026-10-31
+
 ### Fixed
 
 - Release feeds now map Windows NSIS, Linux AppImage, Debian, RPM, and macOS application packages to their matching signed native payloads.
@@ -136,7 +138,8 @@ All notable changes to LumaDesk are documented here. The project follows Semanti
 - **Active on Desktop** workspace with live instance counts, responsive cards, browser-preview states, per-instance controls, and pause-all or confirmed close-all actions.
 - GitHub Actions checks and tagged release builds for Windows x86-64 and ARM64, macOS Apple Silicon and Intel, and Linux x86-64 and ARM64.
 
-[Unreleased]: https://github.com/bayurifkialghifari/lumadesk/compare/v0.6.0...HEAD
+[Unreleased]: https://github.com/bayurifkialghifari/lumadesk/compare/v0.6.1...HEAD
+[0.6.1]: https://github.com/bayurifkialghifari/lumadesk/compare/v0.6.0...v0.6.1
 [0.6.0]: https://github.com/bayurifkialghifari/lumadesk/compare/v0.5.1...v0.6.0
 [0.5.1]: https://github.com/bayurifkialghifari/lumadesk/compare/v0.5.0...v0.5.1
 [0.5.0]: https://github.com/bayurifkialghifari/lumadesk/compare/v0.4.0...v0.5.0
