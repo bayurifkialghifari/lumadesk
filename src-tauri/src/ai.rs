@@ -445,8 +445,8 @@ impl AiModelManager {
             .and_then(|model| {
                 model.with_input_fact(0, f32::fact([1, 3, MODEL_SIZE, MODEL_SIZE]).into())
             })
-            .and_then(|model| model.into_optimized())
-            .and_then(|model| model.into_runnable())
+            .and_then(InferenceModelExt::into_optimized)
+            .and_then(IntoRunnable::into_runnable)
             .map_err(|error| AiError::Inference(error.to_string()))?;
         self.runners
             .lock()
@@ -707,7 +707,11 @@ fn infer_mask(
     save_mask_atomically(&mask, output)
 }
 
-#[allow(clippy::cast_possible_truncation, clippy::cast_sign_loss)]
+#[expect(
+    clippy::cast_possible_truncation,
+    clippy::cast_sign_loss,
+    reason = "the value is clamped to the full u8 alpha range before conversion"
+)]
 fn alpha_byte(value: f32) -> u8 {
     (value.clamp(0.0, 1.0) * 255.0).round() as u8
 }

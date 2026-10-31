@@ -61,6 +61,10 @@ pub(crate) async fn update_settings(
 /// # Errors
 /// Returns a command error when the directory cannot be prepared or opened.
 #[tauri::command]
+#[expect(
+    clippy::needless_pass_by_value,
+    reason = "Tauri command injection provides AppHandle as an owned argument"
+)]
 pub(crate) fn open_data_folder(application: AppHandle) -> Result<(), CommandError> {
     let data_root = application
         .path()
@@ -84,7 +88,7 @@ pub(crate) async fn clear_generated_cache(
     state: State<'_, AppState>,
 ) -> Result<(), CommandError> {
     let _generated_media = ai_state.lock_generated_media().await;
-    with_library(state, |library| library.clear_generated_cache()).await
+    with_library(state, lumadesk_core::Library::clear_generated_cache).await
 }
 
 fn launch_at_login_enabled(application: &AppHandle) -> Result<bool, CommandError> {
