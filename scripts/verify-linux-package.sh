@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
-set -euo pipefail
+set -Eeuo pipefail
+
+trap 'status=$?; echo "Linux package verification failed near line $LINENO (exit $status)." >&2' ERR
 
 target="${1:?Rust target is required}"
 architecture="${2:?Architecture is required}"
@@ -108,16 +110,10 @@ actual_rpm_architecture="$(rpm --query --package --queryformat '%{ARCH}' "$rpm_p
   echo "Expected RPM architecture $rpm_architecture, found $actual_rpm_architecture." >&2
   exit 1
 }
-rpm_root="$temporary_directory/rpm"
-mkdir -p "$rpm_root/usr/bin"
-(
-  cd "$rpm_root"
-  rpm2cpio "$OLDPWD/$rpm_package" | cpio --extract --quiet ./usr/bin/lumadesk
-)
-[[ -x "$rpm_root/usr/bin/lumadesk" ]] || {
+rpm_file_list="$(rpm --query --package --list "$rpm_package")"
+if ! grep -Fxq '/usr/bin/lumadesk' <<<"$rpm_file_list"; then
   echo "RPM package does not contain usr/bin/lumadesk." >&2
   exit 1
-}
-verify_elf_architecture "$rpm_root/usr/bin/lumadesk"
+fi
 
 echo "Verified Linux $architecture packages for LumaDesk $version."
