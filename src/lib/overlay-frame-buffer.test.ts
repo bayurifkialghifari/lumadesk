@@ -38,6 +38,27 @@ describe("overlay frame loading", () => {
     expect(loaded.image).toBe(bitmap);
   });
 
+  it("keeps fallback frames origin-clean when bitmap decoding fails", async () => {
+    const images: FakeImage[] = [];
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async () => {
+        throw new TypeError("Asset fetch blocked");
+      }),
+    );
+    vi.stubGlobal("Image", fakeImageConstructor(images));
+    const frame = {
+      index: 0,
+      durationMs: 80,
+      path: "http://asset.localhost/frame.gif",
+    } satisfies FrameAsset;
+
+    await loadFrame(frame);
+
+    expect(images).toHaveLength(1);
+    expect(images[0]?.crossOrigin).toBe("anonymous");
+  });
+
   it("ignores a stale frame request after invalidation", async () => {
     stubBitmapLoading();
     const stale = deferred<FrameBatch>();
@@ -116,4 +137,24 @@ function stubBitmapLoading(): void {
     "createImageBitmap",
     vi.fn(async (blob: Blob) => ({ width: 32, height: 24, label: await blob.text() })),
   );
+}
+
+class FakeImage {
+  public decoding = "";
+  public crossOrigin = "";
+  public onload: (() => void) | null = null;
+  public onerror: (() => void) | null = null;
+
+  public set src(_value: string) {
+    queueMicrotask(() => this.onload?.());
+  }
+}
+
+function fakeImageConstructor(images: FakeImage[]): typeof FakeImage {
+  return class extends FakeImage {
+    public constructor() {
+      super();
+      images.push(this);
+    }
+  };
 }
