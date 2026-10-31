@@ -62,7 +62,7 @@ When **Follow system** is selected, the dark tokens remain active for a dark ope
 - The main content column owns vertical scrolling. Navigation and inspector stay fixed within the viewport.
 - At widths below 1,100 px, the inspector becomes a modal sheet.
 - The library grid uses responsive columns with a minimum card width of 184 px. Media cards use a 4:3 preview stage and show controls only on selection or hover.
-- The desktop manager uses one compact row per active overlay on wide screens and stacks preview, metadata, actions, and sliders on narrow screens.
+- The desktop manager uses one compact row per persisted overlay on wide screens and stacks preview, metadata, actions, and sliders on narrow screens. Hidden overlays remain listed so users can recover them.
 - Browser preview omits native-only window controls because no native window exists.
 
 ## 4. Core primitives
@@ -78,6 +78,9 @@ When **Follow system** is selected, the dark tokens remain active for a dark ope
 - **Dialog:** focused title, concise copy, ordered actions, Escape and focus trapping.
 - **Toast:** status icon and one sentence; errors may add a single recovery action.
 - **EmptyState:** original LumaDesk mark, direct explanation, one primary action.
+- **GlobalActionBar:** horizontally scrollable desktop-wide controls grouped by visibility, playback, interaction, and destructive actions.
+- **SceneManager:** compact save form, selectable scene list, selected-scene actions, and inline confirmation for deletion.
+- **StateBadge:** short text plus status color for visible, hidden, playing, paused, and locked states.
 
 ## 5. Interaction and motion
 
@@ -96,11 +99,23 @@ When **Follow system** is selected, the dark tokens remain active for a dark ope
 - The toolbar and subtle boundary start hidden. Pressing the animation reveals both, interaction restarts the idle timer, and they hide after 3,000 ms of inactivity.
 - The toolbar remains visible while its pointer or keyboard focus is inside the control surface.
 - The toolbar exposes drag, play/pause, flip, background removal, duplicate, and close. Detailed size, opacity, and speed controls live in the main-window inspector.
+- Click-through is available in both the overlay toolbar and the main-window row. Enabling it removes pointer focus from the native overlay; the manager and tray remain recovery surfaces.
 - The **Remove background** effect uses a standard checkbox in the main-window inspector. Its supporting copy stays concise and explains that solid or near-solid backgrounds produce the best result.
 - Effect processing never modifies the managed source file. A checked state is persisted per overlay and remains distinguishable through text and control state without relying on color.
-- The **Active on Desktop** page shows live active and playing counts plus pause-all and confirmed close-all actions.
+- The **Active on Desktop** page shows total, visible, playing, and locked counts. Its global bar provides show, hide, play, pause, lock, unlock, and confirmed close actions.
+- Each overlay row includes a connected-display selector. Changing it preserves the overlay's relative position and keeps the complete overlay inside the destination display.
+- Hidden rows use a dashed neutral boundary and reduced preview saturation. Paused and click-through states add explicit text badges.
 
-## 7. Creator Studio
+## 7. Desktop scenes
+
+- The scene manager sits between global actions and overlay instances so layout-level work precedes per-instance tuning.
+- Saving requires a visible label and a non-empty unique name. Supporting copy states that hidden and locked states are included.
+- The selected scene exposes one blue **Apply scene** action, a neutral **Update snapshot** action, and secondary rename, duplicate, and delete actions.
+- Applying a scene replaces the current layout. Scene selection alone never changes native windows.
+- Rename stays inline. Delete requires a compact confirmation beside the initiating action.
+- On narrow screens, save controls stack, the scene list moves above scene actions, and the manager keeps a single scroll owner in the workspace.
+
+## 8. Creator Studio
 
 - The Creator workspace uses a three-column desktop layout: a compact asset rail, a large live preview, and grouped editing controls. At narrower widths, controls move below the preview and the asset rail becomes a short horizontal region.
 - Transform controls stay close to the preview toolbar. Numeric crop controls use the dimensions of one sprite cell when sprite playback is enabled.
@@ -109,21 +124,21 @@ When **Follow system** is selected, the dark tokens remain active for a dark ope
 - Sprite controls show grid dimensions, frame count, frame duration, and playback mode. Animated source formats disable sprite setup because they already contain a frame sequence.
 - Changes remain provisional until **Save changes** is pressed. A successful save updates the preview and active overlays; a failed save leaves the persisted recipe unchanged.
 
-## 8. Settings
+## 9. Settings
 
 - Settings uses compact two-column sections for appearance, desktop behavior, overlay defaults, and storage. The local-model section spans the full content width.
 - Every setting uses a native form control with a visible label and current value. Settings are written only through **Save settings**.
 - Model cards distinguish built-in edge removal from downloadable Fast and Quality models. Download, installed, removing, and error states use text and icons in addition to color.
 - Destructive model removal uses a direct labeled action. Generated masks for that model are removed with it.
 
-## 9. Content language
+## 10. Content language
 
 - The interface and public project documentation use English.
 - Prefer direct verbs. Interface examples include `Import animation`, `Show on desktop`, `Rename`, and `Remove from collection`.
 - Explain file ownership precisely: deleting from LumaDesk removes its managed copy and never deletes the original source.
 - Error messages state what failed and one useful next step.
 
-## 10. Accessibility constraints and accepted debt
+## 11. Accessibility constraints and accepted debt
 
 - Text contrast targets WCAG AA; focus indicators remain visible against every surface.
 - All controls are keyboard reachable and expose names to accessibility APIs.

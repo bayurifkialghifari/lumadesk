@@ -4,6 +4,27 @@ All notable changes to LumaDesk are documented here. The project follows Semanti
 
 ## [Unreleased]
 
+## [0.5.0] - 2026-10-31
+
+### Added
+
+- Added named desktop scenes that capture the complete overlay layout and support apply, update, rename, duplicate, and delete actions.
+- Added monitor-aware placement with a per-overlay display selector, relative-position mapping, full-bounds clamping, and primary-display fallback.
+- Added click-through overlays with recovery controls in the overlay toolbar, desktop manager, and system tray.
+- Added global show, hide, play, pause, lock, unlock, and confirmed close actions in the desktop manager.
+- Added matching show, hide, play, pause, lock, and unlock actions to the tray or menu-bar menu.
+
+### Changed
+
+- **Active on Desktop** now lists hidden overlays and shows total, visible, playing, and locked counts.
+- Scene snapshots now preserve visibility, playback, background removal, click-through, z-order, and monitor placement.
+- Scene application replaces the current desktop layout and restores the previous database and native windows if synchronization fails.
+
+### Fixed
+
+- Saved scenes now retain hidden overlay state across updates and application.
+- The HTML language and application description now use English.
+
 ## [0.4.0] - 2026-10-31
 
 ### Added
@@ -85,7 +106,8 @@ All notable changes to LumaDesk are documented here. The project follows Semanti
 - **Active on Desktop** workspace with live instance counts, responsive cards, browser-preview states, per-instance controls, and pause-all or confirmed close-all actions.
 - GitHub Actions checks and tagged release builds for Windows x86-64 and ARM64, macOS Apple Silicon and Intel, and Linux x86-64 and ARM64.
 
-[Unreleased]: https://github.com/bayurifkialghifari/lumadesk/compare/v0.4.0...HEAD
+[Unreleased]: https://github.com/bayurifkialghifari/lumadesk/compare/v0.5.0...HEAD
+[0.5.0]: https://github.com/bayurifkialghifari/lumadesk/compare/v0.4.0...v0.5.0
 [0.4.0]: https://github.com/bayurifkialghifari/lumadesk/compare/v0.3.0...v0.4.0
 [0.3.0]: https://github.com/bayurifkialghifari/lumadesk/compare/v0.2.1...v0.3.0
 [0.2.1]: https://github.com/bayurifkialghifari/lumadesk/compare/v0.2.0...v0.2.1

@@ -46,7 +46,11 @@ Generated assets are registered with a media ID, variant kind, validated relativ
 
 ### `overlay_instances`
 
-Each instance references a media item and stores logical position, monitor identity, width, opacity, speed, horizontal flip, immediate edge-removal state, playback state, z-order, and active state. Logical coordinates avoid DPI-dependent persistence. The media recipe and sprite sequence apply in addition to these per-instance controls.
+Each instance references a media item and stores logical position, monitor identity, width, opacity, speed, horizontal flip, immediate edge-removal state, click-through state, playback state, z-order, and active state. Logical coordinates avoid DPI-dependent persistence. The media recipe and sprite sequence apply in addition to these per-instance controls.
+
+### `desktop_scenes` and `desktop_scene_items`
+
+A scene owns a unique case-insensitive name and an ordered snapshot of the complete persisted overlay layout. Each item stores media identity, saved monitor name and dimensions, normalized position, size, opacity, speed, flip, background removal, playback, click-through, z-order, and visibility. Deleting media removes dependent scene items while leaving the scene itself available for review or update.
 
 ### `settings`
 
@@ -64,11 +68,16 @@ The frontend calls serializable commands whose responses are checked again with 
 
 - catalog: list, import, rename, favorite, tag, remove, resolve asset URL, and get frame batches;
 - Creator: get or update recipes, atomically save Creator changes, and get, set, or clear sprite sequences;
-- overlays: list, create, show, move, update, duplicate, remove, pause all, and close all;
+- overlays: list, create, show, move, move between monitors, update, duplicate, remove, patch all, and close all;
+- scenes: list, create, update, rename, duplicate, delete, and apply complete desktop snapshots;
 - settings: get, update, open the data directory, and clear generated caches;
 - local AI: list model status, download, remove, and request a bounded mask batch.
 
 Inputs are validated at the command boundary. Domain failures map to stable error codes with English messages. If a native overlay update fails, persisted instance state is rolled back. Overlay and media removal close dependent windows before deleting records and restore captured windows when persistence fails.
+
+Monitor descriptors come from Tauri in logical coordinates. Moving one overlay preserves its normalized position from the source display, maps it to the selected display, and clamps its rendered bounds. Scene application resolves a saved monitor by name and falls back to the primary display, or the first available display when no primary is reported.
+
+Applying a scene first prepares all media and target coordinates, replaces the persisted overlay layout transactionally, and then synchronizes native windows. A native failure restores both the previous database layout and its windows. Global show, hide, play, pause, lock, and unlock operations use the same persistence-first synchronization with rollback.
 
 ## File ownership
 
@@ -88,9 +97,9 @@ Edge removal flood-fills similar pixels connected to frame boundaries and feathe
 
 ## Native windows and lifecycle
 
-Each active overlay is an undecorated, transparent, always-on-top Tauri window whose label derives from an internal instance UUID. Pressing the animation reveals its compact toolbar and boundary. Native dragging starts from the animation or drag handle, and a debounced serial writer persists logical position.
+Each visible overlay is an undecorated, transparent, always-on-top Tauri window whose label derives from an internal instance UUID. Pressing the animation reveals its compact toolbar and boundary. Native dragging starts from the animation or drag handle, and a debounced serial writer persists logical position. Click-through disables focus and ignores cursor events at the native-window layer.
 
-The management window uses a custom title bar with Minimize, Maximize/Restore, and Close. Closing hides it to the tray or menu bar when `close_to_tray` is enabled. Tray actions restore the window or quit the process, and single-instance launches use the same restore path. Overlay windows bypass the main-window close handler.
+The management window uses a custom title bar with Minimize, Maximize/Restore, and Close. Closing hides it to the tray or menu bar when `close_to_tray` is enabled. Tray actions restore the window, show or hide all overlays, play or pause all overlays, lock or unlock click-through, or quit the process. Single-instance launches use the same restore path. Overlay windows bypass the main-window close handler.
 
 ## Migrations and compatibility
 

@@ -12,10 +12,17 @@ The **Close to tray** setting controls this behavior. Turning it off makes **Clo
 
 ## System tray and menu bar
 
-The tray menu provides **Show LumaDesk** and **Quit LumaDesk**. **Show LumaDesk** restores a hidden or minimized management window and brings it to the foreground. **Quit LumaDesk** exits the process and closes its native windows. Left-clicking the tray icon also restores the window on platforms that emit tray click events; Linux desktop environments can always use the tray menu.
+The tray menu provides **Show LumaDesk**, global overlay controls, and **Quit LumaDesk**. **Show LumaDesk** restores a hidden or minimized management window and brings it to the foreground. **Quit LumaDesk** exits the process and closes its native windows. Left-clicking the tray icon also restores the window on platforms that emit tray click events; Linux desktop environments can always use the tray menu.
+
+Global tray actions remain available while the manager is hidden:
+
+- **Show all overlays** and **Hide all overlays** control visibility without deleting instances.
+- **Play all overlays** and **Pause all overlays** control animation playback.
+- **Lock all overlays** enables click-through for every instance.
+- **Unlock all overlays** restores pointer interaction and is the recovery path when overlays cannot be clicked directly.
 
 LumaDesk runs as a single application instance. Launching it again asks the existing process to restore and focus the main window, including when it is hidden in the tray.
 
 ## Layout restoration
 
-The **Restore overlays** option activates previously active overlays when LumaDesk starts. It is enabled by default. System autostart is a separate setting and is disabled by default.
+The **Restore overlays** option activates previously visible overlays when LumaDesk starts. Hidden overlay records and saved scenes remain in SQLite. The option is enabled by default. System autostart is a separate setting and is disabled by default.

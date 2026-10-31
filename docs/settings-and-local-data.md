@@ -19,11 +19,11 @@ Width, opacity, and playback speed become the starting values for new desktop in
 
 ## Storage
 
-**Clear cache** removes generated previews, decoded frames, and background masks. Collection records, tags, edit recipes, sprite settings, managed media, overlays, application settings, and installed AI models remain intact.
+**Clear cache** removes generated previews, decoded frames, and background masks. Collection records, tags, edit recipes, sprite settings, managed media, overlays, desktop scenes, application settings, and installed AI models remain intact.
 
 **Open data folder** opens the operating system's application-data directory containing:
 
-- `lumadesk.sqlite3` for the catalog, tags, recipes, variants, settings, and layouts;
+- `lumadesk.sqlite3` for the catalog, tags, recipes, variants, settings, overlay instances, and desktop scenes;
 - `media/` for managed copies of imported files;
 - `thumbnails/`, `frames/`, and `masks/` for regenerable output;
 - `models/` for optional downloaded ONNX models.

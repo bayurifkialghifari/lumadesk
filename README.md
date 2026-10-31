@@ -33,6 +33,9 @@ LumaDesk combines a searchable media library, a non-destructive Creator Studio, 
 
 - Create multiple always-on-top instances with independent position, size, opacity, speed, flip, playback, and background settings.
 - Drag an animation directly; its controls appear on press and hide when idle.
+- Move overlays between connected displays while preserving their relative placement.
+- Save complete desktop scenes, including visibility, playback, click-through, and monitor placement, then restore them in one action.
+- Show, hide, play, pause, lock, or unlock every overlay from the manager or system tray.
 - Restore the active layout after restart and keep overlays running from the system tray or menu bar.
 
 ### Settings and storage
@@ -79,6 +82,9 @@ cargo test --workspace --locked
 - [Creator Studio](docs/creator-studio.md)
 - [Sprite sheets](docs/sprite-sheets.md)
 - [Desktop overlays](docs/desktop-overlays.md)
+- [Desktop scenes](docs/desktop-scenes.md)
+- [Multi-monitor layouts](docs/multi-monitor-layouts.md)
+- [Click-through overlays](docs/click-through.md)
 - [Background removal](docs/background-removal.md)
 - [Settings and local data](docs/settings-and-local-data.md)
 - [Window and application lifecycle](docs/window-lifecycle.md)

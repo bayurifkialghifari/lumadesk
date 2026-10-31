@@ -1,6 +1,6 @@
 # LumaDesk Product Requirements
 
-**Status:** v0.4.0 implementation contract
+**Status:** v0.5.0 implementation contract
 **Updated:** 31 October 2026
 
 ## Product statement
@@ -13,7 +13,7 @@ LumaDesk is a desktop animation library and editor. It organizes local media, ap
 - Artists want to prepare GIF, APNG, WebP, still-image, and sprite-sheet assets while preserving their source files.
 - Collectors want a searchable library with names, tags, favorites, duplicate detection, and predictable local ownership.
 
-## v0.4.0 outcomes
+## v0.5.0 outcomes
 
 1. Users can import GIF, APNG, animated or static WebP, PNG, and JPEG files through a native picker or drag and drop.
 2. Imported media appears in a searchable library and can be previewed, renamed, tagged, favorited, or removed.
@@ -23,6 +23,10 @@ LumaDesk is a desktop animation library and editor. It organizes local media, ap
 6. Library items can create independent desktop overlays with persisted position, size, opacity, speed, playback, flip, and background controls.
 7. Settings control appearance, startup behavior, overlay defaults, storage, cache cleanup, and local AI models.
 8. Version tags build direct installers for supported Windows, macOS, and Linux architectures.
+9. Users can save, apply, update, rename, duplicate, and delete complete desktop scenes.
+10. Overlay placement can move between connected monitors and falls back safely when a saved display is unavailable.
+11. The manager and tray can show, hide, play, pause, lock, or unlock every persisted overlay in one action.
+12. Click-through overlays pass pointer input to windows below and remain recoverable from the manager and tray.
 
 ## Functional requirements
 
@@ -70,13 +74,25 @@ LumaDesk is a desktop animation library and editor. It organizes local media, ap
 - Create one undecorated transparent native window for each active overlay.
 - Let users drag an overlay directly from the animation surface. Pressing the overlay reveals edit controls, and idle controls hide after three seconds.
 - Expose playback, 25–400% speed, 10–100% opacity, horizontal flip, background removal, duplication, and bounded size controls.
+- Expose visible, hidden, playing, paused, interactive, and click-through states in the desktop manager.
+- Let the user choose a connected display for each overlay while preserving its relative position and clamping the complete overlay inside the target display.
+- Support batch show, hide, play, pause, lock, unlock, and confirmed close actions across all persisted overlays.
 - Restore active instances at startup when layout restoration is enabled.
+
+### Desktop scenes
+
+- Capture every persisted overlay in a named scene, including media, monitor, normalized position, size, opacity, speed, flip, background removal, playback, click-through, z-order, and visibility.
+- Apply a scene as a complete desktop replacement instead of layering it over the current layout.
+- Resolve saved monitor names against connected displays and fall back to the primary display when a saved monitor is unavailable.
+- Keep scene names unique without case sensitivity and support update, rename, duplicate, and confirmed delete actions.
+- Apply scene database and native-window changes as one coordinated operation and restore the previous layout if native synchronization fails.
 
 ### Desktop lifecycle and settings
 
 - Run as one application instance and focus the existing management window when reopened.
 - Provide Minimize, Maximize/Restore, and Close controls in the custom title bar.
 - Keep the application in the system tray or menu bar after the main window closes when **Close to tray** is enabled.
+- Provide tray actions to show, hide, play, pause, lock, and unlock all overlays while the management window is closed.
 - Make autostart opt-in and disabled by default.
 - Persist theme, Collection view, overlay defaults, restore behavior, close-to-tray behavior, and autostart.
 - Let users open the application data directory, clear regenerable caches, and install or remove local AI models.
@@ -111,8 +127,10 @@ LumaDesk is a desktop animation library and editor. It organizes local media, ap
 
 ## Acceptance criteria
 
-- Deterministic v0.4.0 behavior passes Rust and frontend tests.
+- Deterministic v0.5.0 behavior passes Rust and frontend tests.
 - Invalid Creator input cannot partially save an edit recipe.
 - A downloaded model must pass size and SHA-256 checks before it is reported as installed.
 - A tagged release publishes direct installer files and `SHA256SUMS.txt` for every supported target.
 - The tag, Cargo workspace, `package.json`, Tauri configuration, title-bar version, changelog, and release title agree.
+- Applying a scene preserves hidden state, maps missing displays to the primary monitor, and never leaves the database and native windows on different layouts.
+- A click-through overlay can always be unlocked from the management window or tray.
