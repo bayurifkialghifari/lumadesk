@@ -4,7 +4,7 @@ use std::{
     io::{self, BufReader, BufWriter, Read, Write},
     path::{Path, PathBuf},
     sync::atomic::{AtomicU64, Ordering},
-    time::{Duration, SystemTime},
+    time::Duration,
 };
 
 use lumadesk_core::{ImportOutcome, MediaFormat};
@@ -696,7 +696,7 @@ fn write_atomic(path: &Path, bytes: &[u8]) -> Result<(), GalleryError> {
 fn cache_is_fresh(path: &Path) -> bool {
     path.metadata()
         .and_then(|metadata| metadata.modified())
-        .and_then(SystemTime::elapsed)
+        .and_then(|modified| modified.elapsed())
         .is_ok_and(|age| age <= CATALOG_CACHE_MAX_AGE)
 }
 
