@@ -49,5 +49,11 @@ describe("Tauri security configuration", () => {
     expect(capabilities.permissions).toEqual(
       expect.arrayContaining(["updater:default", "process:allow-restart"]),
     );
+    expect(capabilities.permissions).toContainEqual({
+      identifier: "opener:allow-open-url",
+      allow: expect.arrayContaining([
+        { url: "https://github.com/bayurifkialghifari/lumadesk/releases/latest" },
+      ]),
+    });
   });
 });

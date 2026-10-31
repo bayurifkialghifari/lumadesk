@@ -2,6 +2,7 @@
 import {
   Copy,
   Download,
+  ExternalLink,
   LoaderCircle,
   Minus,
   RefreshCw,
@@ -12,6 +13,7 @@ import {
 import { isTauri } from "@tauri-apps/api/core";
 import type { UnlistenFn } from "@tauri-apps/api/event";
 import { getCurrentWindow } from "@tauri-apps/api/window";
+import { openUrl } from "@tauri-apps/plugin-opener";
 import { onMount } from "svelte";
 import packageMetadata from "../../../package.json";
 import { createAppUpdater } from "../app-updater";
@@ -29,7 +31,14 @@ const appUpdater = createAppUpdater({
   nativeAvailable: nativeWindow !== null,
   currentVersion: packageMetadata.version,
   onInstallError: (error) => {
-    onupdateerror(userErrorMessage(error, "The update could not be installed. Try again."));
+    onupdateerror(
+      userErrorMessage(error, "The update could not be installed. Retry or download it manually."),
+    );
+  },
+  onRetryError: (error) => {
+    onupdateerror(
+      userErrorMessage(error, "The update retry failed. Download it manually instead."),
+    );
   },
   onRestartError: (error) => {
     onupdateerror(
@@ -91,6 +100,14 @@ async function toggleMaximize(): Promise<void> {
     maximized = await nativeWindow.isMaximized();
   });
 }
+
+async function openLatestRelease(): Promise<void> {
+  try {
+    await openUrl("https://github.com/bayurifkialghifari/lumadesk/releases/latest");
+  } catch (error) {
+    onupdateerror(userErrorMessage(error, "The LumaDesk download page could not be opened."));
+  }
+}
 </script>
 
 <header class="titlebar" data-tauri-drag-region>
@@ -131,6 +148,29 @@ async function toggleMaximize(): Promise<void> {
         <RefreshCw size={14} />
         <span class="update-label">Restart to finish update</span>
       </button>
+    {:else if $appUpdater.status === "failed"}
+      <div class="update-recovery" aria-label={`Update LumaDesk ${$appUpdater.nextVersion}`}>
+        <button
+          class="update-action"
+          type="button"
+          title={`Retry updating to LumaDesk ${$appUpdater.nextVersion}`}
+          aria-label={`Retry updating to LumaDesk ${$appUpdater.nextVersion}`}
+          onclick={() => void appUpdater.retry()}
+        >
+          <RefreshCw size={14} />
+          <span class="update-label">Retry update</span>
+        </button>
+        <button
+          class="manual-update-action"
+          type="button"
+          title="Download the latest LumaDesk release"
+          aria-label="Download the latest LumaDesk release manually"
+          onclick={() => void openLatestRelease()}
+        >
+          <ExternalLink size={14} />
+          <span class="manual-update-label">Download manually</span>
+        </button>
+      </div>
     {:else}
       <span class="version" data-tauri-drag-region>v{packageMetadata.version}</span>
     {/if}
@@ -184,11 +224,13 @@ async function toggleMaximize(): Promise<void> {
 .brand { display: flex; align-items: center; gap: 8px; font-family: "Space Grotesk Variable", sans-serif; font-weight: 680; }
 .brand-mark { display: grid; width: 28px; height: 28px; place-items: center; color: var(--brand-300); background: var(--surface-800); border-radius: 6px; }
 .version { color: var(--ink-500); font-size: 12px; }
-.titlebar-end, .window-controls { display: flex; height: 100%; align-items: center; }
+.titlebar-end, .window-controls, .update-recovery { display: flex; height: 100%; align-items: center; }
 .titlebar-end { gap: 12px; }
-.update-action, .update-status { display: flex; height: 28px; align-items: center; gap: 6px; padding: 0 9px; color: var(--brand-300); font-size: 12px; font-weight: 680; background: var(--surface-800); border: 1px solid var(--line-700); border-radius: 6px; }
-.update-action { cursor: pointer; }
-.update-action:hover { color: var(--ink-100); background: var(--surface-750); }
+.update-recovery { gap: 6px; }
+.update-action, .update-status, .manual-update-action { display: flex; height: 28px; align-items: center; gap: 6px; padding: 0 9px; color: var(--brand-300); font-size: 12px; font-weight: 680; background: var(--surface-800); border: 1px solid var(--line-700); border-radius: 6px; }
+.update-action, .manual-update-action { cursor: pointer; }
+.manual-update-action { color: var(--ink-300); }
+.update-action:hover, .manual-update-action:hover { color: var(--ink-100); background: var(--surface-750); }
 :global(.update-spinner) { animation: update-spin 900ms linear infinite; }
 .window-controls { margin-right: -16px; }
 .window-controls button { display: grid; width: 42px; height: 100%; padding: 0; place-items: center; color: var(--ink-300); background: transparent; border: 0; cursor: pointer; }
@@ -237,7 +279,7 @@ nav small { color: var(--ink-500); font-size: 12px; }
   nav button { display: flex; flex-direction: column; justify-content: center; gap: 3px; padding: 0 4px; font-size: 12px; text-align: center; }
   nav button small { display: none; }
   .version { display: none; }
-  .update-action, .update-status { width: 32px; justify-content: center; padding: 0; }
-  .update-label { display: none; }
+  .update-action, .update-status, .manual-update-action { width: 32px; justify-content: center; padding: 0; }
+  .update-label, .manual-update-label { display: none; }
 }
 </style>

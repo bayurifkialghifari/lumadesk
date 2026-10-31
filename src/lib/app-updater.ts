@@ -21,6 +21,11 @@ export type AppUpdaterState =
       readonly nextVersion: string;
     }
   | {
+      readonly status: "failed";
+      readonly currentVersion: string;
+      readonly nextVersion: string;
+    }
+  | {
       readonly status: "restart-required";
       readonly currentVersion: string;
       readonly nextVersion: string;
@@ -40,6 +45,7 @@ export interface UpdaterGateway {
 export interface AppUpdaterController extends Readable<AppUpdaterState> {
   check(): Promise<void>;
   install(): Promise<void>;
+  retry(): Promise<void>;
   restart(): Promise<void>;
   destroy(): void;
 }
@@ -49,6 +55,7 @@ interface AppUpdaterOptions {
   readonly currentVersion: string;
   readonly gateway?: UpdaterGateway;
   readonly onInstallError?: (error: unknown) => void;
+  readonly onRetryError?: (error: unknown) => void;
   readonly onRestartError?: (error: unknown) => void;
 }
 
@@ -69,10 +76,13 @@ export function createAppUpdater(options: AppUpdaterOptions): AppUpdaterControll
     currentVersion: options.currentVersion,
   });
   const gateway = options.gateway ?? nativeGateway;
+  const closedCandidates = new WeakSet<UpdateCandidate>();
   let candidate: UpdateCandidate | null = null;
+  let failedVersion: string | null = null;
   let installedVersion: string | null = null;
   let busy = false;
   let destroyed = false;
+  let operation = 0;
   let downloadedBytes = 0;
   let totalBytes: number | undefined;
 
@@ -84,7 +94,44 @@ export function createAppUpdater(options: AppUpdaterOptions): AppUpdaterControll
     };
   }
 
-  function handleDownload(event: DownloadEvent, update: UpdateCandidate): void {
+  function failedState(nextVersion: string): AppUpdaterState {
+    return {
+      status: "failed",
+      currentVersion: options.currentVersion,
+      nextVersion,
+    };
+  }
+
+  function active(operationId: number): boolean {
+    return !destroyed && operation === operationId;
+  }
+
+  function beginOperation(): number {
+    busy = true;
+    operation += 1;
+    return operation;
+  }
+
+  function finishOperation(operationId: number): void {
+    if (active(operationId)) busy = false;
+  }
+
+  async function closeCandidate(update: UpdateCandidate): Promise<void> {
+    if (closedCandidates.has(update)) return;
+    closedCandidates.add(update);
+    try {
+      await update.close();
+    } catch (error) {
+      console.error("LumaDesk updater cleanup failed", error);
+    }
+  }
+
+  function handleDownload(
+    event: DownloadEvent,
+    update: UpdateCandidate,
+    operationId: number,
+  ): void {
+    if (!active(operationId)) return;
     switch (event.event) {
       case "Started":
         downloadedBytes = 0;
@@ -123,6 +170,52 @@ export function createAppUpdater(options: AppUpdaterOptions): AppUpdaterControll
     }
   }
 
+  async function installCandidate(
+    update: UpdateCandidate,
+    operationId: number,
+    onError: ((error: unknown) => void) | undefined,
+  ): Promise<void> {
+    state.set({
+      status: "downloading",
+      currentVersion: options.currentVersion,
+      nextVersion: update.version,
+      progressPercent: null,
+    });
+    let installed = false;
+    try {
+      await update.downloadAndInstall((event) => handleDownload(event, update, operationId));
+      if (!active(operationId)) return;
+      if (candidate === update) candidate = null;
+      failedVersion = null;
+      installedVersion = update.version;
+      installed = true;
+      state.set({
+        status: "installing",
+        currentVersion: options.currentVersion,
+        nextVersion: update.version,
+      });
+      await gateway.relaunch();
+    } catch (error) {
+      if (!active(operationId)) return;
+      if (installed) {
+        state.set({
+          status: "restart-required",
+          currentVersion: options.currentVersion,
+          nextVersion: update.version,
+        });
+        options.onRestartError?.(error);
+        return;
+      }
+
+      if (candidate === update) candidate = null;
+      failedVersion = update.version;
+      await closeCandidate(update);
+      if (!active(operationId)) return;
+      state.set(failedState(update.version));
+      onError?.(error);
+    }
+  }
+
   return {
     subscribe: state.subscribe,
     async check() {
@@ -134,15 +227,16 @@ export function createAppUpdater(options: AppUpdaterOptions): AppUpdaterControll
         installedVersion !== null
       )
         return;
-      busy = true;
+      const operationId = beginOperation();
       state.set({ status: "checking", currentVersion: options.currentVersion });
       try {
         const update = await gateway.check();
-        if (destroyed) {
-          if (update !== null) await update.close();
+        if (!active(operationId)) {
+          if (update !== null) await closeCandidate(update);
           return;
         }
         candidate = update;
+        failedVersion = null;
         state.set(
           update === null
             ? { status: "idle", currentVersion: options.currentVersion }
@@ -150,53 +244,62 @@ export function createAppUpdater(options: AppUpdaterOptions): AppUpdaterControll
         );
       } catch (error) {
         console.error("LumaDesk update check failed", error);
-        state.set({ status: "idle", currentVersion: options.currentVersion });
+        if (active(operationId)) {
+          state.set({ status: "idle", currentVersion: options.currentVersion });
+        }
       } finally {
-        busy = false;
+        finishOperation(operationId);
       }
     },
     async install() {
       const update = candidate;
-      if (update === null || busy || destroyed) return;
-      busy = true;
-      state.set({
-        status: "downloading",
-        currentVersion: options.currentVersion,
-        nextVersion: update.version,
-        progressPercent: null,
-      });
-      let installed = false;
+      if (update === null || busy || destroyed || installedVersion !== null) return;
+      const operationId = beginOperation();
       try {
-        await update.downloadAndInstall((event) => handleDownload(event, update));
-        candidate = null;
-        installedVersion = update.version;
-        installed = true;
-        state.set({
-          status: "installing",
-          currentVersion: options.currentVersion,
-          nextVersion: update.version,
-        });
-        await gateway.relaunch();
-      } catch (error) {
-        if (installed) {
-          state.set({
-            status: "restart-required",
-            currentVersion: options.currentVersion,
-            nextVersion: update.version,
-          });
-          options.onRestartError?.(error);
-        } else {
-          state.set(availableState(update));
-          options.onInstallError?.(error);
-        }
+        await installCandidate(update, operationId, options.onInstallError);
       } finally {
-        busy = false;
+        finishOperation(operationId);
+      }
+    },
+    async retry() {
+      const previousVersion = failedVersion;
+      if (previousVersion === null || busy || destroyed || installedVersion !== null) return;
+      const operationId = beginOperation();
+      state.set({ status: "checking", currentVersion: options.currentVersion });
+      try {
+        let update: UpdateCandidate | null;
+        try {
+          update = await gateway.check();
+        } catch (error) {
+          if (!active(operationId)) return;
+          state.set(failedState(previousVersion));
+          options.onRetryError?.(error);
+          return;
+        }
+
+        if (!active(operationId)) {
+          if (update !== null) await closeCandidate(update);
+          return;
+        }
+        if (update === null) {
+          state.set(failedState(previousVersion));
+          options.onRetryError?.(
+            new Error("No compatible update package is available. Download it manually instead."),
+          );
+          return;
+        }
+
+        candidate = update;
+        failedVersion = null;
+        await installCandidate(update, operationId, options.onRetryError);
+      } finally {
+        finishOperation(operationId);
       }
     },
     async restart() {
       const nextVersion = installedVersion;
       if (nextVersion === null || busy || destroyed) return;
-      busy = true;
+      const operationId = beginOperation();
       state.set({
         status: "installing",
         currentVersion: options.currentVersion,
@@ -205,6 +308,7 @@ export function createAppUpdater(options: AppUpdaterOptions): AppUpdaterControll
       try {
         await gateway.relaunch();
       } catch (error) {
+        if (!active(operationId)) return;
         state.set({
           status: "restart-required",
           currentVersion: options.currentVersion,
@@ -212,18 +316,17 @@ export function createAppUpdater(options: AppUpdaterOptions): AppUpdaterControll
         });
         options.onRestartError?.(error);
       } finally {
-        busy = false;
+        finishOperation(operationId);
       }
     },
     destroy() {
+      if (destroyed) return;
       destroyed = true;
+      operation += 1;
+      busy = false;
       const update = candidate;
       candidate = null;
-      if (update !== null) {
-        void update.close().catch((error: unknown) => {
-          console.error("LumaDesk updater cleanup failed", error);
-        });
-      }
+      if (update !== null) void closeCandidate(update);
     },
   };
 }
