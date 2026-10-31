@@ -32,7 +32,8 @@
           "$APPDATA/media/**",
           "$APPDATA/thumbnails/**",
           "$APPDATA/frames/**",
-          "$APPDATA/masks/**"
+          "$APPDATA/masks/**",
+          "$APPDATA/gallery/**"
         ]
       }
     }

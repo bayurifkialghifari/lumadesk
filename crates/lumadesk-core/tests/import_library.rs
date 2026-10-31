@@ -89,6 +89,29 @@ fn duplicate_import_reuses_catalog_item_and_managed_file() -> Result<(), Box<dyn
 }
 
 #[test]
+fn metadata_import_stores_gallery_name_tags_and_reports_existing_hashes()
+-> Result<(), Box<dyn Error>> {
+    let temp = TempDir::new()?;
+    let source = temp.path().join("catalog.png");
+    write_png(&source)?;
+    let mut library = Library::open(temp.path().join("data"))?;
+
+    let item = imported(library.import_file_with_metadata(
+        &source,
+        "Neon Orbit",
+        &["ambient".into(), "Neon".into()],
+    )?)?;
+
+    assert_eq!(item.display_name, "Neon Orbit");
+    assert_eq!(item.tags, ["ambient", "Neon"]);
+    assert_eq!(
+        library.existing_content_hashes(&[item.content_hash.clone(), "0".repeat(64)])?,
+        [item.content_hash]
+    );
+    Ok(())
+}
+
+#[test]
 fn rejected_media_leaves_no_row_or_partial_file() -> Result<(), Box<dyn Error>> {
     let temp = TempDir::new()?;
     let broken = temp.path().join("broken.png");

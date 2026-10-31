@@ -90,7 +90,26 @@ impl Database {
         self.find_media("m.content_hash = ?1", hash.to_owned())
     }
 
-    pub(crate) fn insert_media(&mut self, new: &NewMediaItem) -> Result<MediaItem, CoreError> {
+    pub(crate) fn existing_content_hashes(
+        &self,
+        hashes: &[String],
+    ) -> Result<Vec<String>, CoreError> {
+        let mut existing = Vec::new();
+        for hash in hashes {
+            if self.media_by_hash(hash)?.is_some() {
+                existing.push(hash.clone());
+            }
+        }
+        Ok(existing)
+    }
+
+    pub(crate) fn insert_media_with_tags(
+        &mut self,
+        new: &NewMediaItem,
+        tags: &[String],
+    ) -> Result<MediaItem, CoreError> {
+        let display_name = validate_name(&new.display_name)?;
+        let tags = validate_tags(tags)?;
         let now = Utc::now().timestamp_millis();
         let duration_ms = i64::try_from(new.duration_ms)
             .map_err(|_| CoreError::InvalidInput("The media duration is too long.".into()))?;
@@ -103,7 +122,7 @@ impl Database {
             params![
                 new.id.to_string(),
                 new.content_hash,
-                new.display_name,
+                display_name,
                 new.managed_path,
                 new.media_format.as_str(),
                 new.asset_kind.as_str(),
@@ -119,6 +138,14 @@ impl Database {
             "INSERT INTO edit_recipes (media_id, updated_at) VALUES (?1, ?2)",
             params![new.id.to_string(), now],
         )?;
+        for tag in tags.values() {
+            transaction.execute("INSERT OR IGNORE INTO tags (name) VALUES (?1)", [tag])?;
+            transaction.execute(
+                "INSERT INTO media_tags (media_id, tag_id)
+                 SELECT ?1, id FROM tags WHERE name = ?2 COLLATE NOCASE",
+                params![new.id.to_string(), tag],
+            )?;
+        }
         transaction.commit()?;
         self.media_by_id(new.id)
     }

@@ -26,7 +26,13 @@ import {
   editRecipeSchema,
   type FrameBatch,
   frameBatchSchema,
+  type GalleryCatalogResponse,
+  type GalleryPreview,
+  galleryCatalogResponseSchema,
+  galleryPreviewSchema,
+  type ImportOutcome,
   type ImportReport,
+  importOutcomeSchema,
   importReportSchema,
   type LibraryQuery,
   type MediaId,
@@ -97,6 +103,28 @@ export function listMedia(query: LibraryQuery = {}): Promise<MediaPage> {
 
 export function importMedia(paths: readonly string[]): Promise<ImportReport> {
   return invokeParsed("import_media", importReportSchema, { paths });
+}
+
+export function fetchGalleryCatalog(refresh = false): Promise<GalleryCatalogResponse> {
+  return invokeParsed("fetch_gallery_catalog", galleryCatalogResponseSchema, { refresh });
+}
+
+export async function cacheGalleryPreview(itemId: string): Promise<GalleryPreview> {
+  const preview = await invokeParsed("cache_gallery_preview", galleryPreviewSchema, {
+    input: { itemId },
+  });
+  return { ...preview, path: convertFileSrc(preview.path) };
+}
+
+export function importGalleryItem(itemId: string): Promise<ImportOutcome> {
+  return invokeParsed("import_gallery_item", importOutcomeSchema, { input: { itemId } });
+}
+
+export function importMediaUrl(url: string, name?: string): Promise<ImportOutcome> {
+  return invokeParsed("import_media_url", importOutcomeSchema, {
+    url,
+    name: name?.trim() || null,
+  });
 }
 
 export function renameMedia(id: MediaId, name: string): Promise<MediaItem> {

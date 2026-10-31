@@ -6,6 +6,10 @@ const tauriConfigSchema = z.object({
   app: z.object({
     security: z.object({
       csp: z.string(),
+      assetProtocol: z.object({
+        enable: z.boolean(),
+        scope: z.array(z.string()),
+      }),
     }),
   }),
   bundle: z.object({
@@ -32,6 +36,8 @@ describe("Tauri security configuration", () => {
       .slice(1);
 
     expect(connectSources).toEqual(expect.arrayContaining(["asset:", "http://asset.localhost"]));
+    expect(config.app.security.assetProtocol.enable).toBe(true);
+    expect(config.app.security.assetProtocol.scope).toContain("$APPDATA/gallery/**");
   });
 
   it("pins the signed GitHub release feed and updater permissions", () => {
@@ -52,6 +58,7 @@ describe("Tauri security configuration", () => {
     expect(capabilities.permissions).toContainEqual({
       identifier: "opener:allow-open-url",
       allow: expect.arrayContaining([
+        { url: "https://*" },
         { url: "https://github.com/bayurifkialghifari/lumadesk/releases/latest" },
       ]),
     });

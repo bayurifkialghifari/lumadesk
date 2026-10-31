@@ -4,6 +4,7 @@ mod ai;
 mod app_lifecycle;
 mod command_error;
 mod commands;
+mod gallery;
 mod overlay_windows;
 mod state;
 
@@ -31,6 +32,7 @@ pub fn run() {
             let data_root = application.path().app_data_dir()?;
             let library = Library::open(&data_root)?;
             let ai_state = ai::AiState::open(&data_root)?;
+            let gallery_state = gallery::GalleryState::open(&data_root)?;
             let restore = library.get_settings()?.restore_overlays;
             let overlays = if restore {
                 library
@@ -48,6 +50,7 @@ pub fn run() {
             };
             application.manage(AppState::new(library));
             application.manage(ai_state);
+            application.manage(gallery_state);
             app_lifecycle::install_tray(application.handle())?;
             for (overlay, source) in overlays {
                 if let Err(error) = overlay_windows::sync(application.handle(), &overlay, &source) {
@@ -95,6 +98,10 @@ pub fn run() {
             commands::settings::update_settings,
             commands::settings::open_data_folder,
             commands::settings::clear_generated_cache,
+            gallery::fetch_gallery_catalog,
+            gallery::cache_gallery_preview,
+            gallery::import_gallery_item,
+            gallery::import_media_url,
             ai::list_ai_models,
             ai::download_ai_model,
             ai::remove_ai_model,

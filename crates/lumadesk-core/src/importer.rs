@@ -87,6 +87,20 @@ impl Library {
     /// # Errors
     /// Returns an error for unreadable, corrupt, unsupported, or unstorable media.
     pub fn import_file(&mut self, source: &Path) -> Result<ImportOutcome, CoreError> {
+        let name = display_name(source);
+        self.import_file_with_metadata(source, &name, &[])
+    }
+
+    /// Imports one media file with an explicit catalog name and initial tags.
+    ///
+    /// # Errors
+    /// Returns an error for invalid metadata, unreadable media, or unavailable storage.
+    pub fn import_file_with_metadata(
+        &mut self,
+        source: &Path,
+        display_name: &str,
+        tags: &[String],
+    ) -> Result<ImportOutcome, CoreError> {
         let source_metadata = source.metadata()?;
         if !source_metadata.is_file() {
             return Err(CoreError::InvalidInput(
@@ -113,20 +127,31 @@ impl Library {
         fs::rename(&temporary, &final_path)?;
         *cleanup = final_path;
 
-        let item = self.database.insert_media(&NewMediaItem {
-            id,
-            content_hash,
-            display_name: display_name(source),
-            managed_path,
-            asset_kind: metadata.asset_kind,
-            media_format: metadata.format,
-            width: metadata.width,
-            height: metadata.height,
-            frame_count: metadata.frame_count,
-            duration_ms: metadata.duration_ms,
-        })?;
+        let item = self.database.insert_media_with_tags(
+            &NewMediaItem {
+                id,
+                content_hash,
+                display_name: display_name.to_owned(),
+                managed_path,
+                asset_kind: metadata.asset_kind,
+                media_format: metadata.format,
+                width: metadata.width,
+                height: metadata.height,
+                frame_count: metadata.frame_count,
+                duration_ms: metadata.duration_ms,
+            },
+            tags,
+        )?;
         drop(ScopeGuard::into_inner(cleanup));
         Ok(ImportOutcome::Imported { item })
+    }
+
+    /// Returns the requested hashes that already exist in the local catalog.
+    ///
+    /// # Errors
+    /// Returns an error when local catalog data cannot be read.
+    pub fn existing_content_hashes(&self, hashes: &[String]) -> Result<Vec<String>, CoreError> {
+        self.database.existing_content_hashes(hashes)
     }
 
     /// Changes the catalog label without renaming the managed file.

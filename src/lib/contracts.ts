@@ -144,13 +144,14 @@ export const mediaVariantSchema = z.object({
 });
 export type MediaVariant = z.infer<typeof mediaVariantSchema>;
 
+export const importOutcomeSchema = z.discriminatedUnion("status", [
+  z.object({ status: z.literal("imported"), item: mediaItemSchema }),
+  z.object({ status: z.literal("duplicate"), item: mediaItemSchema }),
+]);
+export type ImportOutcome = z.infer<typeof importOutcomeSchema>;
+
 export const importReportSchema = z.object({
-  outcomes: z.array(
-    z.discriminatedUnion("status", [
-      z.object({ status: z.literal("imported"), item: mediaItemSchema }),
-      z.object({ status: z.literal("duplicate"), item: mediaItemSchema }),
-    ]),
-  ),
+  outcomes: z.array(importOutcomeSchema),
   failures: z.array(
     z.object({
       path: z.string(),
@@ -160,6 +161,50 @@ export const importReportSchema = z.object({
   ),
 });
 export type ImportReport = z.infer<typeof importReportSchema>;
+
+export const galleryMediaFormatSchema = z.enum(["gif", "apng", "webp", "png", "jpeg"]);
+export type GalleryMediaFormat = z.infer<typeof galleryMediaFormatSchema>;
+
+export const galleryAssetSchema = z.object({
+  url: z.string().url().startsWith("https://"),
+  sha256: z.string().regex(/^[a-f0-9]{64}$/),
+  sizeBytes: z
+    .number()
+    .int()
+    .positive()
+    .max(100 * 1024 * 1024),
+  mediaFormat: galleryMediaFormatSchema,
+});
+export type GalleryAsset = z.infer<typeof galleryAssetSchema>;
+
+export const galleryItemSchema = z.object({
+  id: z.string().regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/),
+  title: z.string().min(1).max(120),
+  description: z.string().min(1).max(500),
+  author: z.string().min(1).max(120),
+  licenseName: z.string().min(1).max(80),
+  licenseUrl: z.string().url().startsWith("https://"),
+  sourceUrl: z.string().url().startsWith("https://"),
+  tags: z.array(z.string().min(1).max(32)).min(1).max(20),
+  preview: galleryAssetSchema,
+  download: galleryAssetSchema,
+});
+export type GalleryItem = z.infer<typeof galleryItemSchema>;
+
+export const galleryCatalogResponseSchema = z.object({
+  schemaVersion: z.literal(1),
+  revision: z.number().int().positive(),
+  items: z.array(galleryItemSchema).min(1).max(500),
+  source: z.enum(["network", "cache", "bundled"]),
+  installedHashes: z.array(z.string().regex(/^[a-f0-9]{64}$/)),
+});
+export type GalleryCatalogResponse = z.infer<typeof galleryCatalogResponseSchema>;
+
+export const galleryPreviewSchema = z.object({
+  itemId: z.string().regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/),
+  path: z.string().min(1),
+});
+export type GalleryPreview = z.infer<typeof galleryPreviewSchema>;
 
 export const overlaySchema = z.object({
   id: overlayIdSchema,

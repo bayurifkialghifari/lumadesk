@@ -1,0 +1,94 @@
+{
+  "schemaVersion": 1,
+  "revision": 1,
+  "items": [
+    {
+      "id": "neon-orbit",
+      "title": "Neon Orbit",
+      "description": "A quiet set of luminous rings and satellites for ambient desktop layouts.",
+      "author": "LumaDesk Contributors",
+      "licenseName": "CC0-1.0",
+      "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "sourceUrl": "https://github.com/bayurifkialghifari/lumadesk/tree/main/src/assets/gallery",
+      "tags": ["abstract", "ambient", "neon"],
+      "preview": {
+        "url": "https://raw.githubusercontent.com/bayurifkialghifari/lumadesk/main/src/assets/gallery/neon-orbit.webp",
+        "sha256": "7cb74e7231ebd5969ff519902fee6e40e01f6730806a8741bc9d726005267f7e",
+        "sizeBytes": 11442,
+        "mediaFormat": "webp"
+      },
+      "download": {
+        "url": "https://raw.githubusercontent.com/bayurifkialghifari/lumadesk/main/src/assets/gallery/neon-orbit.webp",
+        "sha256": "7cb74e7231ebd5969ff519902fee6e40e01f6730806a8741bc9d726005267f7e",
+        "sizeBytes": 11442,
+        "mediaFormat": "webp"
+      }
+    },
+    {
+      "id": "pixel-bloom",
+      "title": "Pixel Bloom",
+      "description": "A colorful pixel flower that pulses gently against a dark arcade backdrop.",
+      "author": "LumaDesk Contributors",
+      "licenseName": "CC0-1.0",
+      "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "sourceUrl": "https://github.com/bayurifkialghifari/lumadesk/tree/main/src/assets/gallery",
+      "tags": ["colorful", "pixel", "retro"],
+      "preview": {
+        "url": "https://raw.githubusercontent.com/bayurifkialghifari/lumadesk/main/src/assets/gallery/pixel-bloom.gif",
+        "sha256": "21ab8cedef0dccc7a466e2d690730d35f512e06d03a5c15e86f91fbe3c03f502",
+        "sizeBytes": 124791,
+        "mediaFormat": "gif"
+      },
+      "download": {
+        "url": "https://raw.githubusercontent.com/bayurifkialghifari/lumadesk/main/src/assets/gallery/pixel-bloom.gif",
+        "sha256": "21ab8cedef0dccc7a466e2d690730d35f512e06d03a5c15e86f91fbe3c03f502",
+        "sizeBytes": 124791,
+        "mediaFormat": "gif"
+      }
+    },
+    {
+      "id": "moon-jelly",
+      "title": "Moon Jelly",
+      "description": "A soft bioluminescent jellyfish drifting through a deep blue field.",
+      "author": "LumaDesk Contributors",
+      "licenseName": "CC0-1.0",
+      "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "sourceUrl": "https://github.com/bayurifkialghifari/lumadesk/tree/main/src/assets/gallery",
+      "tags": ["blue", "creature", "ocean"],
+      "preview": {
+        "url": "https://raw.githubusercontent.com/bayurifkialghifari/lumadesk/main/src/assets/gallery/moon-jelly.png",
+        "sha256": "9b9fb55565335a619f451148810919030bffe230b4d3eb7a69cfe4e5039bd9a4",
+        "sizeBytes": 151027,
+        "mediaFormat": "apng"
+      },
+      "download": {
+        "url": "https://raw.githubusercontent.com/bayurifkialghifari/lumadesk/main/src/assets/gallery/moon-jelly.png",
+        "sha256": "9b9fb55565335a619f451148810919030bffe230b4d3eb7a69cfe4e5039bd9a4",
+        "sizeBytes": 151027,
+        "mediaFormat": "apng"
+      }
+    },
+    {
+      "id": "signal-ghost",
+      "title": "Signal Ghost",
+      "description": "A friendly mint specter floating through a compact synthwave signal grid.",
+      "author": "LumaDesk Contributors",
+      "licenseName": "CC0-1.0",
+      "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "sourceUrl": "https://github.com/bayurifkialghifari/lumadesk/tree/main/src/assets/gallery",
+      "tags": ["character", "ghost", "synthwave"],
+      "preview": {
+        "url": "https://raw.githubusercontent.com/bayurifkialghifari/lumadesk/main/src/assets/gallery/signal-ghost.webp",
+        "sha256": "6b0e7d0605aaed59c3fd73cfac983f7bcb1308ae21cde5de2f0a50f593449eaa",
+        "sizeBytes": 20416,
+        "mediaFormat": "webp"
+      },
+      "download": {
+        "url": "https://raw.githubusercontent.com/bayurifkialghifari/lumadesk/main/src/assets/gallery/signal-ghost.webp",
+        "sha256": "6b0e7d0605aaed59c3fd73cfac983f7bcb1308ae21cde5de2f0a50f593449eaa",
+        "sizeBytes": 20416,
+        "mediaFormat": "webp"
+      }
+    }
+  ]
+}
