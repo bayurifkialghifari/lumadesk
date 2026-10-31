@@ -24,6 +24,11 @@ struct OverlaySize {
     height: f64,
 }
 
+pub(crate) fn rendered_size(width: f64, source: &OverlayMedia) -> (f64, f64) {
+    let size = overlay_size(width, source);
+    (size.width, size.height)
+}
+
 #[derive(Clone, Debug)]
 pub(crate) struct OverlayMedia {
     pub(crate) media: MediaItem,
@@ -150,7 +155,7 @@ fn build(
         .inner_size(size.width, size.height)
         .resizable(false)
         .focused(false)
-        .focusable(true)
+        .focusable(!overlay.click_through)
         .transparent(true)
         .visible(false)
         .build()
@@ -164,8 +169,8 @@ fn configure(
     window.set_size(LogicalSize::new(size.width, size.height))?;
     window.set_position(LogicalPosition::new(overlay.x, overlay.y))?;
     window.set_always_on_top(true)?;
-    window.set_focusable(true)?;
-    window.set_ignore_cursor_events(false)?;
+    window.set_focusable(!overlay.click_through)?;
+    window.set_ignore_cursor_events(overlay.click_through)?;
     window.show()?;
     Ok(())
 }
