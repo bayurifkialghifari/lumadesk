@@ -53,6 +53,14 @@
 
 LumaDesk combines a searchable media library, a non-destructive Creator Studio, and native transparent overlays in one cross-platform app. Import a GIF or image, prepare it once, then create as many independently controlled desktop instances as you want.
 
+### Community Gallery
+
+- Browse a versioned catalog of redistributable animations without creating an account.
+- Search by title, author, description, or tag and filter by file format.
+- Add verified items directly to the local Collection with their title and tags intact.
+- Import a GIF, APNG, WebP, PNG, or JPEG directly from an HTTPS URL.
+- Keep browsing during network outages through cached metadata and the bundled starter pack.
+
 ### Library
 
 - Import GIF, APNG, WebP, PNG, and JPEG through the native picker or drag and drop.
@@ -110,12 +118,14 @@ Run the primary checks with:
 ```bash
 pnpm check
 pnpm test
+pnpm validate:gallery
 cargo test --workspace --locked
 ```
 
 ## Documentation
 
 - [Animation library](docs/animation-library.md)
+- [Community Gallery](docs/community-gallery.md)
 - [Importing media](docs/importing-media.md)
 - [Discovering GIFs](docs/discovering-gifs.md)
 - [Creator Studio](docs/creator-studio.md)

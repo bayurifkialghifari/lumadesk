@@ -16,6 +16,8 @@ flowchart LR
   APP --> LIFECYCLE[Tray and window lifecycle]
   UI -->|check, install, relaunch| UPDATER[Tauri updater and process plugins]
   UPDATER -->|signed manifest and package| RELEASES[GitHub Releases]
+  UI -->|typed Gallery commands| GALLERY[Verified Gallery cache]
+  GALLERY -->|HTTPS catalog and assets| STATIC[Static GitHub catalog]
 ```
 
 ## Repository boundaries
@@ -23,7 +25,8 @@ flowchart LR
 - `src/`: Svelte application, runtime schemas, typed command client, controllers, pages, components, and CSS tokens.
 - `src-tauri/src/`: Tauri commands, native window coordination, local model inference, single-instance behavior, and tray lifecycle.
 - `crates/lumadesk-core/`: platform-independent domain types, SQLite repositories, import pipeline, edit validation, frame decoding, and generated-media records.
-- `assets/starter/`: redistributable starter media and license records.
+- `gallery/`: versioned catalog, contribution instructions, and starter-media license record.
+- `src/assets/gallery/`: original redistributable starter media bundled for offline preview and import.
 - `docs/`: one English guide per user-facing feature.
 
 The core crate has no Tauri dependency. Database, editing, importing, sprite decoding, and cache behavior run in tests without a graphical session.
@@ -74,6 +77,7 @@ The frontend calls serializable commands whose responses are checked again with 
 - scenes: list, create, update, rename, duplicate, delete, and apply complete desktop snapshots;
 - settings: get, update, open the data directory, and clear generated caches;
 - local AI: list model status, download, remove, and request a bounded mask batch.
+- Gallery: fetch the catalog, cache a verified preview, import a verified catalog item, and import supported media from an HTTPS URL.
 
 Inputs are validated at the command boundary. Domain failures map to stable error codes with English messages. If a native overlay update fails, persisted instance state is rolled back. Overlay and media removal close dependent windows before deleting records and restore captured windows when persistence fails.
 
@@ -83,11 +87,21 @@ Applying a scene first prepares all media and target coordinates, replaces the p
 
 ## File ownership
 
-Application data contains `lumadesk.sqlite3`, `media/`, `thumbnails/`, `frames/`, `masks/`, and `models/`. Import writes to a temporary file, hashes and decodes it, moves it atomically into `media/`, then commits the catalog row. A scope guard removes temporary data if any stage fails.
+Application data contains `lumadesk.sqlite3`, `media/`, `thumbnails/`, `frames/`, `masks/`, `models/`, and `gallery/`. Import writes to a temporary file, hashes and decodes it, moves it atomically into `media/`, then commits the catalog row. A scope guard removes temporary data if any stage fails.
 
 Model downloads use a `.part` file and become available only after exact length and SHA-256 verification. Fast and Quality model files remain optional and removable. Clearing generated cache removes previews, decoded frames, and masks while preserving the database, managed source media, settings, and installed models.
 
 The frontend receives asset URLs only for approved media and cache roots. Deletion quarantines a managed file before the database transaction, restores it on failure, and clears stale quarantine files at startup.
+
+## Community Gallery architecture
+
+The Community Gallery has no dedicated backend. `gallery/catalog.v1.json` is published with the repository and fetched from GitHub over HTTPS. Rust parses a strict schema and validates IDs, text bounds, tags, supported formats, URLs, declared sizes, and SHA-256 values. A fresh disk cache is preferred for normal launches; a refresh requests the network copy. Failure falls back to any valid cache and then to the catalog embedded in the binary.
+
+Preview and download files pass through the Rust network layer to avoid browser CORS and filesystem access. Downloads use bounded streaming and temporary files, require a final HTTPS URL, and become visible only after exact size and SHA-256 verification. The four starter assets are embedded in the binary and satisfy matching catalog hashes without a network request. Approved previews live under the scoped `gallery/` application-data directory.
+
+Gallery import stores the declared title and tags in the same SQLite transaction as the new media row and edit recipe. Existing content hashes return the normal duplicate outcome. Direct URL import accepts HTTPS only, streams at most 100 MiB into a temporary file, and then invokes the same media inspection, managed-copy, hashing, and duplicate pipeline as local files.
+
+CI runs `scripts/validate-gallery.mjs` before frontend and Rust checks. It rejects schema drift, duplicate IDs, insecure URLs, missing local assets, and byte-size or SHA-256 mismatches. New entries are therefore reviewed and released like source code. Accounts, public uploads, ratings, and moderation would require a service and remain outside this static-catalog design.
 
 ## Rendering and playback
 

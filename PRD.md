@@ -1,6 +1,6 @@
 # LumaDesk Product Requirements
 
-**Status:** v0.6.2 implementation contract
+**Status:** v0.7.0 implementation contract
 **Updated:** 31 October 2026
 
 ## Product statement
@@ -13,7 +13,7 @@ LumaDesk is a desktop animation library and editor. It organizes local media, ap
 - Artists want to prepare GIF, APNG, WebP, still-image, and sprite-sheet assets while preserving their source files.
 - Collectors want a searchable library with names, tags, favorites, duplicate detection, and predictable local ownership.
 
-## v0.6.2 outcomes
+## v0.7.0 outcomes
 
 1. Users can import GIF, APNG, animated or static WebP, PNG, and JPEG files through a native picker or drag and drop.
 2. Imported media appears in a searchable library and can be previewed, renamed, tagged, favorited, or removed.
@@ -30,6 +30,9 @@ LumaDesk is a desktop animation library and editor. It organizes local media, ap
 13. Installed builds check GitHub Releases for signed updates and offer one-click installation from the title bar.
 14. Failed update downloads or installations remain recoverable through retry and direct-release actions without restarting the workspace.
 15. Release automation verifies native package identity, architecture, signatures, checksums, and the complete public asset inventory before publication.
+16. Users can browse a static Community Gallery, search and filter its entries, preview animated media, and add verified items to the local Collection.
+17. Users can import supported media directly from an HTTPS URL through the same managed, duplicate-aware import pipeline.
+18. Gallery metadata and starter assets remain available through cache and bundled fallbacks when the network is unavailable.
 
 ## Functional requirements
 
@@ -41,6 +44,17 @@ LumaDesk is a desktop animation library and editor. It organizes local media, ap
 - Detect duplicate imports by SHA-256 and focus the existing item instead of creating another copy.
 - Store imported files in an application-managed media directory. Renaming changes the catalog name only.
 - Confirm removal, stop dependent overlays, and delete the managed copy and regenerable data without touching the original source file.
+
+### Community Gallery
+
+- Load a versioned static catalog from GitHub without an account or dedicated application server.
+- Fall back from the network catalog to a verified disk cache and then to the catalog bundled with the application.
+- Search titles, descriptions, authors, and tags; filter by tag and file format; and show whether an exact content hash already exists locally.
+- Download Gallery previews and collection assets through the Rust command layer, limit each file to 100 MiB, and require HTTPS after redirects.
+- Verify every Gallery asset against its declared byte length and SHA-256 before making it available or importing it.
+- Preserve the Gallery title and tags during import and use the existing SHA-256 duplicate rule as the authority.
+- Accept user-entered HTTPS media URLs with an optional display name and route the result through the normal managed import pipeline.
+- Display author, source, and license information for every catalog item.
 
 ### Creator Studio
 
@@ -123,20 +137,22 @@ LumaDesk is a desktop animation library and editor. It organizes local media, ap
 - Linux x86-64 and ARM64: `.AppImage`, `.deb`, and `.rpm` packages.
 - Every tagged release includes ten signed native updater payloads, ten detached signatures, two macOS disk images, `latest.json`, and `SHA256SUMS.txt`.
 - Core library, editing, playback, and edge removal do not require an account or network connection.
-- Network access is limited to update checks, user-initiated external discovery, optional model downloads, and downloading an update after user confirmation.
+- Network access is limited to Gallery catalog and asset requests, user-initiated URL imports and external discovery, update checks, optional model downloads, and downloading an update after user confirmation.
 - Updater signing credentials are mandatory. Windows Authenticode signing, Apple code signing, and Apple notarization activate only when each complete optional credential group is configured.
 
 ## Deferred
 
 - Timeline and per-frame drawing tools.
 - Video and audio playback.
-- Embedded online marketplace, accounts, sync, and cloud backup.
+- Account-based Gallery submissions, ratings, moderation, sync, and cloud backup.
 - Autonomous characters, desktop object detection, and conversational AI.
 - Native Wayland layer-shell integration.
 
 ## Acceptance criteria
 
-- Deterministic v0.6.2 behavior passes Rust and frontend tests.
+- Deterministic v0.7.0 behavior passes Rust and frontend tests.
+- The Gallery validator rejects unknown fields, duplicate or unstable IDs, insecure URLs, unsupported formats, missing local starter assets, and mismatched byte lengths or SHA-256 values.
+- Gallery import works from network, cached, and bundled catalog sources without creating duplicate media rows.
 - Invalid Creator input cannot partially save an edit recipe.
 - A downloaded model must pass size and SHA-256 checks before it is reported as installed.
 - A tagged release publishes exactly 24 validated assets: ten updater payloads, ten detached signatures, two DMGs, `latest.json`, and `SHA256SUMS.txt`.

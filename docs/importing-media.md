@@ -8,6 +8,10 @@ Select **Import animation**, choose one or more files, or drag files onto the Co
 
 To find new media, enter an optional Collection search term and select **Discover GIFs**. Download a GIF from the page that opens, then import it through the same picker or drag-and-drop flow.
 
+The **Community Gallery** provides a curated catalog inside LumaDesk. Search or filter the catalog, review the author and license, then select **Add to collection**. Catalog files are checked against their declared byte length and SHA-256 before import.
+
+Select **Import URL** in the Gallery to import one supported media file directly from an HTTPS address. A custom name is optional. URL downloads are limited to 100 MiB and pass through the same media validation, managed storage, and duplicate detection used by local files.
+
 ## File storage
 
 LumaDesk copies imported media into its application data directory. The source file remains in its original location. The initial display name comes from the filename and can be changed after import.

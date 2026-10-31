@@ -83,6 +83,7 @@ When **Follow system** is selected, the dark tokens remain active for a dark ope
 - **UpdateAction:** a compact title-bar control with available, downloading, installing, failed, and restart-required states. It uses the brand tonal surface, a download or progress glyph, explicit text, and an accessible status label.
 - **SceneManager:** compact save form, selectable scene list, selected-scene actions, and inline confirmation for deletion.
 - **StateBadge:** short text plus status color for visible, hidden, playing, paused, and locked states.
+- **GalleryCard:** animated preview, title, author, format, size, tags, license/source links, and one collection action. Installed state uses a check icon and explicit text.
 
 ## 5. Interaction and motion
 
@@ -94,6 +95,7 @@ When **Follow system** is selected, the dark tokens remain active for a dark ope
 - Import progress is determinate when byte progress exists and indeterminate otherwise.
 - Update checks run without interrupting the workspace. Installation starts only after the user presses the title-bar update action; known download size produces integer progress, and an unknown size uses a short activity label. Failed operations return focus to a retry action and keep a direct-release fallback in the same control.
 - Reduced-motion mode removes translation and scale while keeping short opacity changes.
+- Gallery previews stay paused when reduced motion is requested. Each card exposes an explicit play action and restores the paused state when the system preference changes.
 - Destructive operations always require explicit confirmation and return focus to a logical element afterward.
 
 ## 6. Overlay controls
@@ -118,7 +120,19 @@ When **Follow system** is selected, the dark tokens remain active for a dark ope
 - Rename stays inline. Delete requires a compact confirmation beside the initiating action.
 - On narrow screens, save controls stack, the scene list moves above scene actions, and the manager keeps a single scroll owner in the workspace.
 
-## 8. Creator Studio
+## 8. Community Gallery
+
+- The Gallery header identifies the active catalog source, item count, refresh action, and direct URL import.
+- Search spans title, description, author, and tags. Format and tag filters remain visible beside search on desktop and wrap below it on narrow screens.
+- The responsive grid uses a 280 px minimum card width. Every card gives the animated preview the largest area and keeps attribution beside the collection action.
+- Compact Gallery layouts hide the visual scrollbar while preserving touch, wheel, and keyboard scrolling so the content keeps the full viewport width.
+- **Add to collection** becomes an inline busy state while downloading and a persistent **In collection** state after exact hash detection.
+- Source and license actions open in the system browser. Attribution remains visible before import.
+- Browser preview uses the bundled starter catalog and disables native collection actions with explanatory copy.
+- Loading, catalog error, no-results, preview-unavailable, importing, duplicate, and imported states use direct English labels.
+- Direct URL import uses a focused dialog with an HTTPS URL, optional display name, 100 MiB limit note, and one primary import action.
+
+## 9. Creator Studio
 
 - The Creator workspace uses a three-column desktop layout: a compact asset rail, a large live preview, and grouped editing controls. At narrower widths, controls move below the preview and the asset rail becomes a short horizontal region.
 - Transform controls stay close to the preview toolbar. Numeric crop controls use the dimensions of one sprite cell when sprite playback is enabled.
@@ -127,21 +141,21 @@ When **Follow system** is selected, the dark tokens remain active for a dark ope
 - Sprite controls show grid dimensions, frame count, frame duration, and playback mode. Animated source formats disable sprite setup because they already contain a frame sequence.
 - Changes remain provisional until **Save changes** is pressed. A successful save updates the preview and active overlays; a failed save leaves the persisted recipe unchanged.
 
-## 9. Settings
+## 10. Settings
 
 - Settings uses compact two-column sections for appearance, desktop behavior, overlay defaults, and storage. The local-model section spans the full content width.
 - Every setting uses a native form control with a visible label and current value. Settings are written only through **Save settings**.
 - Model cards distinguish built-in edge removal from downloadable Fast and Quality models. Download, installed, removing, and error states use text and icons in addition to color.
 - Destructive model removal uses a direct labeled action. Generated masks for that model are removed with it.
 
-## 10. Content language
+## 11. Content language
 
 - The interface and public project documentation use English.
 - Prefer direct verbs. Interface examples include `Import animation`, `Show on desktop`, `Rename`, and `Remove from collection`.
 - Explain file ownership precisely: deleting from LumaDesk removes its managed copy and never deletes the original source.
 - Error messages state what failed and one useful next step.
 
-## 11. Accessibility constraints and accepted debt
+## 12. Accessibility constraints and accepted debt
 
 - Text contrast targets WCAG AA; focus indicators remain visible against every surface.
 - All controls are keyboard reachable and expose names to accessibility APIs.
