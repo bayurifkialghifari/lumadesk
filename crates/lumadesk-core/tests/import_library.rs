@@ -215,7 +215,10 @@ fn desktop_scene_lifecycle_uses_explicit_snapshots_and_unique_names() -> Result<
     let created =
         library.create_desktop_scene("  Focus  ", std::slice::from_ref(&original_item))?;
     assert_eq!(created.name, "Focus");
-    assert_eq!(created.items, [original_item.clone()]);
+    assert_eq!(
+        created.items.as_slice(),
+        std::slice::from_ref(&original_item)
+    );
     assert!(library.create_desktop_scene("focus", &[]).is_err());
     assert!(library.create_desktop_scene("", &[]).is_err());
 
@@ -298,7 +301,10 @@ fn replacing_and_batch_patching_overlays_are_atomic() -> Result<(), Box<dyn Erro
         is_active: true,
     };
     assert!(library.replace_overlays(&[replacement]).is_err());
-    assert_eq!(library.list_overlays()?, [existing.clone()]);
+    assert_eq!(
+        library.list_overlays()?.as_slice(),
+        std::slice::from_ref(&existing)
+    );
 
     let patched = library.patch_all_overlays(&OverlayBatchPatch {
         is_playing: Some(false),
