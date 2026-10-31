@@ -8,6 +8,15 @@ const tauriConfigSchema = z.object({
       csp: z.string(),
     }),
   }),
+  bundle: z.object({
+    createUpdaterArtifacts: z.boolean(),
+  }),
+  plugins: z.object({
+    updater: z.object({
+      endpoints: z.array(z.url()),
+      pubkey: z.string().min(1),
+    }),
+  }),
 });
 
 describe("Tauri security configuration", () => {
@@ -23,5 +32,22 @@ describe("Tauri security configuration", () => {
       .slice(1);
 
     expect(connectSources).toEqual(expect.arrayContaining(["asset:", "http://asset.localhost"]));
+  });
+
+  it("pins the signed GitHub release feed and updater permissions", () => {
+    const configUrl = new URL("../../src-tauri/tauri.conf.json", import.meta.url);
+    const capabilitiesUrl = new URL("../../src-tauri/capabilities/default.json", import.meta.url);
+    const config = tauriConfigSchema.parse(JSON.parse(readFileSync(configUrl, "utf8")));
+    const capabilities = z
+      .object({ permissions: z.array(z.union([z.string(), z.object({}).passthrough()])) })
+      .parse(JSON.parse(readFileSync(capabilitiesUrl, "utf8")));
+
+    expect(config.bundle.createUpdaterArtifacts).toBe(true);
+    expect(config.plugins.updater.endpoints).toEqual([
+      "https://github.com/bayurifkialghifari/lumadesk/releases/latest/download/latest.json",
+    ]);
+    expect(capabilities.permissions).toEqual(
+      expect.arrayContaining(["updater:default", "process:allow-restart"]),
+    );
   });
 });

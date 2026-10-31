@@ -179,6 +179,7 @@ async function clearCache(): Promise<void> {
     collectionCount={$collection.total}
     desktopCount={$desktop.overlays.length}
     onnavigate={navigate}
+    onupdateerror={(message) => collection.notify("error", message)}
   />
 
   <div class:with-inspector={activePage === "collection" && selectedItem !== undefined} class="workspace-region">

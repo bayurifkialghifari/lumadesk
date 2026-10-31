@@ -7,7 +7,7 @@ version = "0.5.1"
 edition = "2024"
 license = "MIT"
 repository = "https://github.com/bayurifkialghifari/lumadesk"
-rust-version = "1.88"
+rust-version = "1.90"
 
 [workspace.lints.rust]
 unsafe_code = "forbid"
