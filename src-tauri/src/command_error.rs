@@ -1,3 +1,5 @@
+use std::fmt::Display;
+
 use lumadesk_core::{ApiError, CoreError, ErrorCode};
 use serde::Serialize;
 
@@ -20,6 +22,27 @@ impl CommandError {
         Self {
             code: ErrorCode::Io,
             message: format!("The desktop overlay could not be updated: {error}"),
+        }
+    }
+
+    pub(crate) fn native(action: &str, error: impl Display) -> Self {
+        Self {
+            code: ErrorCode::Io,
+            message: format!("{action}: {error}"),
+        }
+    }
+
+    pub(crate) fn invalid_input(message: impl Into<String>) -> Self {
+        Self {
+            code: ErrorCode::InvalidInput,
+            message: message.into(),
+        }
+    }
+
+    pub(crate) fn invalid_data(message: impl Into<String>) -> Self {
+        Self {
+            code: ErrorCode::InvalidData,
+            message: message.into(),
         }
     }
 }

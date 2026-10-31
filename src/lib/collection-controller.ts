@@ -1,17 +1,17 @@
 import { get, writable } from "svelte/store";
-import { getSettings, listMedia, mediaAssetUrl, updateSettings } from "./api";
+import { getEditRecipe, getSettings, listMedia, mediaAssetUrl, updateSettings } from "./api";
 import {
-  ALL_MEDIA_KINDS,
+  ALL_MEDIA_FORMATS,
   buildLibraryQuery,
   type CollectionController,
   type CollectionState,
   DEFAULT_SETTINGS,
   lastCollectionPage,
-  type MediaKindFilter,
+  type MediaFormatFilter,
   type ToastTone,
 } from "./collection-model";
 import { createCollectionMutations } from "./collection-mutations";
-import type { MediaItem } from "./contracts";
+import type { EditRecipe, MediaItem } from "./contracts";
 import { userErrorMessage } from "./presentation";
 
 const SEARCH_DELAY_MS = 180;
@@ -28,10 +28,11 @@ export function createCollectionController(nativeAvailable: boolean): Collection
     items: [],
     total: 0,
     page: 0,
-    filters: { search: "", mediaKind: ALL_MEDIA_KINDS, favoriteOnly: false, tag: "" },
+    filters: { search: "", mediaFormat: ALL_MEDIA_FORMATS, favoriteOnly: false, tag: "" },
     settings: DEFAULT_SETTINGS,
     selectedId: null,
     assetUrls: {},
+    editRecipes: {},
     busyIds: new Set(),
     loadError: null,
     notice: null,
@@ -68,6 +69,19 @@ export function createCollectionController(nativeAvailable: boolean): Collection
     return urls;
   }
 
+  async function resolveEditRecipes(
+    items: readonly MediaItem[],
+  ): Promise<Readonly<Record<string, EditRecipe>>> {
+    const results = await Promise.allSettled(
+      items.map(async (item) => ({ id: item.id, recipe: await getEditRecipe(item.id) })),
+    );
+    const recipes: Record<string, EditRecipe> = {};
+    for (const result of results) {
+      if (result.status === "fulfilled") recipes[result.value.id] = result.value.recipe;
+    }
+    return recipes;
+  }
+
   async function reload(): Promise<void> {
     if (!nativeAvailable) {
       store.update((state) => ({ ...state, ready: true, loading: false, refreshing: false }));
@@ -91,7 +105,10 @@ export function createCollectionController(nativeAvailable: boolean): Collection
         await reload();
         return;
       }
-      const assetUrls = await resolveAssetUrls(page.items);
+      const [assetUrls, editRecipes] = await Promise.all([
+        resolveAssetUrls(page.items),
+        resolveEditRecipes(page.items),
+      ]);
       if (request !== requestSequence) return;
       store.update((state) => {
         const selectedId = page.items.some((item) => item.id === state.selectedId)
@@ -106,6 +123,7 @@ export function createCollectionController(nativeAvailable: boolean): Collection
           total: page.total,
           selectedId,
           assetUrls,
+          editRecipes,
         };
       });
     } catch (error) {
@@ -183,6 +201,26 @@ export function createCollectionController(nativeAvailable: boolean): Collection
     }
   }
 
+  async function saveSettings(next: CollectionState["settings"]): Promise<boolean> {
+    const previous = get(store).settings;
+    store.update((state) => ({ ...state, settings: next }));
+    if (!nativeAvailable) return true;
+    try {
+      const settings = await updateSettings(next);
+      store.update((state) => ({ ...state, settings }));
+      notify("success", "Settings saved.");
+      return true;
+    } catch (error) {
+      const message =
+        error instanceof Error
+          ? userErrorMessage(error, "Settings could not be saved.")
+          : "Settings could not be saved.";
+      store.update((state) => ({ ...state, settings: previous }));
+      notify("error", message);
+      return false;
+    }
+  }
+
   const mutations = createCollectionMutations({
     nativeAvailable,
     getState: () => get(store),
@@ -196,7 +234,7 @@ export function createCollectionController(nativeAvailable: boolean): Collection
     initialize,
     reload,
     setSearch: (search) => updateFilter({ search }, true),
-    setMediaKind: (mediaKind: MediaKindFilter) => updateFilter({ mediaKind }),
+    setMediaFormat: (mediaFormat: MediaFormatFilter) => updateFilter({ mediaFormat }),
     setFavoriteOnly: (favoriteOnly) => updateFilter({ favoriteOnly }),
     setTag: (tag) => updateFilter({ tag }),
     setPage: (page) => {
@@ -204,6 +242,7 @@ export function createCollectionController(nativeAvailable: boolean): Collection
       void reload();
     },
     setView,
+    saveSettings,
     select: (selectedId) => store.update((state) => ({ ...state, selectedId })),
     setDragActive: (dragActive) => store.update((state) => ({ ...state, dragActive })),
     ...mutations,

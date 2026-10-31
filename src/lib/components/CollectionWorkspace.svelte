@@ -1,14 +1,14 @@
 <script lang="ts">
 import { CloudOff, Download, RefreshCw } from "@lucide/svelte";
 import { onMount } from "svelte";
-import { availableTags, type CollectionState, type MediaKindFilter } from "../collection-model";
+import { availableTags, type CollectionState, type MediaFormatFilter } from "../collection-model";
 import type { AppSettings, MediaId, MediaItem } from "../contracts";
 import CollectionCatalog from "./CollectionCatalog.svelte";
 import CollectionToolbar from "./CollectionToolbar.svelte";
 
 export let state: CollectionState;
 export let onsearch: (value: string) => void;
-export let onkind: (value: MediaKindFilter) => void;
+export let onkind: (value: MediaFormatFilter) => void;
 export let onfavoritefilter: (value: boolean) => void;
 export let ontag: (value: string) => void;
 export let onview: (value: AppSettings["collectionView"]) => void;

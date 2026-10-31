@@ -1,6 +1,6 @@
 <script lang="ts">
 import { Copy, FlipHorizontal2, Monitor, Pause, Play, X } from "@lucide/svelte";
-import type { DesktopOverlay, OverlayId, OverlayPatch } from "../contracts";
+import type { DesktopOverlay, EditRecipe, OverlayId, OverlayPatch } from "../contracts";
 import {
   MAX_OVERLAY_WIDTH,
   MIN_OVERLAY_WIDTH,
@@ -9,11 +9,12 @@ import {
   opacityFromPercent,
   overlayHeight,
 } from "../desktop-model";
-import { mediaKindLabel } from "../presentation";
+import { mediaFormatLabel } from "../presentation";
 import MediaPreview from "./MediaPreview.svelte";
 
 export let item: DesktopOverlay;
 export let src: string | undefined = undefined;
+export let recipe: EditRecipe | undefined = undefined;
 export let busy = false;
 export let onupdate: (id: OverlayId, patch: OverlayPatch) => void;
 export let onduplicate: (id: OverlayId) => void;
@@ -34,13 +35,13 @@ function numberValue(event: Event): number {
       style:opacity={item.overlay.opacity}
       style:transform={item.overlay.flipHorizontal ? "scaleX(-1)" : "none"}
     >
-      <MediaPreview item={item.media} {src} eager />
+      <MediaPreview item={item.media} {src} {recipe} eager />
     </div>
     <div class="preview-status">
       <span class:paused={!item.overlay.isPlaying}>
         {#if item.overlay.isPlaying}<Play size={11} fill="currentColor" /> Active{:else}<Pause size={11} /> Paused{/if}
       </span>
-      <small>{mediaKindLabel(item.media.mediaKind)}</small>
+      <small>{mediaFormatLabel(item.media.mediaFormat)}</small>
     </div>
   </div>
 
@@ -130,8 +131,8 @@ function numberValue(event: Event): number {
         onchange={() => onupdate(item.overlay.id, { removeBackground: !item.overlay.removeBackground })}
       />
       <span>
-        <strong>Remove background</strong>
-        <small>Best for solid or near-solid backgrounds.</small>
+        <strong>Quick edge removal</strong>
+        <small>Applies a solid-background edge mask to this overlay.</small>
       </span>
     </label>
   </div>

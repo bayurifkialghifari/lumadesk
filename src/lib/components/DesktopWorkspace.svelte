@@ -90,6 +90,7 @@ $: playingCount = state.overlays.filter((item) => item.overlay.isPlaying).length
           <DesktopOverlayCard
             {item}
             src={state.assetUrls[item.media.id]}
+            recipe={state.editRecipes[item.media.id]}
             busy={state.busyIds.has(item.overlay.id)}
             {onupdate}
             {onduplicate}

@@ -5,13 +5,16 @@ import { getCurrentWebview } from "@tauri-apps/api/webview";
 import { open } from "@tauri-apps/plugin-dialog";
 import { openUrl } from "@tauri-apps/plugin-opener";
 import { onMount } from "svelte";
+import { clearGeneratedCache, openDataFolder } from "./lib/api";
 import { createCollectionController } from "./lib/collection-controller";
 import type { CollectionDialog } from "./lib/collection-model";
 import AppChrome from "./lib/components/AppChrome.svelte";
 import CollectionDialogs from "./lib/components/CollectionDialogs.svelte";
 import CollectionWorkspace from "./lib/components/CollectionWorkspace.svelte";
+import CreatorStudio from "./lib/components/CreatorStudio.svelte";
 import DesktopWorkspace from "./lib/components/DesktopWorkspace.svelte";
 import MediaInspector from "./lib/components/MediaInspector.svelte";
+import SettingsWorkspace from "./lib/components/SettingsWorkspace.svelte";
 import Toast from "./lib/components/Toast.svelte";
 import type { MediaItem } from "./lib/contracts";
 import { createDesktopController } from "./lib/desktop-controller";
@@ -29,7 +32,17 @@ $: selectedItem =
     ? undefined
     : $collection.items.find((item) => item.id === $collection.selectedId);
 $: selectedBusy = selectedItem === undefined ? false : $collection.busyIds.has(selectedItem.id);
-$: pageTitle = activePage === "desktop" ? "Active on Desktop" : "Collection";
+$: pageTitle =
+  activePage === "desktop"
+    ? "Active on Desktop"
+    : activePage === "creator"
+      ? "Creator Studio"
+      : activePage === "settings"
+        ? "Settings"
+        : "Collection";
+$: if (typeof document !== "undefined") {
+  document.documentElement.dataset.theme = $collection.settings.theme;
+}
 
 onMount(() => {
   let disposed = false;
@@ -128,6 +141,34 @@ function edit(kind: CollectionDialog["kind"], item: MediaItem): void {
 function navigate(id: NavigationId, enabled: boolean): void {
   if (enabled) activePage = id;
 }
+
+async function openStorageFolder(): Promise<void> {
+  try {
+    await openDataFolder();
+  } catch (error) {
+    const message =
+      error instanceof Error
+        ? userErrorMessage(error, "The data folder could not be opened.")
+        : "The data folder could not be opened.";
+    collection.notify("error", message);
+  }
+}
+
+async function clearCache(): Promise<void> {
+  try {
+    await clearGeneratedCache();
+    collection.notify(
+      "success",
+      "Generated previews, decoded frames, and background masks were cleared.",
+    );
+  } catch (error) {
+    const message =
+      error instanceof Error
+        ? userErrorMessage(error, "The generated cache could not be cleared.")
+        : "The generated cache could not be cleared.";
+    collection.notify("error", message);
+  }
+}
 </script>
 
 <svelte:head><title>LumaDesk — {pageTitle}</title></svelte:head>
@@ -145,7 +186,7 @@ function navigate(id: NavigationId, enabled: boolean): void {
       <CollectionWorkspace
         state={$collection}
         onsearch={collection.setSearch}
-        onkind={collection.setMediaKind}
+        onkind={collection.setMediaFormat}
         onfavoritefilter={collection.setFavoriteOnly}
         ontag={collection.setTag}
         onview={(view) => void collection.setView(view)}
@@ -161,6 +202,7 @@ function navigate(id: NavigationId, enabled: boolean): void {
         <MediaInspector
           item={selectedItem}
           src={$collection.assetUrls[selectedItem.id]}
+          recipe={$collection.editRecipes[selectedItem.id]}
           busy={selectedBusy}
           onclose={() => collection.select(null)}
           onrename={(item) => edit("rename", item)}
@@ -181,6 +223,24 @@ function navigate(id: NavigationId, enabled: boolean): void {
         onreload={() => void desktop.reload()}
         oncollection={() => (activePage = "collection")}
       />
+    {:else if activePage === "creator"}
+      <CreatorStudio
+        items={$collection.items}
+        assetUrls={$collection.assetUrls}
+        selectedId={$collection.selectedId}
+        nativeAvailable={$collection.nativeAvailable}
+        onselect={collection.select}
+        onnotify={collection.notify}
+        onreload={() => void collection.reload()}
+      />
+    {:else if activePage === "settings"}
+      <SettingsWorkspace
+        settings={$collection.settings}
+        nativeAvailable={$collection.nativeAvailable}
+        onsave={collection.saveSettings}
+        onopenfolder={openStorageFolder}
+        onclearcache={clearCache}
+      />
     {/if}
   </div>
 </div>
@@ -196,7 +256,7 @@ function navigate(id: NavigationId, enabled: boolean): void {
   ondelete={collection.remove}
 />
 
-{#if activePage === "collection" && $collection.notice !== null}
+{#if activePage !== "desktop" && $collection.notice !== null}
   {#key $collection.notice.id}
     <Toast message={$collection.notice.message} tone={$collection.notice.tone} ondismiss={collection.dismissNotice} />
   {/key}

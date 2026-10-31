@@ -1,11 +1,12 @@
 <script lang="ts">
 import { Heart, MonitorUp, Pencil, X } from "@lucide/svelte";
-import type { MediaItem } from "../contracts";
+import type { EditRecipe, MediaItem } from "../contracts";
 import MediaInspectorDetails from "./MediaInspectorDetails.svelte";
 import MediaPreview from "./MediaPreview.svelte";
 
 export let item: MediaItem;
 export let src: string | undefined = undefined;
+export let recipe: EditRecipe | undefined = undefined;
 export let busy = false;
 export let onclose: () => void;
 export let onrename: (item: MediaItem) => void;
@@ -27,7 +28,7 @@ export let onshow: (item: MediaItem) => void;
   </header>
 
   <div class="inspector__body">
-    <MediaPreview {item} {src} eager />
+    <MediaPreview {item} {src} {recipe} eager />
 
     <button class="primary-button" type="button" disabled={busy} onclick={() => onshow(item)}>
       <MonitorUp size={17} />

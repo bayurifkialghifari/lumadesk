@@ -1,7 +1,7 @@
 <script lang="ts">
 import { ExternalLink, Grid2X2, List, Search, Upload, X } from "@lucide/svelte";
 import { onMount } from "svelte";
-import type { CollectionFilters, MediaKindFilter } from "../collection-model";
+import type { CollectionFilters, MediaFormatFilter } from "../collection-model";
 import type { AppSettings } from "../contracts";
 import CollectionFiltersControl from "./CollectionFilters.svelte";
 
@@ -11,7 +11,7 @@ export let view: AppSettings["collectionView"];
 export let importing = false;
 export let refreshing = false;
 export let onsearch: (value: string) => void;
-export let onkind: (value: MediaKindFilter) => void;
+export let onkind: (value: MediaFormatFilter) => void;
 export let onfavorite: (value: boolean) => void;
 export let ontag: (value: string) => void;
 export let onview: (value: AppSettings["collectionView"]) => void;

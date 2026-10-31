@@ -62,9 +62,9 @@ function handleFocusOut(): void {
   <button
     class:active={overlay?.removeBackground === true}
     type="button"
-    aria-label={overlay?.removeBackground === true ? "Restore background" : "Remove background"}
+    aria-label={overlay?.removeBackground === true ? "Disable quick edge removal" : "Enable quick edge removal"}
     aria-pressed={overlay?.removeBackground === true}
-    title={overlay?.removeBackground === true ? "Restore background" : "Remove background"}
+    title={overlay?.removeBackground === true ? "Disable quick edge removal" : "Quick edge removal"}
     disabled={busy || overlay === null}
     onclick={() => onpatch({ removeBackground: overlay?.removeBackground !== true })}
   >

@@ -1,5 +1,6 @@
 //! Native application adapter for `LumaDesk`.
 
+mod ai;
 mod app_lifecycle;
 mod command_error;
 mod commands;
@@ -27,6 +28,7 @@ pub fn run() {
         .setup(|application| {
             let data_root = application.path().app_data_dir()?;
             let library = Library::open(&data_root)?;
+            let ai_state = ai::AiState::open(&data_root)?;
             let restore = library.get_settings()?.restore_overlays;
             let overlays = if restore {
                 library
@@ -34,17 +36,19 @@ pub fn run() {
                     .into_iter()
                     .filter(|overlay| overlay.is_active)
                     .map(|overlay| {
-                        let media = library.media_item(overlay.media_id)?;
-                        Ok((overlay, media))
+                        let source =
+                            overlay_windows::OverlayMedia::load(&library, overlay.media_id)?;
+                        Ok((overlay, source))
                     })
                     .collect::<Result<Vec<_>, lumadesk_core::CoreError>>()?
             } else {
                 Vec::new()
             };
             application.manage(AppState::new(library));
+            application.manage(ai_state);
             app_lifecycle::install_tray(application.handle())?;
-            for (overlay, media) in overlays {
-                if let Err(error) = overlay_windows::sync(application.handle(), &overlay, &media) {
+            for (overlay, source) in overlays {
+                if let Err(error) = overlay_windows::sync(application.handle(), &overlay, &source) {
                     eprintln!("failed to restore overlay {}: {error}", overlay.id);
                 }
             }
@@ -60,6 +64,13 @@ pub fn run() {
             commands::catalog::delete_media,
             commands::catalog::resolve_media_path,
             commands::catalog::get_frame_batch,
+            commands::catalog::get_edit_recipe,
+            commands::catalog::update_edit_recipe,
+            commands::catalog::save_creator_changes,
+            commands::catalog::get_sprite_sequence,
+            commands::catalog::set_sprite_sequence,
+            commands::catalog::clear_sprite_sequence,
+            commands::catalog::list_media_variants,
             commands::overlays::list_overlays,
             commands::overlays::list_desktop_overlays,
             commands::overlays::create_overlay,
@@ -70,6 +81,12 @@ pub fn run() {
             commands::overlays::remove_overlay,
             commands::settings::get_settings,
             commands::settings::update_settings,
+            commands::settings::open_data_folder,
+            commands::settings::clear_generated_cache,
+            ai::list_ai_models,
+            ai::download_ai_model,
+            ai::remove_ai_model,
+            ai::get_ai_mask_batch,
         ])
         .run(tauri::generate_context!())
         .unwrap_or_else(|error| {

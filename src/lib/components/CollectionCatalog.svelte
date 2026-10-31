@@ -50,6 +50,7 @@ $: filtered = hasActiveFilters(state.filters);
           <MediaCard
             {item}
             src={state.assetUrls[item.id]}
+            recipe={state.editRecipes[item.id]}
             selected={state.selectedId === item.id}
             busy={state.busyIds.has(item.id)}
             {onselect}
@@ -66,6 +67,7 @@ $: filtered = hasActiveFilters(state.filters);
           <MediaListRow
             {item}
             src={state.assetUrls[item.id]}
+            recipe={state.editRecipes[item.id]}
             selected={state.selectedId === item.id}
             busy={state.busyIds.has(item.id)}
             {onselect}

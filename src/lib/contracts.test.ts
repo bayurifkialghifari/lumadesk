@@ -1,12 +1,19 @@
 import { describe, expect, it } from "vitest";
-import { desktopOverlaySchema, mediaItemSchema, settingsSchema } from "./contracts";
+import {
+  aiMaskBatchSchema,
+  aiModelStatusSchema,
+  desktopOverlaySchema,
+  mediaItemSchema,
+  settingsSchema,
+} from "./contracts";
 
 const media = {
   id: "2db87e5a-5968-4c30-89e9-bf1980e8bb5f",
   contentHash: "a".repeat(64),
-  displayName: "Lampu Biru",
+  displayName: "Blue Light",
   managedPath: "2db87e5a-5968-4c30-89e9-bf1980e8bb5f.png",
-  mediaKind: "png",
+  assetKind: "still",
+  mediaFormat: "png",
   width: 320,
   height: 240,
   frameCount: 1,
@@ -28,6 +35,7 @@ describe("native command contracts", () => {
 
   it("rejects settings outside overlay limits", () => {
     const settings = {
+      theme: "dark",
       launchAtLogin: false,
       restoreOverlays: true,
       closeToTray: true,
@@ -35,9 +43,30 @@ describe("native command contracts", () => {
       defaultOverlayWidth: 240,
       defaultOpacity: 1,
       defaultSpeed: 5,
-      cacheLimitMb: 512,
     };
     expect(() => settingsSchema.parse(settings)).toThrow();
+  });
+
+  it("validates local AI model and mask payloads", () => {
+    expect(
+      aiModelStatusSchema.parse({
+        model: "fast",
+        status: "installed",
+        sizeBytes: 4_574_861,
+        installedBytes: 4_574_861,
+        message: null,
+      }),
+    ).toMatchObject({ model: "fast", status: "installed" });
+    expect(
+      aiMaskBatchSchema.parse({
+        mediaId: media.id,
+        model: "quality",
+        masks: [{ index: 0, path: "/data/masks/00000000.png" }],
+      }).masks,
+    ).toHaveLength(1);
+    expect(() =>
+      aiMaskBatchSchema.parse({ mediaId: media.id, model: "remote", masks: [] }),
+    ).toThrow();
   });
 
   it("validates the combined media and overlay payload used by the desktop manager", () => {

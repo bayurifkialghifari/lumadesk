@@ -5,8 +5,8 @@ import {
   mediaDate,
   mediaDimensions,
   mediaDuration,
+  mediaFormatLabel,
   mediaFrameLabel,
-  mediaKindLabel,
 } from "../presentation";
 
 export let item: MediaItem;
@@ -18,7 +18,7 @@ export let ondelete: (item: MediaItem) => void;
 <section class="inspector-section">
   <h3>Information</h3>
   <dl>
-    <div><dt>Format</dt><dd>{mediaKindLabel(item.mediaKind)}</dd></div>
+    <div><dt>Format</dt><dd>{mediaFormatLabel(item.mediaFormat)}</dd></div>
     <div><dt>Size</dt><dd>{mediaDimensions(item)}</dd></div>
     <div><dt>Frames</dt><dd>{mediaFrameLabel(item.frameCount)}</dd></div>
     <div><dt>Duration</dt><dd>{mediaDuration(item)}</dd></div>

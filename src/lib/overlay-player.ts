@@ -1,4 +1,4 @@
-import type { FrameAsset } from "./contracts";
+import type { FrameAsset, SpritePlaybackMode } from "./contracts";
 
 export const FRAME_BATCH_SIZE = 32;
 export const FRAME_PREFETCH_THRESHOLD = 4;
@@ -16,6 +16,39 @@ export interface BufferedFrameBatch<TFrame extends IndexedFrame> {
 export function nextFrameIndex(current: number, totalFrames: number): number {
   if (totalFrames <= 1) return 0;
   return current + 1 >= totalFrames ? 0 : current + 1;
+}
+
+export interface PlaybackStep {
+  readonly index: number;
+  readonly direction: 1 | -1;
+  readonly finished: boolean;
+}
+
+export function nextPlaybackStep(
+  current: number,
+  totalFrames: number,
+  mode: SpritePlaybackMode,
+  direction: 1 | -1,
+): PlaybackStep {
+  if (totalFrames <= 1) return { index: 0, direction: 1, finished: mode === "once" };
+  if (mode === "loop") {
+    return { index: nextFrameIndex(current, totalFrames), direction: 1, finished: false };
+  }
+  if (mode === "once") {
+    const finished = current >= totalFrames - 1;
+    return {
+      index: finished ? totalFrames - 1 : current + 1,
+      direction: 1,
+      finished,
+    };
+  }
+  if (direction === 1 && current >= totalFrames - 1) {
+    return { index: totalFrames - 2, direction: -1, finished: false };
+  }
+  if (direction === -1 && current <= 0) {
+    return { index: 1, direction: 1, finished: false };
+  }
+  return { index: current + direction, direction, finished: false };
 }
 
 export function frameDelayMs(frame: Pick<FrameAsset, "durationMs">, speed: number): number {

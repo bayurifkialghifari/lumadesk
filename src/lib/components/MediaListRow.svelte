@@ -1,11 +1,12 @@
 <script lang="ts">
 import { Check, Heart } from "@lucide/svelte";
-import type { MediaId, MediaItem } from "../contracts";
-import { mediaDimensions, mediaFrameLabel, mediaKindLabel } from "../presentation";
+import type { EditRecipe, MediaId, MediaItem } from "../contracts";
+import { mediaDimensions, mediaFormatLabel, mediaFrameLabel } from "../presentation";
 import MediaPreview from "./MediaPreview.svelte";
 
 export let item: MediaItem;
 export let src: string | undefined = undefined;
+export let recipe: EditRecipe | undefined = undefined;
 export let selected = false;
 export let busy = false;
 export let onselect: (id: MediaId) => void;
@@ -14,12 +15,12 @@ export let onfavorite: (item: MediaItem) => void;
 
 <article class:selected class="media-row">
   <button class="media-row__body" type="button" aria-pressed={selected} onclick={() => onselect(item.id)}>
-    <span class="media-row__preview"><MediaPreview {item} {src} /></span>
+    <span class="media-row__preview"><MediaPreview {item} {src} {recipe} /></span>
     <span class="media-row__identity">
       <span class="media-row__name" title={item.displayName}>{item.displayName}</span>
       <span class="media-row__tags">{item.tags.length > 0 ? item.tags.join(", ") : "No tags yet"}</span>
     </span>
-    <span class="media-row__cell">{mediaKindLabel(item.mediaKind)}</span>
+    <span class="media-row__cell">{mediaFormatLabel(item.mediaFormat)}</span>
     <span class="media-row__cell">{mediaDimensions(item)}</span>
     <span class="media-row__cell">{mediaFrameLabel(item.frameCount)}</span>
     {#if selected}

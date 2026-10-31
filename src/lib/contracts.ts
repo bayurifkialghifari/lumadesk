@@ -24,15 +24,33 @@ export type MediaId = z.infer<typeof mediaIdSchema>;
 export const overlayIdSchema = z.string().uuid().brand<"OverlayId">();
 export type OverlayId = z.infer<typeof overlayIdSchema>;
 
-export const mediaKindSchema = z.enum(["gif", "apng", "webp", "png", "jpeg"]);
-export type MediaKind = z.infer<typeof mediaKindSchema>;
+export const variantIdSchema = z.string().uuid().brand<"VariantId">();
+export type VariantId = z.infer<typeof variantIdSchema>;
+
+export const assetKindSchema = z.enum(["still", "animation", "sprite_sheet", "video", "audio"]);
+export type AssetKind = z.infer<typeof assetKindSchema>;
+
+export const mediaFormatSchema = z.enum([
+  "gif",
+  "apng",
+  "webp",
+  "png",
+  "jpeg",
+  "mp4",
+  "webm",
+  "mp3",
+  "wav",
+  "ogg",
+]);
+export type MediaFormat = z.infer<typeof mediaFormatSchema>;
 
 export const mediaItemSchema = z.object({
   id: mediaIdSchema,
   contentHash: z.string().regex(/^[a-f0-9]{64}$/),
   displayName: z.string(),
   managedPath: z.string(),
-  mediaKind: mediaKindSchema,
+  assetKind: assetKindSchema,
+  mediaFormat: mediaFormatSchema,
   width: z.number().int().positive(),
   height: z.number().int().positive(),
   frameCount: z.number().int().positive(),
@@ -49,6 +67,79 @@ export const mediaPageSchema = z.object({
   total: z.number().int().nonnegative(),
 });
 export type MediaPage = z.infer<typeof mediaPageSchema>;
+
+export const backgroundRemovalModeSchema = z.enum(["none", "edge", "ai_fast", "ai_quality"]);
+export type BackgroundRemovalMode = z.infer<typeof backgroundRemovalModeSchema>;
+
+export const cropRectSchema = z.object({
+  x: z.number().finite().nonnegative(),
+  y: z.number().finite().nonnegative(),
+  width: z.number().finite().positive(),
+  height: z.number().finite().positive(),
+});
+export type CropRect = z.infer<typeof cropRectSchema>;
+
+export const editRecipeSchema = z.object({
+  mediaId: mediaIdSchema,
+  crop: cropRectSchema.nullable(),
+  rotationDegrees: z.union([z.literal(0), z.literal(90), z.literal(180), z.literal(270)]),
+  flipHorizontal: z.boolean(),
+  backgroundRemoval: backgroundRemovalModeSchema,
+  brightness: z.number().min(0).max(2),
+  contrast: z.number().min(0).max(2),
+  saturation: z.number().min(0).max(2),
+  updatedAt: z.string().datetime({ offset: true }),
+});
+export type EditRecipe = z.infer<typeof editRecipeSchema>;
+
+export interface EditRecipePatch {
+  readonly crop?: CropRect | null;
+  readonly rotationDegrees?: 0 | 90 | 180 | 270;
+  readonly flipHorizontal?: boolean;
+  readonly backgroundRemoval?: BackgroundRemovalMode;
+  readonly brightness?: number;
+  readonly contrast?: number;
+  readonly saturation?: number;
+}
+
+export const spritePlaybackModeSchema = z.enum(["loop", "once", "ping_pong"]);
+export type SpritePlaybackMode = z.infer<typeof spritePlaybackModeSchema>;
+
+export const spriteSequenceSchema = z.object({
+  mediaId: mediaIdSchema,
+  columns: z.number().int().positive(),
+  rows: z.number().int().positive(),
+  frameCount: z.number().int().positive(),
+  frameDurationMs: z.number().int().positive(),
+  playbackMode: spritePlaybackModeSchema,
+  updatedAt: z.string().datetime({ offset: true }),
+});
+export type SpriteSequence = z.infer<typeof spriteSequenceSchema>;
+export type SpriteSequenceInput = Omit<SpriteSequence, "updatedAt">;
+
+export const creatorChangesSchema = z.object({
+  recipe: editRecipeSchema,
+  spriteSequence: spriteSequenceSchema.nullable(),
+});
+export type CreatorChanges = z.infer<typeof creatorChangesSchema>;
+
+export interface CreatorChangesInput {
+  readonly mediaId: MediaId;
+  readonly recipe: EditRecipePatch;
+  readonly spriteSequence: SpriteSequenceInput | null;
+  readonly clearSpriteSequence: boolean;
+}
+
+export const mediaVariantSchema = z.object({
+  id: variantIdSchema,
+  mediaId: mediaIdSchema,
+  kind: z.enum(["preview", "export", "proxy", "segmentation_mask"]),
+  relativePath: z.string().min(1),
+  width: z.number().int().positive(),
+  height: z.number().int().positive(),
+  createdAt: z.string().datetime({ offset: true }),
+});
+export type MediaVariant = z.infer<typeof mediaVariantSchema>;
 
 export const importReportSchema = z.object({
   outcomes: z.array(
@@ -93,6 +184,7 @@ export const desktopOverlaySchema = z.object({
 export type DesktopOverlay = z.infer<typeof desktopOverlaySchema>;
 
 export const settingsSchema = z.object({
+  theme: z.enum(["dark", "system"]),
   launchAtLogin: z.boolean(),
   restoreOverlays: z.boolean(),
   closeToTray: z.boolean(),
@@ -100,9 +192,20 @@ export const settingsSchema = z.object({
   defaultOverlayWidth: z.number().int().min(64).max(2048),
   defaultOpacity: z.number().min(0.1).max(1),
   defaultSpeed: z.number().min(0.25).max(4),
-  cacheLimitMb: z.number().int().min(64).max(16_384),
 });
 export type AppSettings = z.infer<typeof settingsSchema>;
+
+export const aiModelSchema = z.enum(["fast", "quality"]);
+export type AiModel = z.infer<typeof aiModelSchema>;
+
+export const aiModelStatusSchema = z.object({
+  model: aiModelSchema,
+  status: z.enum(["missing", "installed", "downloading", "removing", "error"]),
+  sizeBytes: z.number().int().nonnegative(),
+  installedBytes: z.number().int().nonnegative(),
+  message: z.string().min(1).nullable(),
+});
+export type AiModelStatus = z.infer<typeof aiModelStatusSchema>;
 
 export const deleteReportSchema = z.object({
   mediaId: mediaIdSchema,
@@ -127,9 +230,22 @@ export const frameBatchSchema = z.object({
 });
 export type FrameBatch = z.infer<typeof frameBatchSchema>;
 
+export const aiMaskBatchSchema = z.object({
+  mediaId: mediaIdSchema,
+  model: aiModelSchema,
+  masks: z.array(
+    z.object({
+      index: z.number().int().nonnegative(),
+      path: z.string().min(1),
+    }),
+  ),
+});
+export type AiMaskBatch = z.infer<typeof aiMaskBatchSchema>;
+
 export interface LibraryQuery {
   readonly search?: string;
-  readonly mediaKind?: MediaKind;
+  readonly assetKind?: AssetKind;
+  readonly mediaFormat?: MediaFormat;
   readonly favoriteOnly?: boolean;
   readonly tag?: string;
   readonly limit?: number;

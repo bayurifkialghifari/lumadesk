@@ -1,6 +1,7 @@
 :root {
   color: #f4f8fc;
   background: #08111c;
+  color-scheme: dark;
   font-family: "Inter Variable", system-ui, sans-serif;
   font-synthesis: none;
   text-rendering: optimizeLegibility;
@@ -18,6 +19,28 @@
   --success-400: #42d392;
   --warning-400: #f3b95f;
   --danger-400: #ff6b75;
+}
+
+@media (prefers-color-scheme: light) {
+  :root[data-theme="system"] {
+    color: #162235;
+    background: #edf3f8;
+    color-scheme: light;
+    --canvas-950: #edf3f8;
+    --canvas-900: #e2eaf1;
+    --surface-850: #f8fbfd;
+    --surface-800: #edf3f8;
+    --surface-750: #dce7f0;
+    --line-700: #c3d1de;
+    --ink-100: #162235;
+    --ink-300: #40566f;
+    --ink-500: #687f97;
+    --brand-400: #0879c9;
+    --brand-300: #006bb4;
+    --success-400: #167a51;
+    --warning-400: #9b6500;
+    --danger-400: #c63342;
+  }
 }
 
 * {

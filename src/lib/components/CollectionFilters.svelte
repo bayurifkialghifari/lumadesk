@@ -1,23 +1,32 @@
 <script lang="ts">
 import { Heart } from "@lucide/svelte";
-import { ALL_MEDIA_KINDS, type CollectionFilters, type MediaKindFilter } from "../collection-model";
+import {
+  ALL_MEDIA_FORMATS,
+  type CollectionFilters,
+  type MediaFormatFilter,
+} from "../collection-model";
 
 export let filters: CollectionFilters;
 export let tags: readonly string[];
-export let onkind: (value: MediaKindFilter) => void;
+export let onkind: (value: MediaFormatFilter) => void;
 export let onfavorite: (value: boolean) => void;
 export let ontag: (value: string) => void;
 
-function handleMediaKind(event: Event): void {
+function handleMediaFormat(event: Event): void {
   if (!(event.currentTarget instanceof HTMLSelectElement)) return;
   const value = event.currentTarget.value;
   if (
-    value === ALL_MEDIA_KINDS ||
+    value === ALL_MEDIA_FORMATS ||
     value === "gif" ||
     value === "apng" ||
     value === "webp" ||
     value === "png" ||
-    value === "jpeg"
+    value === "jpeg" ||
+    value === "mp4" ||
+    value === "webm" ||
+    value === "mp3" ||
+    value === "wav" ||
+    value === "ogg"
   ) {
     onkind(value);
   }
@@ -27,13 +36,18 @@ function handleMediaKind(event: Event): void {
 <div class="filter-group">
   <label>
     <span class="sr-only">Format filter</span>
-    <select value={filters.mediaKind} onchange={handleMediaKind}>
-      <option value={ALL_MEDIA_KINDS}>All formats</option>
+    <select value={filters.mediaFormat} onchange={handleMediaFormat}>
+      <option value={ALL_MEDIA_FORMATS}>All formats</option>
       <option value="gif">GIF</option>
       <option value="apng">APNG</option>
       <option value="webp">WebP</option>
       <option value="png">PNG</option>
       <option value="jpeg">JPG</option>
+      <option value="mp4">MP4</option>
+      <option value="webm">WebM</option>
+      <option value="mp3">MP3</option>
+      <option value="wav">WAV</option>
+      <option value="ogg">OGG</option>
     </select>
   </label>
 

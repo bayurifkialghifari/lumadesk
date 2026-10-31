@@ -1,11 +1,12 @@
 <script lang="ts">
 import { Check, Heart } from "@lucide/svelte";
-import type { MediaId, MediaItem } from "../contracts";
-import { mediaDimensions, mediaKindLabel } from "../presentation";
+import type { EditRecipe, MediaId, MediaItem } from "../contracts";
+import { mediaDimensions, mediaFormatLabel } from "../presentation";
 import MediaPreview from "./MediaPreview.svelte";
 
 export let item: MediaItem;
 export let src: string | undefined = undefined;
+export let recipe: EditRecipe | undefined = undefined;
 export let selected = false;
 export let busy = false;
 export let onselect: (id: MediaId) => void;
@@ -19,10 +20,10 @@ export let onfavorite: (item: MediaItem) => void;
     aria-pressed={selected}
     onclick={() => onselect(item.id)}
   >
-    <MediaPreview {item} {src} />
+    <MediaPreview {item} {src} {recipe} />
     <span class="media-card__copy">
       <span class="media-card__name" title={item.displayName}>{item.displayName}</span>
-      <span class="media-card__meta">{mediaKindLabel(item.mediaKind)} · {mediaDimensions(item)}</span>
+      <span class="media-card__meta">{mediaFormatLabel(item.mediaFormat)} · {mediaDimensions(item)}</span>
     </span>
     {#if selected}
       <span class="selected-mark" aria-hidden="true"><Check size={14} strokeWidth={2.5} /></span>

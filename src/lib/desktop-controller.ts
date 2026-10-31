@@ -1,8 +1,8 @@
 import { listen, type UnlistenFn } from "@tauri-apps/api/event";
 import { writable } from "svelte/store";
-import { listDesktopOverlays, mediaAssetUrl } from "./api";
+import { getEditRecipe, listDesktopOverlays, mediaAssetUrl } from "./api";
 import type { ToastTone } from "./collection-model";
-import type { DesktopOverlay } from "./contracts";
+import type { DesktopOverlay, EditRecipe } from "./contracts";
 import { createDesktopActions } from "./desktop-actions";
 import type { DesktopController, DesktopState } from "./desktop-model";
 import { userErrorMessage } from "./presentation";
@@ -19,6 +19,7 @@ export function createDesktopController(nativeAvailable: boolean): DesktopContro
     refreshing: false,
     overlays: [],
     assetUrls: {},
+    editRecipes: {},
     busyIds: new Set(),
     batchBusy: false,
     loadError: null,
@@ -35,6 +36,20 @@ export function createDesktopController(nativeAvailable: boolean): DesktopContro
     if (noticeTimer !== undefined) clearTimeout(noticeTimer);
     noticeTimer = undefined;
     store.update((state) => ({ ...state, notice: null }));
+  }
+
+  async function resolveEditRecipes(
+    overlays: readonly DesktopOverlay[],
+  ): Promise<Readonly<Record<string, EditRecipe>>> {
+    const mediaIds = [...new Set(overlays.map((item) => item.media.id))];
+    const results = await Promise.allSettled(
+      mediaIds.map(async (id) => ({ id, recipe: await getEditRecipe(id) })),
+    );
+    const recipes: Record<string, EditRecipe> = {};
+    for (const result of results) {
+      if (result.status === "fulfilled") recipes[result.value.id] = result.value.recipe;
+    }
+    return recipes;
   }
 
   function notify(tone: ToastTone, message: string): void {
@@ -74,7 +89,10 @@ export function createDesktopController(nativeAvailable: boolean): DesktopContro
     }));
     try {
       const overlays = await listDesktopOverlays();
-      const assetUrls = await resolveAssetUrls(overlays);
+      const [assetUrls, editRecipes] = await Promise.all([
+        resolveAssetUrls(overlays),
+        resolveEditRecipes(overlays),
+      ]);
       if (disposed || request !== requestSequence) return;
       store.update((state) => ({
         ...state,
@@ -83,6 +101,7 @@ export function createDesktopController(nativeAvailable: boolean): DesktopContro
         refreshing: false,
         overlays,
         assetUrls,
+        editRecipes,
       }));
     } catch (error) {
       if (disposed || request !== requestSequence) return;

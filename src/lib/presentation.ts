@@ -1,12 +1,17 @@
 import { NativeCommandError } from "./api";
-import type { MediaItem, MediaKind } from "./contracts";
+import type { MediaFormat, MediaItem } from "./contracts";
 
-const MEDIA_KIND_LABEL: Readonly<Record<MediaKind, string>> = {
+const MEDIA_FORMAT_LABEL: Readonly<Record<MediaFormat, string>> = {
   gif: "GIF",
   apng: "APNG",
   webp: "WebP",
   png: "PNG",
   jpeg: "JPG",
+  mp4: "MP4",
+  webm: "WebM",
+  mp3: "MP3",
+  wav: "WAV",
+  ogg: "OGG",
 };
 
 const decimal = new Intl.NumberFormat("en-US", { maximumFractionDigits: 1 });
@@ -16,8 +21,8 @@ const date = new Intl.DateTimeFormat("en-US", {
   year: "numeric",
 });
 
-export function mediaKindLabel(kind: MediaKind): string {
-  return MEDIA_KIND_LABEL[kind];
+export function mediaFormatLabel(format: MediaFormat): string {
+  return MEDIA_FORMAT_LABEL[format];
 }
 
 export function mediaDimensions(item: MediaItem): string {
@@ -25,6 +30,9 @@ export function mediaDimensions(item: MediaItem): string {
 }
 
 export function mediaDuration(item: MediaItem): string {
+  if (item.assetKind === "audio" || item.assetKind === "video") {
+    return `${decimal.format(item.durationMs / 1000)} seconds`;
+  }
   if (item.frameCount === 1 || item.durationMs === 0) {
     return "Static image";
   }
@@ -32,7 +40,7 @@ export function mediaDuration(item: MediaItem): string {
 }
 
 export function mediaFrameLabel(frameCount: number): string {
-  return frameCount === 1 ? "1 frame" : `${frameCount} frame`;
+  return frameCount === 1 ? "1 frame" : `${frameCount} frames`;
 }
 
 export function mediaDate(value: string): string {

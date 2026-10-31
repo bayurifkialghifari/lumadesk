@@ -1,12 +1,14 @@
 use std::path::PathBuf;
 
 use lumadesk_core::{
-    DeleteReport, FrameBatch, FrameBatchRequest, ImportReport, LibraryQuery, MediaId, MediaItem,
-    MediaPage, OverlayInstance,
+    CreatorChanges, CreatorChangesInput, DeleteReport, EditRecipe, EditRecipePatch, FrameBatch,
+    FrameBatchRequest, ImportReport, LibraryQuery, MediaId, MediaItem, MediaPage, MediaVariant,
+    OverlayInstance, SpriteSequence, SpriteSequenceInput,
 };
 use tauri::{AppHandle, Manager as _, State};
 
 use crate::{
+    ai::AiState,
     command_error::CommandError,
     overlay_windows,
     state::{AppState, with_library},
@@ -86,22 +88,24 @@ pub(crate) async fn replace_tags(
 #[tauri::command]
 pub(crate) async fn delete_media(
     app: AppHandle,
+    ai_state: State<'_, AiState>,
     state: State<'_, AppState>,
     id: MediaId,
 ) -> Result<DeleteReport, CommandError> {
-    let (media, overlays) = with_library(state, move |library| {
-        let media = library.media_item(id)?;
+    let _generated_media = ai_state.lock_generated_media().await;
+    let (source, overlays) = with_library(state, move |library| {
+        let source = overlay_windows::OverlayMedia::load(library, id)?;
         let overlays = library
             .list_overlays()?
             .into_iter()
             .filter(|overlay| overlay.media_id == id)
             .collect::<Vec<_>>();
-        Ok((media, overlays))
+        Ok((source, overlays))
     })
     .await?;
     for (index, overlay) in overlays.iter().enumerate() {
         if let Err(error) = overlay_windows::destroy(&app, overlay.id) {
-            restore_overlay_windows(&app, &overlays[..index], &media);
+            restore_overlay_windows(&app, &overlays[..index], &source);
             return Err(CommandError::overlay(&error));
         }
     }
@@ -111,7 +115,7 @@ pub(crate) async fn delete_media(
             Ok(report)
         }
         Err(error) => {
-            restore_overlay_windows(&app, &overlays, &media);
+            restore_overlay_windows(&app, &overlays, &source);
             Err(error)
         }
     }
@@ -152,9 +156,173 @@ pub(crate) async fn get_frame_batch(
     .await
 }
 
-fn restore_overlay_windows(app: &AppHandle, overlays: &[OverlayInstance], media: &MediaItem) {
+/// Returns the non-destructive edit recipe for one media item.
+///
+/// # Errors
+/// Returns a command error when the item or recipe cannot be read.
+#[tauri::command]
+pub(crate) async fn get_edit_recipe(
+    state: State<'_, AppState>,
+    id: MediaId,
+) -> Result<EditRecipe, CommandError> {
+    with_library(state, move |library| library.edit_recipe(id)).await
+}
+
+/// Updates a non-destructive edit recipe.
+///
+/// # Errors
+/// Returns a command error when the patch is invalid or cannot be stored.
+#[tauri::command]
+pub(crate) async fn update_edit_recipe(
+    app: AppHandle,
+    state: State<'_, AppState>,
+    id: MediaId,
+    patch: EditRecipePatch,
+) -> Result<EditRecipe, CommandError> {
+    let (recipe, source, overlays) = with_library(state, move |library| {
+        let recipe = library.update_edit_recipe(id, &patch)?;
+        let source = overlay_windows::OverlayMedia::load(library, id)?;
+        let overlays = active_overlays_for(library, id)?;
+        Ok((recipe, source, overlays))
+    })
+    .await?;
+    sync_media_windows(&app, &overlays, &source);
+    overlay_windows::emit_edit_recipe_changed(&app, &recipe);
+    Ok(recipe)
+}
+
+/// Saves the edit recipe and sprite configuration as one Creator Studio operation.
+///
+/// # Errors
+/// Returns a command error when validation, persistence, or generated-cache cleanup fails.
+#[tauri::command]
+pub(crate) async fn save_creator_changes(
+    app: AppHandle,
+    ai_state: State<'_, AiState>,
+    state: State<'_, AppState>,
+    input: CreatorChangesInput,
+) -> Result<CreatorChanges, CommandError> {
+    let _generated_media = ai_state.lock_generated_media().await;
+    let media_id = input.media_id;
+    let (changes, source, overlays) = with_library(state, move |library| {
+        let changes = library.save_creator_changes(&input)?;
+        let source = overlay_windows::OverlayMedia::load(library, media_id)?;
+        let overlays = active_overlays_for(library, media_id)?;
+        Ok((changes, source, overlays))
+    })
+    .await?;
+    sync_media_windows(&app, &overlays, &source);
+    overlay_windows::emit_edit_recipe_changed(&app, &changes.recipe);
+    overlay_windows::emit_sprite_sequence_changed(&app, media_id);
+    Ok(changes)
+}
+
+/// Returns sprite-sheet playback metadata when configured.
+///
+/// # Errors
+/// Returns a command error when the item or metadata cannot be read.
+#[tauri::command]
+pub(crate) async fn get_sprite_sequence(
+    state: State<'_, AppState>,
+    id: MediaId,
+) -> Result<Option<SpriteSequence>, CommandError> {
+    with_library(state, move |library| library.sprite_sequence(id)).await
+}
+
+/// Creates or replaces sprite-sheet playback metadata.
+///
+/// # Errors
+/// Returns a command error when the grid is invalid or cannot be stored.
+#[tauri::command]
+pub(crate) async fn set_sprite_sequence(
+    app: AppHandle,
+    ai_state: State<'_, AiState>,
+    state: State<'_, AppState>,
+    input: SpriteSequenceInput,
+) -> Result<SpriteSequence, CommandError> {
+    let _generated_media = ai_state.lock_generated_media().await;
+    let media_id = input.media_id;
+    let (sequence, source, overlays) = with_library(state, move |library| {
+        let sequence = library.set_sprite_sequence(&input)?;
+        let source = overlay_windows::OverlayMedia::load(library, media_id)?;
+        let overlays = active_overlays_for(library, media_id)?;
+        Ok((sequence, source, overlays))
+    })
+    .await?;
+    sync_media_windows(&app, &overlays, &source);
+    overlay_windows::emit_sprite_sequence_changed(&app, sequence.media_id);
+    Ok(sequence)
+}
+
+/// Removes sprite-sheet playback metadata.
+///
+/// # Errors
+/// Returns a command error when the item is unavailable or storage fails.
+#[tauri::command]
+pub(crate) async fn clear_sprite_sequence(
+    app: AppHandle,
+    ai_state: State<'_, AiState>,
+    state: State<'_, AppState>,
+    id: MediaId,
+) -> Result<(), CommandError> {
+    let _generated_media = ai_state.lock_generated_media().await;
+    let (source, overlays) = with_library(state, move |library| {
+        library.clear_sprite_sequence(id)?;
+        let source = overlay_windows::OverlayMedia::load(library, id)?;
+        let overlays = active_overlays_for(library, id)?;
+        Ok((source, overlays))
+    })
+    .await?;
+    sync_media_windows(&app, &overlays, &source);
+    overlay_windows::emit_sprite_sequence_changed(&app, id);
+    Ok(())
+}
+
+/// Lists generated variants for one immutable imported source.
+///
+/// # Errors
+/// Returns a command error when variant metadata cannot be read.
+#[tauri::command]
+pub(crate) async fn list_media_variants(
+    state: State<'_, AppState>,
+    id: MediaId,
+) -> Result<Vec<MediaVariant>, CommandError> {
+    with_library(state, move |library| library.media_variants(id)).await
+}
+
+fn active_overlays_for(
+    library: &lumadesk_core::Library,
+    media_id: MediaId,
+) -> Result<Vec<OverlayInstance>, lumadesk_core::CoreError> {
+    Ok(library
+        .list_overlays()?
+        .into_iter()
+        .filter(|overlay| overlay.media_id == media_id && overlay.is_active)
+        .collect())
+}
+
+fn sync_media_windows(
+    app: &AppHandle,
+    overlays: &[OverlayInstance],
+    source: &overlay_windows::OverlayMedia,
+) {
     for overlay in overlays {
-        if let Err(error) = overlay_windows::sync(app, overlay, media) {
+        if let Err(error) = overlay_windows::sync(app, overlay, source) {
+            eprintln!(
+                "failed to resize overlay {} after media changed: {error}",
+                overlay.id
+            );
+        }
+    }
+}
+
+fn restore_overlay_windows(
+    app: &AppHandle,
+    overlays: &[OverlayInstance],
+    source: &overlay_windows::OverlayMedia,
+) {
+    for overlay in overlays {
+        if let Err(error) = overlay_windows::sync(app, overlay, source) {
             eprintln!(
                 "failed to restore overlay {} after delete failed: {error}",
                 overlay.id

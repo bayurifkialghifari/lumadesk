@@ -3,6 +3,7 @@ import {
   appendBufferedBatch,
   frameDelayMs,
   nextFrameIndex,
+  nextPlaybackStep,
   prefetchBatchOffset,
   shouldSchedulePlayback,
 } from "./overlay-player";
@@ -42,5 +43,33 @@ describe("overlay playback timeline", () => {
     const result = appendBufferedBatch(appendBufferedBatch([first], second), third);
 
     expect(result.map((batch) => batch.offset)).toEqual([32, 64]);
+  });
+});
+
+describe("nextPlaybackStep", () => {
+  it("stops once playback on the final frame", () => {
+    expect(nextPlaybackStep(1, 3, "once", 1)).toEqual({
+      index: 2,
+      direction: 1,
+      finished: false,
+    });
+    expect(nextPlaybackStep(2, 3, "once", 1)).toEqual({
+      index: 2,
+      direction: 1,
+      finished: true,
+    });
+  });
+
+  it("reverses ping-pong playback at both edges", () => {
+    expect(nextPlaybackStep(2, 3, "ping_pong", 1)).toEqual({
+      index: 1,
+      direction: -1,
+      finished: false,
+    });
+    expect(nextPlaybackStep(0, 3, "ping_pong", -1)).toEqual({
+      index: 1,
+      direction: 1,
+      finished: false,
+    });
   });
 });

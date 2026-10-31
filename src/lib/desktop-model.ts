@@ -2,6 +2,7 @@ import type { Readable } from "svelte/store";
 import type { CollectionNotice, ToastTone } from "./collection-model";
 import type {
   DesktopOverlay,
+  EditRecipe,
   MediaItem,
   OverlayId,
   OverlayInstance,
@@ -18,6 +19,7 @@ export interface DesktopState {
   readonly refreshing: boolean;
   readonly overlays: readonly DesktopOverlay[];
   readonly assetUrls: Readonly<Record<string, string>>;
+  readonly editRecipes: Readonly<Record<string, EditRecipe>>;
   readonly busyIds: ReadonlySet<OverlayId>;
   readonly batchBusy: boolean;
   readonly loadError: string | null;

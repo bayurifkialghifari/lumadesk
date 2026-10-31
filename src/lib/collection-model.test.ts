@@ -18,10 +18,11 @@ const baseState: CollectionState = {
   items: [],
   total: 0,
   page: 2,
-  filters: { search: "  pixel  ", mediaKind: "webp", favoriteOnly: true, tag: " loop " },
+  filters: { search: "  pixel  ", mediaFormat: "webp", favoriteOnly: true, tag: " loop " },
   settings: DEFAULT_SETTINGS,
   selectedId: null,
   assetUrls: {},
+  editRecipes: {},
   busyIds: new Set(),
   loadError: null,
   notice: null,
@@ -32,7 +33,7 @@ describe("collection model", () => {
   it("builds a normalized paginated query", () => {
     expect(buildLibraryQuery(baseState)).toEqual({
       search: "pixel",
-      mediaKind: "webp",
+      mediaFormat: "webp",
       favoriteOnly: true,
       tag: "loop",
       limit: 24,
@@ -40,7 +41,7 @@ describe("collection model", () => {
     });
   });
 
-  it("returns unique tags in Indonesian sort order", () => {
+  it("returns unique tags in locale-aware order", () => {
     const items = [
       { tags: ["pixel", "biru"] },
       { tags: ["Pixel", "ambient"] },

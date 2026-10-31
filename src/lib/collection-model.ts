@@ -1,22 +1,23 @@
 import type { Readable } from "svelte/store";
 import type {
   AppSettings,
+  EditRecipe,
   ImportReport,
   LibraryQuery,
+  MediaFormat,
   MediaId,
   MediaItem,
-  MediaKind,
 } from "./contracts";
 
 export const COLLECTION_PAGE_SIZE = 24;
-export const ALL_MEDIA_KINDS = "all";
+export const ALL_MEDIA_FORMATS = "all";
 export type ToastTone = "success" | "error" | "info";
 
-export type MediaKindFilter = MediaKind | typeof ALL_MEDIA_KINDS;
+export type MediaFormatFilter = MediaFormat | typeof ALL_MEDIA_FORMATS;
 
 export interface CollectionFilters {
   readonly search: string;
-  readonly mediaKind: MediaKindFilter;
+  readonly mediaFormat: MediaFormatFilter;
   readonly favoriteOnly: boolean;
   readonly tag: string;
 }
@@ -41,6 +42,7 @@ export interface CollectionState {
   readonly settings: AppSettings;
   readonly selectedId: MediaId | null;
   readonly assetUrls: Readonly<Record<string, string>>;
+  readonly editRecipes: Readonly<Record<string, EditRecipe>>;
   readonly busyIds: ReadonlySet<MediaId>;
   readonly loadError: string | null;
   readonly notice: CollectionNotice | null;
@@ -51,11 +53,12 @@ export interface CollectionController extends Readable<CollectionState> {
   readonly initialize: () => Promise<void>;
   readonly reload: () => Promise<void>;
   readonly setSearch: (search: string) => void;
-  readonly setMediaKind: (mediaKind: MediaKindFilter) => void;
+  readonly setMediaFormat: (mediaFormat: MediaFormatFilter) => void;
   readonly setFavoriteOnly: (favoriteOnly: boolean) => void;
   readonly setTag: (tag: string) => void;
   readonly setPage: (page: number) => void;
   readonly setView: (view: AppSettings["collectionView"]) => Promise<void>;
+  readonly saveSettings: (settings: AppSettings) => Promise<boolean>;
   readonly select: (id: MediaId | null) => void;
   readonly setDragActive: (active: boolean) => void;
   readonly importPaths: (paths: readonly string[]) => Promise<void>;
@@ -76,6 +79,7 @@ export type CollectionDialog =
   | { readonly kind: "delete"; readonly item: MediaItem };
 
 export const DEFAULT_SETTINGS = {
+  theme: "dark",
   launchAtLogin: false,
   restoreOverlays: true,
   closeToTray: true,
@@ -83,7 +87,6 @@ export const DEFAULT_SETTINGS = {
   defaultOverlayWidth: 320,
   defaultOpacity: 1,
   defaultSpeed: 1,
-  cacheLimitMb: 512,
 } satisfies AppSettings;
 
 export function buildLibraryQuery(state: CollectionState): LibraryQuery {
@@ -94,7 +97,9 @@ export function buildLibraryQuery(state: CollectionState): LibraryQuery {
     offset: state.page * COLLECTION_PAGE_SIZE,
     ...(search === "" ? {} : { search }),
     ...(tag === "" ? {} : { tag }),
-    ...(state.filters.mediaKind === ALL_MEDIA_KINDS ? {} : { mediaKind: state.filters.mediaKind }),
+    ...(state.filters.mediaFormat === ALL_MEDIA_FORMATS
+      ? {}
+      : { mediaFormat: state.filters.mediaFormat }),
     ...(state.filters.favoriteOnly ? { favoriteOnly: true } : {}),
   };
 }
@@ -112,7 +117,7 @@ export function availableTags(items: readonly Pick<MediaItem, "tags">[]): readon
 export function hasActiveFilters(filters: CollectionFilters): boolean {
   return (
     filters.search.trim() !== "" ||
-    filters.mediaKind !== ALL_MEDIA_KINDS ||
+    filters.mediaFormat !== ALL_MEDIA_FORMATS ||
     filters.favoriteOnly ||
     filters.tag.trim() !== ""
   );

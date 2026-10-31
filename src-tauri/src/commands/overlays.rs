@@ -60,13 +60,13 @@ pub(crate) async fn create_overlay(
     state: State<'_, AppState>,
     input: NewOverlay,
 ) -> Result<OverlayInstance, CommandError> {
-    let (overlay, media) = with_library(state, move |library| {
-        let media = library.media_item(input.media_id)?;
+    let (overlay, source) = with_library(state, move |library| {
+        let source = overlay_windows::OverlayMedia::load(library, input.media_id)?;
         let overlay = library.create_overlay(&input)?;
-        Ok((overlay, media))
+        Ok((overlay, source))
     })
     .await?;
-    if let Err(error) = overlay_windows::sync(&app, &overlay, &media) {
+    if let Err(error) = overlay_windows::sync(&app, &overlay, &source) {
         rollback_created_overlay(&app, overlay.id).await;
         return Err(CommandError::overlay(&error));
     }
@@ -85,16 +85,16 @@ pub(crate) async fn show_media_overlay(
     state: State<'_, AppState>,
     id: MediaId,
 ) -> Result<OverlayInstance, CommandError> {
-    let (media, width) = with_library(state, move |library| {
-        let media = library.media_item(id)?;
+    let (source, width) = with_library(state, move |library| {
+        let source = overlay_windows::OverlayMedia::load(library, id)?;
         let settings = library.get_settings()?;
-        Ok((media, f64::from(settings.default_overlay_width)))
+        Ok((source, f64::from(settings.default_overlay_width)))
     })
     .await?;
-    let input = overlay_windows::default_input(&app, &media, width)
+    let input = overlay_windows::default_input(&app, &source, width)
         .map_err(|error| CommandError::overlay(&error))?;
     let overlay = with_library(app.state(), move |library| library.create_overlay(&input)).await?;
-    if let Err(error) = overlay_windows::sync(&app, &overlay, &media) {
+    if let Err(error) = overlay_windows::sync(&app, &overlay, &source) {
         rollback_created_overlay(&app, overlay.id).await;
         return Err(CommandError::overlay(&error));
     }
@@ -113,15 +113,15 @@ pub(crate) async fn update_overlay(
     id: OverlayId,
     patch: OverlayPatch,
 ) -> Result<OverlayInstance, CommandError> {
-    let (previous, overlay, media) = with_library(state, move |library| {
+    let (previous, overlay, source) = with_library(state, move |library| {
         let previous = library.overlay(id)?;
-        let media = library.media_item(previous.media_id)?;
+        let source = overlay_windows::OverlayMedia::load(library, previous.media_id)?;
         let overlay = library.update_overlay(id, &patch)?;
-        Ok((previous, overlay, media))
+        Ok((previous, overlay, source))
     })
     .await?;
-    if let Err(error) = overlay_windows::sync(&app, &overlay, &media) {
-        restore_updated_overlay(&app, previous, &media).await;
+    if let Err(error) = overlay_windows::sync(&app, &overlay, &source) {
+        restore_updated_overlay(&app, previous, &source).await;
         return Err(CommandError::overlay(&error));
     }
     overlay_windows::emit_catalog_changed(&app);
@@ -147,15 +147,15 @@ pub(crate) async fn move_overlay(
         y: Some(y),
         ..OverlayPatch::default()
     };
-    let (previous, overlay, media) = with_library(state, move |library| {
+    let (previous, overlay, source) = with_library(state, move |library| {
         let previous = library.overlay(id)?;
-        let media = library.media_item(previous.media_id)?;
+        let source = overlay_windows::OverlayMedia::load(library, previous.media_id)?;
         let overlay = library.update_overlay(id, &patch)?;
-        Ok((previous, overlay, media))
+        Ok((previous, overlay, source))
     })
     .await?;
     if let Err(error) = overlay_windows::emit_state(&app, &overlay) {
-        restore_updated_overlay(&app, previous, &media).await;
+        restore_updated_overlay(&app, previous, &source).await;
         return Err(CommandError::overlay(&error));
     }
     overlay_windows::emit_catalog_changed(&app);
@@ -172,9 +172,9 @@ pub(crate) async fn duplicate_overlay(
     state: State<'_, AppState>,
     id: OverlayId,
 ) -> Result<OverlayInstance, CommandError> {
-    let (overlay, media) = with_library(state, move |library| {
+    let (overlay, source) = with_library(state, move |library| {
         let source = library.overlay(id)?;
-        let media = library.media_item(source.media_id)?;
+        let media = overlay_windows::OverlayMedia::load(library, source.media_id)?;
         let overlay = library.duplicate_overlay(
             id,
             source.x + DUPLICATE_OFFSET,
@@ -183,7 +183,7 @@ pub(crate) async fn duplicate_overlay(
         Ok((overlay, media))
     })
     .await?;
-    if let Err(error) = overlay_windows::sync(&app, &overlay, &media) {
+    if let Err(error) = overlay_windows::sync(&app, &overlay, &source) {
         rollback_created_overlay(&app, overlay.id).await;
         return Err(CommandError::overlay(&error));
     }
@@ -201,15 +201,15 @@ pub(crate) async fn remove_overlay(
     state: State<'_, AppState>,
     id: OverlayId,
 ) -> Result<(), CommandError> {
-    let (overlay, media) = with_library(state, move |library| {
+    let (overlay, source) = with_library(state, move |library| {
         let overlay = library.overlay(id)?;
-        let media = library.media_item(overlay.media_id)?;
-        Ok((overlay, media))
+        let source = overlay_windows::OverlayMedia::load(library, overlay.media_id)?;
+        Ok((overlay, source))
     })
     .await?;
     overlay_windows::destroy(&app, id).map_err(|error| CommandError::overlay(&error))?;
     if let Err(error) = with_library(app.state(), move |library| library.remove_overlay(id)).await {
-        if let Err(restore_error) = overlay_windows::sync(&app, &overlay, &media) {
+        if let Err(restore_error) = overlay_windows::sync(&app, &overlay, &source) {
             eprintln!("failed to restore overlay {id} after remove failed: {restore_error}");
         }
         return Err(error);
@@ -225,7 +225,11 @@ async fn rollback_created_overlay(app: &AppHandle, id: OverlayId) {
     }
 }
 
-async fn restore_updated_overlay(app: &AppHandle, previous: OverlayInstance, media: &MediaItem) {
+async fn restore_updated_overlay(
+    app: &AppHandle,
+    previous: OverlayInstance,
+    source: &overlay_windows::OverlayMedia,
+) {
     let id = previous.id;
     let patch = OverlayPatch {
         monitor_id: Some(previous.monitor_id.clone()),
@@ -251,7 +255,7 @@ async fn restore_updated_overlay(app: &AppHandle, previous: OverlayInstance, med
             return;
         }
     };
-    if let Err(error) = overlay_windows::sync(app, &restored, media) {
+    if let Err(error) = overlay_windows::sync(app, &restored, source) {
         eprintln!("failed to restore overlay window {id}: {error}");
     }
 }

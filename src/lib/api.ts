@@ -1,13 +1,24 @@
 import { convertFileSrc, invoke } from "@tauri-apps/api/core";
 import { z } from "zod";
 import {
+  type AiMaskBatch,
+  type AiModel,
+  type AiModelStatus,
   type AppSettings,
+  aiMaskBatchSchema,
+  aiModelStatusSchema,
   type CommandErrorPayload,
+  type CreatorChanges,
+  type CreatorChangesInput,
   commandErrorSchema,
+  creatorChangesSchema,
   type DeleteReport,
   type DesktopOverlay,
   deleteReportSchema,
   desktopOverlaySchema,
+  type EditRecipe,
+  type EditRecipePatch,
+  editRecipeSchema,
   type FrameBatch,
   frameBatchSchema,
   type ImportReport,
@@ -16,14 +27,19 @@ import {
   type MediaId,
   type MediaItem,
   type MediaPage,
+  type MediaVariant,
   mediaItemSchema,
   mediaPageSchema,
+  mediaVariantSchema,
   type NewOverlay,
   type OverlayId,
   type OverlayInstance,
   type OverlayPatch,
   overlaySchema,
+  type SpriteSequence,
+  type SpriteSequenceInput,
   settingsSchema,
+  spriteSequenceSchema,
 } from "./contracts";
 
 export class NativeCommandError extends Error {
@@ -108,6 +124,34 @@ export async function getFrameBatch(
   };
 }
 
+export function getEditRecipe(id: MediaId): Promise<EditRecipe> {
+  return invokeParsed("get_edit_recipe", editRecipeSchema, { id });
+}
+
+export function updateEditRecipe(id: MediaId, patch: EditRecipePatch): Promise<EditRecipe> {
+  return invokeParsed("update_edit_recipe", editRecipeSchema, { id, patch });
+}
+
+export function saveCreatorChanges(input: CreatorChangesInput): Promise<CreatorChanges> {
+  return invokeParsed("save_creator_changes", creatorChangesSchema, { input });
+}
+
+export function getSpriteSequence(id: MediaId): Promise<SpriteSequence | null> {
+  return invokeParsed("get_sprite_sequence", spriteSequenceSchema.nullable(), { id });
+}
+
+export function setSpriteSequence(input: SpriteSequenceInput): Promise<SpriteSequence> {
+  return invokeParsed("set_sprite_sequence", spriteSequenceSchema, { input });
+}
+
+export async function clearSpriteSequence(id: MediaId): Promise<void> {
+  await invokeParsed("clear_sprite_sequence", z.null(), { id });
+}
+
+export function listMediaVariants(id: MediaId): Promise<MediaVariant[]> {
+  return invokeParsed("list_media_variants", z.array(mediaVariantSchema), { id });
+}
+
 export function listOverlays(): Promise<OverlayInstance[]> {
   return invokeParsed("list_overlays", z.array(overlaySchema));
 }
@@ -151,4 +195,42 @@ export function getSettings(): Promise<AppSettings> {
 
 export function updateSettings(settings: AppSettings): Promise<AppSettings> {
   return invokeParsed("update_settings", settingsSchema, { settings });
+}
+
+export async function openDataFolder(): Promise<void> {
+  await invokeParsed("open_data_folder", z.null());
+}
+
+export async function clearGeneratedCache(): Promise<void> {
+  await invokeParsed("clear_generated_cache", z.null());
+}
+
+export function listAiModels(): Promise<AiModelStatus[]> {
+  return invokeParsed("list_ai_models", z.array(aiModelStatusSchema));
+}
+
+export function downloadAiModel(model: AiModel): Promise<AiModelStatus> {
+  return invokeParsed("download_ai_model", aiModelStatusSchema, { model });
+}
+
+export function removeAiModel(model: AiModel): Promise<AiModelStatus> {
+  return invokeParsed("remove_ai_model", aiModelStatusSchema, { model });
+}
+
+export async function getAiMaskBatch(
+  id: MediaId,
+  model: AiModel,
+  offset: number,
+  limit: number,
+): Promise<AiMaskBatch> {
+  const batch = await invokeParsed("get_ai_mask_batch", aiMaskBatchSchema, {
+    id,
+    model,
+    offset,
+    limit,
+  });
+  return {
+    ...batch,
+    masks: batch.masks.map((mask) => ({ ...mask, path: convertFileSrc(mask.path) })),
+  };
 }
