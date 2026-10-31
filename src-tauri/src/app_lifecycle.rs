@@ -4,10 +4,18 @@ use tauri::{
     tray::{MouseButton, MouseButtonState, TrayIconBuilder, TrayIconEvent},
 };
 
-use crate::state::AppState;
+use lumadesk_core::OverlayBatchPatch;
+
+use crate::{commands::overlays::patch_all_overlays_impl, state::AppState};
 
 const MAIN_WINDOW_LABEL: &str = "main";
 const SHOW_MENU_ID: &str = "tray-show";
+const SHOW_ALL_MENU_ID: &str = "tray-show-all";
+const HIDE_ALL_MENU_ID: &str = "tray-hide-all";
+const PLAY_ALL_MENU_ID: &str = "tray-play-all";
+const PAUSE_ALL_MENU_ID: &str = "tray-pause-all";
+const LOCK_ALL_MENU_ID: &str = "tray-lock-all";
+const UNLOCK_ALL_MENU_ID: &str = "tray-unlock-all";
 const QUIT_MENU_ID: &str = "tray-quit";
 
 /// Shows, restores, and focuses the main management window when it exists.
@@ -24,7 +32,7 @@ pub(crate) fn show_main_window<R: Runtime>(application: &AppHandle<R>) -> tauri:
 }
 
 /// Installs the cross-platform tray or menu-bar icon and its application menu.
-pub(crate) fn install_tray<R: Runtime>(application: &AppHandle<R>) -> tauri::Result<()> {
+pub(crate) fn install_tray(application: &AppHandle) -> tauri::Result<()> {
     let show_item = MenuItem::with_id(
         application,
         SHOW_MENU_ID,
@@ -39,8 +47,65 @@ pub(crate) fn install_tray<R: Runtime>(application: &AppHandle<R>) -> tauri::Res
         true,
         None::<&str>,
     )?;
-    let separator = PredefinedMenuItem::separator(application)?;
-    let menu = Menu::with_items(application, &[&show_item, &separator, &quit_item])?;
+    let show_all_item = MenuItem::with_id(
+        application,
+        SHOW_ALL_MENU_ID,
+        "Show all overlays",
+        true,
+        None::<&str>,
+    )?;
+    let hide_all_item = MenuItem::with_id(
+        application,
+        HIDE_ALL_MENU_ID,
+        "Hide all overlays",
+        true,
+        None::<&str>,
+    )?;
+    let play_all_item = MenuItem::with_id(
+        application,
+        PLAY_ALL_MENU_ID,
+        "Play all overlays",
+        true,
+        None::<&str>,
+    )?;
+    let pause_all_item = MenuItem::with_id(
+        application,
+        PAUSE_ALL_MENU_ID,
+        "Pause all overlays",
+        true,
+        None::<&str>,
+    )?;
+    let lock_all_item = MenuItem::with_id(
+        application,
+        LOCK_ALL_MENU_ID,
+        "Lock all overlays",
+        true,
+        None::<&str>,
+    )?;
+    let unlock_all_item = MenuItem::with_id(
+        application,
+        UNLOCK_ALL_MENU_ID,
+        "Unlock all overlays",
+        true,
+        None::<&str>,
+    )?;
+    let first_separator = PredefinedMenuItem::separator(application)?;
+    let second_separator = PredefinedMenuItem::separator(application)?;
+    let menu = Menu::with_items(
+        application,
+        &[
+            &show_item,
+            &first_separator,
+            &show_all_item,
+            &hide_all_item,
+            &play_all_item,
+            &pause_all_item,
+            &lock_all_item,
+            &unlock_all_item,
+            &second_separator,
+            &quit_item,
+        ],
+    )?;
     let show_id = show_item.id().clone();
     let quit_id = quit_item.id().clone();
 
@@ -55,6 +120,40 @@ pub(crate) fn install_tray<R: Runtime>(application: &AppHandle<R>) -> tauri::Res
                 }
             } else if event.id() == &quit_id {
                 app.exit(0);
+            } else {
+                let patch = match event.id().as_ref() {
+                    SHOW_ALL_MENU_ID => OverlayBatchPatch {
+                        is_active: Some(true),
+                        ..OverlayBatchPatch::default()
+                    },
+                    HIDE_ALL_MENU_ID => OverlayBatchPatch {
+                        is_active: Some(false),
+                        ..OverlayBatchPatch::default()
+                    },
+                    PLAY_ALL_MENU_ID => OverlayBatchPatch {
+                        is_playing: Some(true),
+                        ..OverlayBatchPatch::default()
+                    },
+                    PAUSE_ALL_MENU_ID => OverlayBatchPatch {
+                        is_playing: Some(false),
+                        ..OverlayBatchPatch::default()
+                    },
+                    LOCK_ALL_MENU_ID => OverlayBatchPatch {
+                        click_through: Some(true),
+                        ..OverlayBatchPatch::default()
+                    },
+                    UNLOCK_ALL_MENU_ID => OverlayBatchPatch {
+                        click_through: Some(false),
+                        ..OverlayBatchPatch::default()
+                    },
+                    _ => return,
+                };
+                let application = app.clone();
+                tauri::async_runtime::spawn(async move {
+                    if let Err(error) = patch_all_overlays_impl(&application, patch).await {
+                        eprintln!("failed to update overlays from tray: {error:?}");
+                    }
+                });
             }
         })
         .on_tray_icon_event(|tray, event| match event {
