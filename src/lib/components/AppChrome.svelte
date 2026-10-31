@@ -275,7 +275,7 @@ nav small { color: var(--ink-500); font-size: 12px; }
 
 @media (max-width: 760px) {
   .sidebar { z-index: 8; grid-row: 3; padding: 8px 12px; border-top: 1px solid var(--line-700); border-right: 0; }
-  nav { grid-template-columns: repeat(4, 1fr); }
+  nav { grid-template-columns: repeat(5, 1fr); }
   nav button { display: flex; flex-direction: column; justify-content: center; gap: 3px; padding: 0 4px; font-size: 12px; text-align: center; }
   nav button small { display: none; }
   .version { display: none; }

@@ -11,6 +11,7 @@ import type { CollectionDialog } from "./lib/collection-model";
 import AppChrome from "./lib/components/AppChrome.svelte";
 import CollectionDialogs from "./lib/components/CollectionDialogs.svelte";
 import CollectionWorkspace from "./lib/components/CollectionWorkspace.svelte";
+import CommunityGallery from "./lib/components/CommunityGallery.svelte";
 import CreatorStudio from "./lib/components/CreatorStudio.svelte";
 import DesktopWorkspace from "./lib/components/DesktopWorkspace.svelte";
 import MediaInspector from "./lib/components/MediaInspector.svelte";
@@ -35,11 +36,13 @@ $: selectedBusy = selectedItem === undefined ? false : $collection.busyIds.has(s
 $: pageTitle =
   activePage === "desktop"
     ? "Active on Desktop"
-    : activePage === "creator"
-      ? "Creator Studio"
-      : activePage === "settings"
-        ? "Settings"
-        : "Collection";
+    : activePage === "gallery"
+      ? "Community Gallery"
+      : activePage === "creator"
+        ? "Creator Studio"
+        : activePage === "settings"
+          ? "Settings"
+          : "Collection";
 $: if (typeof document !== "undefined") {
   document.documentElement.dataset.theme = $collection.settings.theme;
 }
@@ -235,6 +238,12 @@ async function clearCache(): Promise<void> {
         ondeletescene={(id) => void desktop.deleteScene(id)}
         onreload={() => void desktop.reload()}
         oncollection={() => (activePage = "collection")}
+      />
+    {:else if activePage === "gallery"}
+      <CommunityGallery
+        nativeAvailable={$collection.nativeAvailable}
+        onnotify={collection.notify}
+        onimported={async () => collection.reload()}
       />
     {:else if activePage === "creator"}
       <CreatorStudio
