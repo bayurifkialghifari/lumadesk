@@ -112,7 +112,7 @@ rpm_root="$temporary_directory/rpm"
 mkdir "$rpm_root"
 (
   cd "$rpm_root"
-  rpm2cpio "$OLDPWD/$rpm_package" | cpio --extract --quiet
+  rpm2cpio "$OLDPWD/$rpm_package" | cpio --extract --make-directories --quiet
 )
 [[ -x "$rpm_root/usr/bin/lumadesk" ]] || {
   echo "RPM package does not contain usr/bin/lumadesk." >&2
