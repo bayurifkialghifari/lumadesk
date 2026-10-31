@@ -288,6 +288,22 @@ pub struct SpriteSequenceInput {
     pub playback_mode: SpritePlaybackMode,
 }
 
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct CreatorChangesInput {
+    pub media_id: MediaId,
+    pub recipe: EditRecipePatch,
+    pub sprite_sequence: Option<SpriteSequenceInput>,
+    pub clear_sprite_sequence: bool,
+}
+
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct CreatorChanges {
+    pub recipe: EditRecipe,
+    pub sprite_sequence: Option<SpriteSequence>,
+}
+
 #[derive(Clone, Copy, Debug, Eq, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
 pub enum VariantKind {
@@ -391,8 +407,6 @@ pub struct AppSettings {
     pub default_overlay_width: u32,
     pub default_opacity: f64,
     pub default_speed: f64,
-    pub cache_limit_mb: u32,
-    pub ai_model: String,
 }
 
 impl Default for AppSettings {
@@ -403,11 +417,9 @@ impl Default for AppSettings {
             restore_overlays: true,
             close_to_tray: true,
             collection_view: "grid".into(),
-            default_overlay_width: 240,
+            default_overlay_width: 320,
             default_opacity: 1.0,
             default_speed: 1.0,
-            cache_limit_mb: 512,
-            ai_model: "none".into(),
         }
     }
 }

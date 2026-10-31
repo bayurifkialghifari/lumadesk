@@ -38,8 +38,17 @@ impl FrameCache {
         request: FrameBatchRequest,
     ) -> Result<FrameBatch, CoreError> {
         validate_request(request)?;
-        if !self.manifests.contains_key(&item.id) {
-            let manifest = self.load_or_build(item, source, sequence)?;
+        let cache_dir = self.root.join(item.id.to_string());
+        let configuration = frame_configuration(sequence);
+        let manifest_is_current = self
+            .manifests
+            .get(&item.id)
+            .map(|manifest| manifest.is_valid_for(&cache_dir, item, &configuration))
+            .transpose()?
+            .unwrap_or(false);
+        if !manifest_is_current {
+            self.manifests.remove(&item.id);
+            let manifest = self.load_or_build(item, source, sequence, &configuration)?;
             self.manifests.insert(item.id, manifest);
         }
         let manifest = self
@@ -58,23 +67,32 @@ impl FrameCache {
         Ok(())
     }
 
+    pub(crate) fn clear_all(&mut self) -> Result<(), CoreError> {
+        self.manifests.clear();
+        if self.root.exists() {
+            fs::remove_dir_all(&self.root)?;
+        }
+        fs::create_dir_all(&self.root)?;
+        Ok(())
+    }
+
     fn load_or_build(
         &self,
         item: &MediaItem,
         source: &Path,
         sequence: Option<&SpriteSequence>,
+        configuration: &str,
     ) -> Result<FrameManifest, CoreError> {
         let cache_dir = self.root.join(item.id.to_string());
-        let configuration = frame_configuration(sequence);
         if let Some(manifest) = FrameManifest::read(&cache_dir)?
-            && manifest.is_valid_for(&cache_dir, item, &configuration)?
+            && manifest.is_valid_for(&cache_dir, item, configuration)?
         {
             return Ok(manifest);
         }
         if cache_dir.exists() {
             fs::remove_dir_all(&cache_dir)?;
         }
-        self.build(item, source, sequence, configuration, &cache_dir)
+        self.build(item, source, sequence, configuration.to_owned(), &cache_dir)
     }
 
     fn build(

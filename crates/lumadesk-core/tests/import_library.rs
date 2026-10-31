@@ -5,9 +5,9 @@ use image::{
     codecs::gif::{GifEncoder, Repeat},
 };
 use lumadesk_core::{
-    AssetKind, BackgroundRemovalMode, CropRect, EditRecipePatch, ImportOutcome, Library,
-    LibraryQuery, MediaFormat, MediaItem, NewOverlay, OverlayPatch, SpritePlaybackMode,
-    SpriteSequenceInput,
+    AssetKind, BackgroundRemovalMode, CreatorChangesInput, CropRect, EditRecipePatch,
+    ImportOutcome, Library, LibraryQuery, MediaFormat, MediaItem, NewOverlay, OverlayPatch,
+    SpritePlaybackMode, SpriteSequenceInput,
 };
 use tempfile::TempDir;
 
@@ -232,7 +232,7 @@ fn edit_recipes_and_sprite_metadata_preserve_imported_source() -> Result<(), Box
                 x: 0.0,
                 y: 0.0,
                 width: 2.0,
-                height: 2.0,
+                height: 1.0,
             })),
             rotation_degrees: Some(90),
             flip_horizontal: Some(true),
@@ -265,5 +265,80 @@ fn edit_recipes_and_sprite_metadata_preserve_imported_source() -> Result<(), Box
     library.clear_sprite_sequence(item.id)?;
     assert_eq!(library.sprite_sequence(item.id)?, None);
     assert_eq!(library.media_item(item.id)?.asset_kind, AssetKind::Still);
+    Ok(())
+}
+
+#[test]
+fn creator_save_validates_before_committing_recipe_and_sprite() -> Result<(), Box<dyn Error>> {
+    let temp = TempDir::new()?;
+    let source = temp.path().join("creator-sheet.png");
+    write_png(&source)?;
+    let mut library = Library::open(temp.path().join("data"))?;
+    let item = imported(library.import_file(&source)?)?;
+    let original_recipe = library.edit_recipe(item.id)?;
+
+    let invalid = library.save_creator_changes(&CreatorChangesInput {
+        media_id: item.id,
+        recipe: EditRecipePatch {
+            crop: None,
+            rotation_degrees: None,
+            flip_horizontal: None,
+            background_removal: None,
+            brightness: Some(1.5),
+            contrast: None,
+            saturation: None,
+        },
+        sprite_sequence: Some(SpriteSequenceInput {
+            media_id: item.id,
+            columns: 0,
+            rows: 1,
+            frame_count: 1,
+            frame_duration_ms: 100,
+            playback_mode: SpritePlaybackMode::Loop,
+        }),
+        clear_sprite_sequence: false,
+    });
+
+    assert!(invalid.is_err());
+    assert_eq!(library.edit_recipe(item.id)?, original_recipe);
+    assert_eq!(library.sprite_sequence(item.id)?, None);
+
+    let saved = library.save_creator_changes(&CreatorChangesInput {
+        media_id: item.id,
+        recipe: EditRecipePatch {
+            crop: Some(Some(CropRect {
+                x: 0.0,
+                y: 0.0,
+                width: 2.0,
+                height: 2.0,
+            })),
+            rotation_degrees: Some(90),
+            flip_horizontal: Some(true),
+            background_removal: Some(BackgroundRemovalMode::Edge),
+            brightness: Some(1.2),
+            contrast: Some(0.8),
+            saturation: Some(1.4),
+        },
+        sprite_sequence: Some(SpriteSequenceInput {
+            media_id: item.id,
+            columns: 2,
+            rows: 1,
+            frame_count: 2,
+            frame_duration_ms: 120,
+            playback_mode: SpritePlaybackMode::PingPong,
+        }),
+        clear_sprite_sequence: false,
+    })?;
+
+    assert!((saved.recipe.brightness - 1.2).abs() <= f64::EPSILON);
+    assert_eq!(
+        saved
+            .sprite_sequence
+            .as_ref()
+            .map(|value| value.frame_count),
+        Some(2)
+    );
+    assert_eq!(library.edit_recipe(item.id)?, saved.recipe);
+    assert_eq!(library.sprite_sequence(item.id)?, saved.sprite_sequence);
     Ok(())
 }

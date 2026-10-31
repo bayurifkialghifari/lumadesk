@@ -17,10 +17,11 @@ mod validation;
 
 pub use database::SCHEMA_VERSION;
 pub use domain::{
-    AppSettings, AssetKind, BackgroundRemovalMode, CropRect, DeleteReport, EditRecipe,
-    EditRecipePatch, ImportFailure, ImportOutcome, ImportReport, LibraryQuery, MediaFormat,
-    MediaId, MediaItem, MediaPage, MediaVariant, NewOverlay, OverlayId, OverlayInstance,
-    OverlayPatch, SpritePlaybackMode, SpriteSequence, SpriteSequenceInput, VariantId, VariantKind,
+    AppSettings, AssetKind, BackgroundRemovalMode, CreatorChanges, CreatorChangesInput, CropRect,
+    DeleteReport, EditRecipe, EditRecipePatch, ImportFailure, ImportOutcome, ImportReport,
+    LibraryQuery, MediaFormat, MediaId, MediaItem, MediaPage, MediaVariant, NewOverlay, OverlayId,
+    OverlayInstance, OverlayPatch, SpritePlaybackMode, SpriteSequence, SpriteSequenceInput,
+    VariantId, VariantKind,
 };
 pub use error::{ApiError, CoreError, ErrorCode};
 pub use frames::{FrameAsset, FrameBatch, FrameBatchRequest};

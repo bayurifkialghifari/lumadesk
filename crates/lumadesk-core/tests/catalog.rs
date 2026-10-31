@@ -13,7 +13,6 @@ fn migrations_create_schema_and_settings_round_trip() -> Result<(), Box<dyn Erro
     let settings = AppSettings {
         collection_view: "list".into(),
         default_speed: 1.5,
-        cache_limit_mb: 1_024,
         ..AppSettings::default()
     };
     assert_eq!(library.update_settings(&settings)?, settings);

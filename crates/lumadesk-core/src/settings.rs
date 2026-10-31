@@ -67,15 +67,5 @@ fn validate_settings(settings: &AppSettings) -> Result<(), CoreError> {
             "Speed must be between 0.25× and 4×.".into(),
         ));
     }
-    if !(64..=16_384).contains(&settings.cache_limit_mb) {
-        return Err(CoreError::InvalidInput(
-            "The cache limit must be 64–16384 MB.".into(),
-        ));
-    }
-    if !matches!(settings.ai_model.as_str(), "none" | "fast" | "quality") {
-        return Err(CoreError::InvalidInput(
-            "The background model must be none, fast, or quality.".into(),
-        ));
-    }
     Ok(())
 }

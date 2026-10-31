@@ -8,10 +8,10 @@ use scopeguard::{ScopeGuard, guard};
 use sha2::{Digest, Sha256};
 
 use crate::{
-    ApiError, AppSettings, CoreError, DeleteReport, EditRecipe, EditRecipePatch, FrameBatch,
-    FrameBatchRequest, ImportFailure, ImportOutcome, ImportReport, LibraryQuery, MediaId,
-    MediaItem, MediaPage, MediaVariant, NewOverlay, OverlayId, OverlayInstance, OverlayPatch,
-    SpriteSequence, SpriteSequenceInput,
+    ApiError, AppSettings, CoreError, CreatorChanges, CreatorChangesInput, DeleteReport,
+    EditRecipe, EditRecipePatch, FrameBatch, FrameBatchRequest, ImportFailure, ImportOutcome,
+    ImportReport, LibraryQuery, MediaId, MediaItem, MediaPage, MediaVariant, NewOverlay, OverlayId,
+    OverlayInstance, OverlayPatch, SpriteSequence, SpriteSequenceInput, VariantKind,
     database::Database,
     domain::{NewMediaItem, display_name},
     frame_cache::FrameCache,
@@ -178,6 +178,7 @@ impl Library {
             fs::remove_file(quarantine)?;
         }
         self.remove_cache_for(id)?;
+        self.remove_mask_directories(id)?;
         Ok(report)
     }
 
@@ -209,6 +210,35 @@ impl Library {
         self.database.update_edit_recipe(id, patch)
     }
 
+    /// Saves a complete Creator Studio edit as one database transaction.
+    ///
+    /// # Errors
+    /// Returns an error when the recipe or sprite configuration is invalid or cannot be stored.
+    pub fn save_creator_changes(
+        &mut self,
+        input: &CreatorChangesInput,
+    ) -> Result<CreatorChanges, CoreError> {
+        let current = self.database.sprite_sequence(input.media_id)?;
+        let sprite_changed = input.sprite_sequence.as_ref().map_or_else(
+            || input.clear_sprite_sequence && current.is_some(),
+            |next| {
+                current.as_ref().is_none_or(|stored| {
+                    stored.columns != next.columns
+                        || stored.rows != next.rows
+                        || stored.frame_count != next.frame_count
+                        || stored.frame_duration_ms != next.frame_duration_ms
+                        || stored.playback_mode != next.playback_mode
+                })
+            },
+        );
+        let saved = self.database.save_creator_changes(input)?;
+        if sprite_changed {
+            self.frame_cache.remove(input.media_id)?;
+            self.remove_segmentation_variants(input.media_id)?;
+        }
+        Ok(saved)
+    }
+
     /// Returns sprite-sheet playback metadata when configured.
     ///
     /// # Errors
@@ -227,6 +257,7 @@ impl Library {
     ) -> Result<SpriteSequence, CoreError> {
         let saved = self.database.set_sprite_sequence(sequence)?;
         self.frame_cache.remove(sequence.media_id)?;
+        self.remove_segmentation_variants(sequence.media_id)?;
         Ok(saved)
     }
 
@@ -236,7 +267,8 @@ impl Library {
     /// Returns an error when the asset is missing or persistence fails.
     pub fn clear_sprite_sequence(&mut self, id: MediaId) -> Result<(), CoreError> {
         self.database.clear_sprite_sequence(id)?;
-        self.frame_cache.remove(id)
+        self.frame_cache.remove(id)?;
+        self.remove_segmentation_variants(id)
     }
 
     /// Lists generated derivatives while keeping the imported source immutable.
@@ -245,6 +277,47 @@ impl Library {
     /// Returns an error when the asset or stored variant metadata is invalid.
     pub fn media_variants(&self, id: MediaId) -> Result<Vec<MediaVariant>, CoreError> {
         self.database.media_variants(id)
+    }
+
+    /// Registers a generated derivative using a path relative to the application data directory.
+    ///
+    /// # Errors
+    /// Returns an error for invalid metadata, a missing source item, or failed persistence.
+    pub fn upsert_media_variant(
+        &mut self,
+        id: MediaId,
+        kind: VariantKind,
+        relative_path: &str,
+        width: u32,
+        height: u32,
+    ) -> Result<MediaVariant, CoreError> {
+        self.database
+            .upsert_media_variant(id, kind, relative_path, width, height)
+    }
+
+    /// Removes generated derivatives of one kind for a media item.
+    ///
+    /// # Errors
+    /// Returns an error when the source item is missing or variant metadata cannot be removed.
+    pub fn remove_media_variants(
+        &mut self,
+        id: MediaId,
+        kind: VariantKind,
+    ) -> Result<Vec<String>, CoreError> {
+        self.database.remove_media_variants(id, kind)
+    }
+
+    /// Removes generated derivatives whose relative paths begin with the supplied prefix.
+    ///
+    /// # Errors
+    /// Returns an error for an unsafe prefix or failed persistence.
+    pub fn remove_variants_by_prefix(
+        &mut self,
+        kind: VariantKind,
+        relative_prefix: &str,
+    ) -> Result<Vec<String>, CoreError> {
+        self.database
+            .remove_variants_by_prefix(kind, relative_prefix)
     }
 
     /// Resolves an internal media identifier to its managed local path.
@@ -345,6 +418,27 @@ impl Library {
         self.database.update_settings(settings)
     }
 
+    /// Removes generated thumbnails and decoded frames without touching imported media.
+    ///
+    /// # Errors
+    /// Returns an error when generated cache files cannot be removed or recreated.
+    pub fn clear_generated_cache(&mut self) -> Result<(), CoreError> {
+        let thumbnails = self.data_root.join("thumbnails");
+        if thumbnails.exists() {
+            fs::remove_dir_all(&thumbnails)?;
+        }
+        fs::create_dir_all(thumbnails)?;
+        self.frame_cache.clear_all()?;
+        let masks = self.data_root.join("masks");
+        if masks.exists() {
+            fs::remove_dir_all(&masks)?;
+        }
+        fs::create_dir_all(masks)?;
+        self.database
+            .remove_variants_by_prefix(VariantKind::SegmentationMask, "masks/")?;
+        Ok(())
+    }
+
     fn resolve_managed_path(&self, managed_path: &str) -> Result<PathBuf, CoreError> {
         let path = Path::new(managed_path);
         if path.components().count() != 1 || path.file_name().is_none() {
@@ -361,6 +455,26 @@ impl Library {
             fs::remove_dir_all(thumbnail_path)?;
         }
         self.frame_cache.remove(id)?;
+        Ok(())
+    }
+
+    fn remove_segmentation_variants(&mut self, id: MediaId) -> Result<(), CoreError> {
+        self.database
+            .remove_media_variants(id, VariantKind::SegmentationMask)?;
+        self.remove_mask_directories(id)
+    }
+
+    fn remove_mask_directories(&self, id: MediaId) -> Result<(), CoreError> {
+        for model in ["fast", "quality"] {
+            let path = self
+                .data_root
+                .join("masks")
+                .join(model)
+                .join(id.to_string());
+            if path.exists() {
+                fs::remove_dir_all(path)?;
+            }
+        }
         Ok(())
     }
 
