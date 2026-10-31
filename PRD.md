@@ -1,6 +1,6 @@
 # LumaDesk Product Requirements
 
-**Status:** v0.5.0 implementation contract
+**Status:** v0.6.0 implementation contract
 **Updated:** 31 October 2026
 
 ## Product statement
@@ -13,7 +13,7 @@ LumaDesk is a desktop animation library and editor. It organizes local media, ap
 - Artists want to prepare GIF, APNG, WebP, still-image, and sprite-sheet assets while preserving their source files.
 - Collectors want a searchable library with names, tags, favorites, duplicate detection, and predictable local ownership.
 
-## v0.5.0 outcomes
+## v0.6.0 outcomes
 
 1. Users can import GIF, APNG, animated or static WebP, PNG, and JPEG files through a native picker or drag and drop.
 2. Imported media appears in a searchable library and can be previewed, renamed, tagged, favorited, or removed.
@@ -27,6 +27,7 @@ LumaDesk is a desktop animation library and editor. It organizes local media, ap
 10. Overlay placement can move between connected monitors and falls back safely when a saved display is unavailable.
 11. The manager and tray can show, hide, play, pause, lock, or unlock every persisted overlay in one action.
 12. Click-through overlays pass pointer input to windows below and remain recoverable from the manager and tray.
+13. Installed builds check GitHub Releases for signed updates and offer one-click installation from the title bar.
 
 ## Functional requirements
 
@@ -97,6 +98,10 @@ LumaDesk is a desktop animation library and editor. It organizes local media, ap
 - Persist theme, Collection view, overlay defaults, restore behavior, close-to-tray behavior, and autostart.
 - Let users open the application data directory, clear regenerable caches, and install or remove local AI models.
 - Target X11 directly and use XWayland when launched in a Wayland session.
+- Check for an application update at startup without blocking or interrupting the workspace.
+- Replace the title-bar version label with an update action when a newer signed release is available.
+- Show determinate download progress when the package size is known, install only after a user action, verify the package signature, and relaunch after installation.
+- Treat an unavailable update service as a quiet offline state and report installation failures through the standard application toast.
 
 ## Quality requirements
 
@@ -113,8 +118,9 @@ LumaDesk is a desktop animation library and editor. It organizes local media, ap
 - Windows x86-64 and ARM64: separate NSIS `.exe` installers.
 - macOS Apple Silicon and Intel: separate `.dmg` packages.
 - Linux x86-64 and ARM64: `.AppImage`, `.deb`, and `.rpm` packages.
+- Every tagged release includes signed updater payloads and a static update manifest for all six supported platform and architecture combinations.
 - Core library, editing, playback, and edge removal do not require an account or network connection.
-- Network access is limited to user-initiated external discovery and optional model downloads.
+- Network access is limited to update checks, user-initiated external discovery, optional model downloads, and downloading an update after user confirmation.
 - Signing and notarization activate when repository secrets are configured.
 
 ## Deferred
@@ -127,10 +133,11 @@ LumaDesk is a desktop animation library and editor. It organizes local media, ap
 
 ## Acceptance criteria
 
-- Deterministic v0.5.0 behavior passes Rust and frontend tests.
+- Deterministic v0.6.0 behavior passes Rust and frontend tests.
 - Invalid Creator input cannot partially save an edit recipe.
 - A downloaded model must pass size and SHA-256 checks before it is reported as installed.
-- A tagged release publishes direct installer files and `SHA256SUMS.txt` for every supported target.
+- A tagged release publishes direct installer files, signed updater payloads, `latest.json`, and `SHA256SUMS.txt` for every supported target.
 - The tag, Cargo workspace, `package.json`, Tauri configuration, title-bar version, changelog, and release title agree.
 - Applying a scene preserves hidden state, maps missing displays to the primary monitor, and never leaves the database and native windows on different layouts.
 - A click-through overlay can always be unlocked from the management window or tray.
+- A newer valid release appears as a title-bar update action; its package is verified before installation and the app relaunches when installation completes.

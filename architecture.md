@@ -14,6 +14,8 @@ flowchart LR
   APP --> WINDOWS[Native overlay windows]
   WINDOWS --> RENDER[Canvas recipe renderer]
   APP --> LIFECYCLE[Tray and window lifecycle]
+  UI -->|check, install, relaunch| UPDATER[Tauri updater and process plugins]
+  UPDATER -->|signed manifest and package| RELEASES[GitHub Releases]
 ```
 
 ## Repository boundaries
@@ -99,7 +101,9 @@ Edge removal flood-fills similar pixels connected to frame boundaries and feathe
 
 Each visible overlay is an undecorated, transparent, always-on-top Tauri window whose label derives from an internal instance UUID. Pressing the animation reveals its compact toolbar and boundary. Native dragging starts from the animation or drag handle, and a debounced serial writer persists logical position. Click-through disables focus and ignores cursor events at the native-window layer.
 
-The management window uses a custom title bar with Minimize, Maximize/Restore, and Close. Closing hides it to the tray or menu bar when `close_to_tray` is enabled. Tray actions restore the window, show or hide all overlays, play or pause all overlays, lock or unlock click-through, or quit the process. Single-instance launches use the same restore path. Overlay windows bypass the main-window close handler.
+The management window uses a custom title bar with Minimize, Maximize/Restore, and Close. At startup, the updater plugin reads the signed release manifest from GitHub. A newer version replaces the quiet version label with an install action. The frontend reports download progress, while the native plugin downloads, verifies, and installs the platform package before the process plugin relaunches LumaDesk. Failed checks remain quiet for offline use; failed installations return to the available state and surface a toast. If relaunching fails after installation, the controller preserves a restart-required state so the process can be relaunched without downloading the package again.
+
+Closing hides the management window to the tray or menu bar when `close_to_tray` is enabled. Tray actions restore the window, show or hide all overlays, play or pause all overlays, lock or unlock click-through, or quit the process. Single-instance launches use the same restore path. Overlay windows bypass the main-window close handler.
 
 ## Migrations and compatibility
 
@@ -110,4 +114,6 @@ The management window uses a custom title bar with Minimize, Maximize/Restore, a
 
 ## Release architecture
 
-Pushes and pull requests run frontend types, tests, lint, build, Rust formatting, workspace tests, and Clippy. Tags matching `vMAJOR.MINOR.PATCH` build Windows x86-64 and ARM64 NSIS installers, macOS Apple Silicon and Intel DMGs, and Linux x86-64 and ARM64 AppImage, Debian, and RPM packages. Publishing starts only after every platform job succeeds and includes `SHA256SUMS.txt`. Signing and notarization use protected repository secrets when configured.
+Pushes and pull requests run frontend types, tests, lint, build, Rust formatting, workspace tests, and Clippy. Tags matching `vMAJOR.MINOR.PATCH` build Windows x86-64 and ARM64 NSIS installers, macOS Apple Silicon and Intel DMGs, and Linux x86-64 and ARM64 AppImage, Debian, and RPM packages. Each matrix job also creates an updater archive and detached signature using the protected updater key.
+
+Publishing starts only after every platform job succeeds. The publisher preserves each matrix directory while resolving updater targets, flattens uniquely named release assets, generates `latest.json` with six platform entries and GitHub download URLs, then creates `SHA256SUMS.txt`. The public key embedded in the app verifies updater packages; the private key exists only in GitHub Actions secrets. Operating-system code signing and macOS notarization remain separate release credentials.

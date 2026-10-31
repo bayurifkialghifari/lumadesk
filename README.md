@@ -80,6 +80,7 @@ LumaDesk combines a searchable media library, a non-destructive Creator Studio, 
 - Control theme, Collection layout, startup behavior, overlay defaults, and local storage actions.
 - Install or remove optional AI models and clear regenerable previews, frames, and masks.
 - Store the catalog in SQLite and media inside the operating system's application-data directory.
+- Install signed LumaDesk updates from the title bar and relaunch into the new version.
 
 ## Download
 
@@ -93,6 +94,7 @@ LumaDesk combines a searchable media library, a non-destructive Creator Studio, 
 | Linux ARM64 | `.AppImage`, `.deb`, `.rpm` |
 
 Download tagged installers from [GitHub Releases](https://github.com/bayurifkialghifari/lumadesk/releases). GitHub Actions artifacts are ZIP containers; tagged release assets are the direct installer files.
+After installing a build with automatic updates, LumaDesk checks the latest GitHub Release at startup. An available version appears in the title bar and installs after one click.
 
 ## Development
 
@@ -125,6 +127,7 @@ cargo test --workspace --locked
 - [Background removal](docs/background-removal.md)
 - [Settings and local data](docs/settings-and-local-data.md)
 - [Window and application lifecycle](docs/window-lifecycle.md)
+- [Application updates](docs/application-updates.md)
 - [Installation and releases](docs/installation-and-releases.md)
 - [Product requirements](PRD.md)
 - [Design system](DESIGN.md)
