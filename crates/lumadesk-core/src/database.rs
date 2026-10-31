@@ -4,7 +4,7 @@ use rusqlite::{Connection, OptionalExtension, TransactionBehavior};
 
 use crate::CoreError;
 
-pub const SCHEMA_VERSION: u32 = 3;
+pub const SCHEMA_VERSION: u32 = 4;
 
 #[derive(Debug)]
 pub(crate) struct Database {
@@ -61,6 +61,9 @@ impl Database {
         if current < 3 {
             migration_v3(&transaction)?;
         }
+        if current < 4 {
+            migration_v4(&transaction)?;
+        }
         if current < SCHEMA_VERSION {
             transaction.execute("DELETE FROM schema_version", [])?;
             transaction.execute(
@@ -83,6 +86,10 @@ fn migration_v2(transaction: &rusqlite::Transaction<'_>) -> Result<(), rusqlite:
 
 fn migration_v3(transaction: &rusqlite::Transaction<'_>) -> Result<(), rusqlite::Error> {
     transaction.execute_batch(include_str!("schema_v3.sql"))
+}
+
+fn migration_v4(transaction: &rusqlite::Transaction<'_>) -> Result<(), rusqlite::Error> {
+    transaction.execute_batch(include_str!("schema_v4.sql"))
 }
 
 #[cfg(test)]
@@ -136,7 +143,7 @@ mod tests {
                 })?;
 
         assert!(!remove_background);
-        assert_eq!(version, 3);
+        assert_eq!(version, 4);
         Ok(())
     }
 
@@ -157,7 +164,52 @@ mod tests {
                 .connection
                 .query_row("SELECT version FROM schema_version", [], |row| row
                     .get::<_, u32>(0))?,
-            3
+            4
+        );
+        Ok(())
+    }
+
+    #[test]
+    fn migration_v4_defaults_existing_overlays_to_clickable() -> Result<(), Box<dyn Error>> {
+        let mut connection = Connection::open_in_memory()?;
+        connection.execute_batch(
+            "CREATE TABLE schema_version (version INTEGER NOT NULL);
+             INSERT INTO schema_version (version) VALUES (1);",
+        )?;
+        let transaction = connection.transaction()?;
+        migration_v1(&transaction)?;
+        transaction.commit()?;
+
+        let media_id = Uuid::new_v4().to_string();
+        let overlay_id = Uuid::new_v4().to_string();
+        connection.execute(
+            "INSERT INTO media_items
+             (id, content_hash, display_name, managed_path, media_kind, width, height,
+              frame_count, duration_ms, is_favorite, created_at, updated_at)
+             VALUES (?1, ?2, 'Fixture', 'fixture.png', 'png', 4, 3, 1, 0, 0, 1, 1)",
+            rusqlite::params![media_id, "b".repeat(64)],
+        )?;
+        connection.execute(
+            "INSERT INTO overlay_instances
+             (id, media_id, x, y, width, opacity, speed, created_at, updated_at)
+             VALUES (?1, ?2, 0, 0, 240, 1, 1, 1, 1)",
+            rusqlite::params![overlay_id, media_id],
+        )?;
+
+        let database = Database::initialize(connection)?;
+        let click_through = database.connection.query_row(
+            "SELECT click_through FROM overlay_instances WHERE id = ?1",
+            [overlay_id],
+            |row| row.get::<_, bool>(0),
+        )?;
+
+        assert!(!click_through);
+        assert_eq!(
+            database
+                .connection
+                .query_row("SELECT version FROM schema_version", [], |row| row
+                    .get::<_, u32>(0))?,
+            4
         );
         Ok(())
     }

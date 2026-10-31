@@ -5,9 +5,10 @@ use image::{
     codecs::gif::{GifEncoder, Repeat},
 };
 use lumadesk_core::{
-    AssetKind, BackgroundRemovalMode, CreatorChangesInput, CropRect, EditRecipePatch,
-    ImportOutcome, Library, LibraryQuery, MediaFormat, MediaItem, NewOverlay, OverlayPatch,
-    SpritePlaybackMode, SpriteSequenceInput,
+    AssetKind, BackgroundRemovalMode, CreatorChangesInput, CropRect, DesktopSceneItem,
+    EditRecipePatch, ImportOutcome, Library, LibraryQuery, MediaFormat, MediaId, MediaItem,
+    NewOverlay, OverlayBatchPatch, OverlayPatch, OverlayReplacement, SpritePlaybackMode,
+    SpriteSequenceInput,
 };
 use tempfile::TempDir;
 
@@ -152,6 +153,7 @@ fn duplicated_overlay_copies_controls_at_the_requested_position() -> Result<(), 
             speed: Some(1.5),
             flip_horizontal: Some(true),
             remove_background: Some(true),
+            click_through: Some(true),
             is_playing: Some(false),
             z_order: Some(4),
             ..OverlayPatch::default()
@@ -173,9 +175,142 @@ fn duplicated_overlay_copies_controls_at_the_requested_position() -> Result<(), 
         source_overlay.remove_background
     );
     assert_eq!(duplicate.is_playing, source_overlay.is_playing);
+    assert_eq!(duplicate.click_through, source_overlay.click_through);
     assert_eq!(duplicate.z_order, 5);
     assert!(duplicate.is_active);
     assert_eq!(library.list_overlays()?.len(), 2);
+    Ok(())
+}
+
+fn scene_item(media_id: MediaId) -> DesktopSceneItem {
+    DesktopSceneItem {
+        media_id,
+        monitor_name: Some("Primary".into()),
+        monitor_width: 1_920.0,
+        monitor_height: 1_080.0,
+        normalized_x: 0.25,
+        normalized_y: 0.5,
+        width: 320.0,
+        opacity: 0.8,
+        speed: 1.5,
+        flip_horizontal: true,
+        remove_background: true,
+        is_playing: false,
+        click_through: true,
+        z_order: 3,
+    }
+}
+
+#[test]
+fn desktop_scene_lifecycle_uses_explicit_snapshots_and_unique_names() -> Result<(), Box<dyn Error>>
+{
+    let temp = TempDir::new()?;
+    let source = temp.path().join("scene.png");
+    write_png(&source)?;
+    let mut library = Library::open(temp.path().join("data"))?;
+    let media = imported(library.import_file(&source)?)?;
+    let original_item = scene_item(media.id);
+
+    let created =
+        library.create_desktop_scene("  Focus  ", std::slice::from_ref(&original_item))?;
+    assert_eq!(created.name, "Focus");
+    assert_eq!(created.items, [original_item.clone()]);
+    assert!(library.create_desktop_scene("focus", &[]).is_err());
+    assert!(library.create_desktop_scene("", &[]).is_err());
+
+    let overlay = library.create_overlay(&NewOverlay {
+        media_id: media.id,
+        monitor_id: None,
+        x: 1.0,
+        y: 2.0,
+    })?;
+    library.update_overlay(
+        overlay.id,
+        &OverlayPatch {
+            width: Some(700.0),
+            ..OverlayPatch::default()
+        },
+    )?;
+    assert_eq!(library.desktop_scene(created.id)?.items, [original_item]);
+
+    let updated_item = DesktopSceneItem {
+        normalized_x: 0.75,
+        ..scene_item(media.id)
+    };
+    let updated = library.update_desktop_scene(created.id, std::slice::from_ref(&updated_item))?;
+    assert_eq!(updated.items, [updated_item]);
+    let renamed = library.rename_desktop_scene(created.id, "Presentation")?;
+    assert_eq!(renamed.name, "Presentation");
+    let duplicate = library.duplicate_desktop_scene(created.id)?;
+    assert_eq!(duplicate.name, "Presentation copy");
+    assert_eq!(duplicate.items, renamed.items);
+    assert_eq!(library.list_desktop_scenes()?.len(), 2);
+
+    library.delete_desktop_scene(created.id)?;
+    assert!(library.desktop_scene(created.id).is_err());
+    Ok(())
+}
+
+#[test]
+fn deleting_media_cascades_scene_items_but_keeps_the_scene() -> Result<(), Box<dyn Error>> {
+    let temp = TempDir::new()?;
+    let source = temp.path().join("scene-cascade.png");
+    write_png(&source)?;
+    let mut library = Library::open(temp.path().join("data"))?;
+    let media = imported(library.import_file(&source)?)?;
+    let scene = library.create_desktop_scene("Cascade", &[scene_item(media.id)])?;
+
+    library.delete_media(media.id)?;
+
+    assert!(library.desktop_scene(scene.id)?.items.is_empty());
+    assert_eq!(library.list_desktop_scenes()?[0].item_count, 0);
+    Ok(())
+}
+
+#[test]
+fn replacing_and_batch_patching_overlays_are_atomic() -> Result<(), Box<dyn Error>> {
+    let temp = TempDir::new()?;
+    let source = temp.path().join("replacement.png");
+    write_png(&source)?;
+    let mut library = Library::open(temp.path().join("data"))?;
+    let media = imported(library.import_file(&source)?)?;
+    let existing = library.create_overlay(&NewOverlay {
+        media_id: media.id,
+        monitor_id: None,
+        x: 10.0,
+        y: 20.0,
+    })?;
+    let missing = MediaId::new();
+    let replacement = OverlayReplacement {
+        media_id: missing,
+        monitor_id: None,
+        x: 0.0,
+        y: 0.0,
+        width: 320.0,
+        opacity: 1.0,
+        speed: 1.0,
+        flip_horizontal: false,
+        remove_background: false,
+        is_playing: true,
+        click_through: false,
+        z_order: 0,
+        is_active: true,
+    };
+    assert!(library.replace_overlays(&[replacement]).is_err());
+    assert_eq!(library.list_overlays()?, [existing.clone()]);
+
+    let patched = library.patch_all_overlays(&OverlayBatchPatch {
+        is_playing: Some(false),
+        is_active: Some(false),
+        click_through: Some(true),
+    })?;
+    assert_eq!(patched.len(), 1);
+    assert!(!patched[0].is_playing);
+    assert!(!patched[0].is_active);
+    assert!(patched[0].click_through);
+
+    assert!(library.replace_overlays(&[])?.is_empty());
+    assert!(library.list_overlays()?.is_empty());
     Ok(())
 }
 

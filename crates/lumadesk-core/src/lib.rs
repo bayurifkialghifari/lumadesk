@@ -12,16 +12,18 @@ mod frames;
 mod importer;
 mod media;
 mod overlays;
+mod scenes;
 mod settings;
 mod validation;
 
 pub use database::SCHEMA_VERSION;
 pub use domain::{
     AppSettings, AssetKind, BackgroundRemovalMode, CreatorChanges, CreatorChangesInput, CropRect,
-    DeleteReport, EditRecipe, EditRecipePatch, ImportFailure, ImportOutcome, ImportReport,
-    LibraryQuery, MediaFormat, MediaId, MediaItem, MediaPage, MediaVariant, NewOverlay, OverlayId,
-    OverlayInstance, OverlayPatch, SpritePlaybackMode, SpriteSequence, SpriteSequenceInput,
-    VariantId, VariantKind,
+    DeleteReport, DesktopScene, DesktopSceneId, DesktopSceneItem, DesktopSceneSummary, EditRecipe,
+    EditRecipePatch, ImportFailure, ImportOutcome, ImportReport, LibraryQuery, MediaFormat,
+    MediaId, MediaItem, MediaPage, MediaVariant, MonitorDescriptor, NewOverlay, OverlayBatchPatch,
+    OverlayId, OverlayInstance, OverlayPatch, OverlayReplacement, SpritePlaybackMode,
+    SpriteSequence, SpriteSequenceInput, VariantId, VariantKind,
 };
 pub use error::{ApiError, CoreError, ErrorCode};
 pub use frames::{FrameAsset, FrameBatch, FrameBatchRequest};

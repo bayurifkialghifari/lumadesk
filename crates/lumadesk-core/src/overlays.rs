@@ -1,10 +1,15 @@
 use chrono::{DateTime, Utc};
-use rusqlite::{OptionalExtension as _, Row, params};
+use rusqlite::{OptionalExtension as _, Row, Transaction, params};
 use uuid::Uuid;
 
 use crate::{
-    CoreError, MediaId, NewOverlay, OverlayId, OverlayInstance, OverlayPatch, database::Database,
+    CoreError, MediaId, NewOverlay, OverlayBatchPatch, OverlayId, OverlayInstance, OverlayPatch,
+    OverlayReplacement, database::Database,
 };
+
+const OVERLAY_COLUMNS: &str =
+    "id, media_id, monitor_id, x, y, width, opacity, speed, flip_horizontal,
+     remove_background, click_through, is_playing, z_order, is_active, created_at, updated_at";
 
 #[derive(Debug)]
 #[expect(
@@ -22,6 +27,7 @@ struct RawOverlay {
     speed: f64,
     flip_horizontal: bool,
     remove_background: bool,
+    click_through: bool,
     is_playing: bool,
     z_order: i32,
     is_active: bool,
@@ -31,11 +37,10 @@ struct RawOverlay {
 
 impl Database {
     pub(crate) fn list_overlays(&self) -> Result<Vec<OverlayInstance>, CoreError> {
-        let mut statement = self.connection.prepare(
-            "SELECT id, media_id, monitor_id, x, y, width, opacity, speed, flip_horizontal,
-                    remove_background, is_playing, z_order, is_active, created_at, updated_at
-             FROM overlay_instances ORDER BY z_order ASC, created_at ASC",
-        )?;
+        let sql = format!(
+            "SELECT {OVERLAY_COLUMNS} FROM overlay_instances ORDER BY z_order ASC, created_at ASC"
+        );
+        let mut statement = self.connection.prepare(&sql)?;
         let rows = statement.query_map([], read_raw_overlay)?;
         rows.map(|row| hydrate_overlay(row?)).collect()
     }
@@ -52,8 +57,8 @@ impl Database {
         self.connection.execute(
             "INSERT INTO overlay_instances
              (id, media_id, monitor_id, x, y, width, opacity, speed, flip_horizontal,
-              remove_background, is_playing, z_order, is_active, created_at, updated_at)
-             VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, 0, 0, 1, 0, 1, ?9, ?9)",
+              remove_background, click_through, is_playing, z_order, is_active, created_at, updated_at)
+             VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, 0, 0, 0, 1, 0, 1, ?9, ?9)",
             params![
                 id.to_string(),
                 input.media_id.to_string(),
@@ -85,7 +90,8 @@ impl Database {
         self.connection.execute(
             "UPDATE overlay_instances SET monitor_id = ?1, x = ?2, y = ?3, width = ?4,
              opacity = ?5, speed = ?6, flip_horizontal = ?7, remove_background = ?8,
-             is_playing = ?9, z_order = ?10, is_active = ?11, updated_at = ?12 WHERE id = ?13",
+             click_through = ?9, is_playing = ?10, z_order = ?11, is_active = ?12,
+             updated_at = ?13 WHERE id = ?14",
             params![
                 monitor_id,
                 x,
@@ -95,6 +101,7 @@ impl Database {
                 speed,
                 patch.flip_horizontal.unwrap_or(current.flip_horizontal),
                 patch.remove_background.unwrap_or(current.remove_background),
+                patch.click_through.unwrap_or(current.click_through),
                 patch.is_playing.unwrap_or(current.is_playing),
                 patch.z_order.unwrap_or(current.z_order),
                 patch.is_active.unwrap_or(current.is_active),
@@ -103,6 +110,30 @@ impl Database {
             ],
         )?;
         self.overlay_by_id(id)
+    }
+
+    pub(crate) fn patch_all_overlays(
+        &mut self,
+        patch: &OverlayBatchPatch,
+    ) -> Result<Vec<OverlayInstance>, CoreError> {
+        if patch.is_playing.is_none() && patch.is_active.is_none() && patch.click_through.is_none()
+        {
+            return self.list_overlays();
+        }
+        self.connection.execute(
+            "UPDATE overlay_instances SET
+             is_playing = COALESCE(?1, is_playing),
+             is_active = COALESCE(?2, is_active),
+             click_through = COALESCE(?3, click_through),
+             updated_at = ?4",
+            params![
+                patch.is_playing,
+                patch.is_active,
+                patch.click_through,
+                Utc::now().timestamp_millis()
+            ],
+        )?;
+        self.list_overlays()
     }
 
     pub(crate) fn duplicate_overlay(
@@ -118,8 +149,8 @@ impl Database {
         self.connection.execute(
             "INSERT INTO overlay_instances
              (id, media_id, monitor_id, x, y, width, opacity, speed, flip_horizontal,
-              remove_background, is_playing, z_order, is_active, created_at, updated_at)
-             VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, 1, ?13, ?13)",
+              remove_background, click_through, is_playing, z_order, is_active, created_at, updated_at)
+             VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13, 1, ?14, ?14)",
             params![
                 duplicate_id.to_string(),
                 source.media_id.to_string(),
@@ -131,12 +162,60 @@ impl Database {
                 source.speed,
                 source.flip_horizontal,
                 source.remove_background,
+                source.click_through,
                 source.is_playing,
                 source.z_order.saturating_add(1),
                 now
             ],
         )?;
         self.overlay_by_id(duplicate_id)
+    }
+
+    pub(crate) fn replace_overlays(
+        &mut self,
+        replacements: &[OverlayReplacement],
+    ) -> Result<Vec<OverlayInstance>, CoreError> {
+        for replacement in replacements {
+            validate_overlay_values(
+                replacement.x,
+                replacement.y,
+                replacement.width,
+                replacement.opacity,
+                replacement.speed,
+            )?;
+        }
+        let transaction = self.connection.transaction()?;
+        transaction.execute("DELETE FROM overlay_instances", [])?;
+        let now = Utc::now().timestamp_millis();
+        for replacement in replacements {
+            ensure_media_exists(&transaction, replacement.media_id)?;
+            insert_replacement(&transaction, replacement, OverlayId::new(), now, now)?;
+        }
+        transaction.commit()?;
+        self.list_overlays()
+    }
+
+    pub(crate) fn restore_overlays(
+        &mut self,
+        overlays: &[OverlayInstance],
+    ) -> Result<Vec<OverlayInstance>, CoreError> {
+        for overlay in overlays {
+            validate_overlay_values(
+                overlay.x,
+                overlay.y,
+                overlay.width,
+                overlay.opacity,
+                overlay.speed,
+            )?;
+        }
+        let transaction = self.connection.transaction()?;
+        transaction.execute("DELETE FROM overlay_instances", [])?;
+        for overlay in overlays {
+            ensure_media_exists(&transaction, overlay.media_id)?;
+            insert_exact(&transaction, overlay)?;
+        }
+        transaction.commit()?;
+        self.list_overlays()
     }
 
     pub(crate) fn remove_overlay(&mut self, id: OverlayId) -> Result<(), CoreError> {
@@ -154,15 +233,10 @@ impl Database {
     }
 
     pub(crate) fn overlay_by_id(&self, id: OverlayId) -> Result<OverlayInstance, CoreError> {
+        let sql = format!("SELECT {OVERLAY_COLUMNS} FROM overlay_instances WHERE id = ?1");
         let raw = self
             .connection
-            .query_row(
-                "SELECT id, media_id, monitor_id, x, y, width, opacity, speed, flip_horizontal,
-                    remove_background, is_playing, z_order, is_active, created_at, updated_at
-             FROM overlay_instances WHERE id = ?1",
-                [id.to_string()],
-                read_raw_overlay,
-            )
+            .query_row(&sql, [id.to_string()], read_raw_overlay)
             .optional()?
             .ok_or_else(|| CoreError::NotFound {
                 entity: "Overlay",
@@ -170,6 +244,82 @@ impl Database {
             })?;
         hydrate_overlay(raw)
     }
+}
+
+fn ensure_media_exists(transaction: &Transaction<'_>, media_id: MediaId) -> Result<(), CoreError> {
+    let exists = transaction.query_row(
+        "SELECT EXISTS(SELECT 1 FROM media_items WHERE id = ?1)",
+        [media_id.to_string()],
+        |row| row.get::<_, bool>(0),
+    )?;
+    if !exists {
+        return Err(CoreError::NotFound {
+            entity: "Media item",
+            id: media_id.to_string(),
+        });
+    }
+    Ok(())
+}
+
+fn insert_replacement(
+    transaction: &Transaction<'_>,
+    replacement: &OverlayReplacement,
+    id: OverlayId,
+    created_at: i64,
+    updated_at: i64,
+) -> Result<(), rusqlite::Error> {
+    transaction.execute(
+        "INSERT INTO overlay_instances
+         (id, media_id, monitor_id, x, y, width, opacity, speed, flip_horizontal,
+          remove_background, click_through, is_playing, z_order, is_active, created_at, updated_at)
+         VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?14, ?15, ?16)",
+        params![
+            id.to_string(),
+            replacement.media_id.to_string(),
+            replacement.monitor_id,
+            replacement.x,
+            replacement.y,
+            replacement.width,
+            replacement.opacity,
+            replacement.speed,
+            replacement.flip_horizontal,
+            replacement.remove_background,
+            replacement.click_through,
+            replacement.is_playing,
+            replacement.z_order,
+            replacement.is_active,
+            created_at,
+            updated_at
+        ],
+    )?;
+    Ok(())
+}
+
+fn insert_exact(
+    transaction: &Transaction<'_>,
+    overlay: &OverlayInstance,
+) -> Result<(), rusqlite::Error> {
+    insert_replacement(
+        transaction,
+        &OverlayReplacement {
+            media_id: overlay.media_id,
+            monitor_id: overlay.monitor_id.clone(),
+            x: overlay.x,
+            y: overlay.y,
+            width: overlay.width,
+            opacity: overlay.opacity,
+            speed: overlay.speed,
+            flip_horizontal: overlay.flip_horizontal,
+            remove_background: overlay.remove_background,
+            is_playing: overlay.is_playing,
+            click_through: overlay.click_through,
+            z_order: overlay.z_order,
+            is_active: overlay.is_active,
+        },
+        overlay.id,
+        overlay.created_at.timestamp_millis(),
+        overlay.updated_at.timestamp_millis(),
+    )
 }
 
 fn read_raw_overlay(row: &Row<'_>) -> rusqlite::Result<RawOverlay> {
@@ -184,11 +334,12 @@ fn read_raw_overlay(row: &Row<'_>) -> rusqlite::Result<RawOverlay> {
         speed: row.get(7)?,
         flip_horizontal: row.get(8)?,
         remove_background: row.get(9)?,
-        is_playing: row.get(10)?,
-        z_order: row.get(11)?,
-        is_active: row.get(12)?,
-        created_at: row.get(13)?,
-        updated_at: row.get(14)?,
+        click_through: row.get(10)?,
+        is_playing: row.get(11)?,
+        z_order: row.get(12)?,
+        is_active: row.get(13)?,
+        created_at: row.get(14)?,
+        updated_at: row.get(15)?,
     })
 }
 
@@ -204,6 +355,7 @@ fn hydrate_overlay(raw: RawOverlay) -> Result<OverlayInstance, CoreError> {
         speed: raw.speed,
         flip_horizontal: raw.flip_horizontal,
         remove_background: raw.remove_background,
+        click_through: raw.click_through,
         is_playing: raw.is_playing,
         z_order: raw.z_order,
         is_active: raw.is_active,
@@ -212,7 +364,7 @@ fn hydrate_overlay(raw: RawOverlay) -> Result<OverlayInstance, CoreError> {
     })
 }
 
-fn validate_overlay_values(
+pub(crate) fn validate_overlay_values(
     x: f64,
     y: f64,
     width: f64,

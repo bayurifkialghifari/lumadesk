@@ -34,6 +34,7 @@ macro_rules! uuid_id {
 uuid_id!(MediaId);
 uuid_id!(VariantId);
 uuid_id!(OverlayId);
+uuid_id!(DesktopSceneId);
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
@@ -364,6 +365,7 @@ pub struct OverlayInstance {
     pub speed: f64,
     pub flip_horizontal: bool,
     pub remove_background: bool,
+    pub click_through: bool,
     pub is_playing: bool,
     pub z_order: i32,
     pub is_active: bool,
@@ -391,9 +393,94 @@ pub struct OverlayPatch {
     pub speed: Option<f64>,
     pub flip_horizontal: Option<bool>,
     pub remove_background: Option<bool>,
+    pub click_through: Option<bool>,
     pub is_playing: Option<bool>,
     pub z_order: Option<i32>,
     pub is_active: Option<bool>,
+}
+
+#[derive(Clone, Debug, Default, PartialEq, Serialize, Deserialize)]
+#[serde(default, rename_all = "camelCase")]
+pub struct OverlayBatchPatch {
+    pub is_playing: Option<bool>,
+    pub is_active: Option<bool>,
+    pub click_through: Option<bool>,
+}
+
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+#[expect(
+    clippy::struct_excessive_bools,
+    reason = "scene items preserve independent overlay controls"
+)]
+pub struct DesktopSceneItem {
+    pub media_id: MediaId,
+    pub monitor_name: Option<String>,
+    pub monitor_width: f64,
+    pub monitor_height: f64,
+    pub normalized_x: f64,
+    pub normalized_y: f64,
+    pub width: f64,
+    pub opacity: f64,
+    pub speed: f64,
+    pub flip_horizontal: bool,
+    pub remove_background: bool,
+    pub is_playing: bool,
+    pub click_through: bool,
+    pub z_order: i32,
+}
+
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct DesktopScene {
+    pub id: DesktopSceneId,
+    pub name: String,
+    pub items: Vec<DesktopSceneItem>,
+    pub created_at: DateTime<Utc>,
+    pub updated_at: DateTime<Utc>,
+}
+
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct DesktopSceneSummary {
+    pub id: DesktopSceneId,
+    pub name: String,
+    pub item_count: u32,
+    pub created_at: DateTime<Utc>,
+    pub updated_at: DateTime<Utc>,
+}
+
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct MonitorDescriptor {
+    pub name: String,
+    pub x: f64,
+    pub y: f64,
+    pub width: f64,
+    pub height: f64,
+    pub scale_factor: f64,
+    pub is_primary: bool,
+}
+
+#[derive(Clone, Debug, PartialEq)]
+#[expect(
+    clippy::struct_excessive_bools,
+    reason = "replacement rows mirror independent overlay controls"
+)]
+pub struct OverlayReplacement {
+    pub media_id: MediaId,
+    pub monitor_id: Option<String>,
+    pub x: f64,
+    pub y: f64,
+    pub width: f64,
+    pub opacity: f64,
+    pub speed: f64,
+    pub flip_horizontal: bool,
+    pub remove_background: bool,
+    pub is_playing: bool,
+    pub click_through: bool,
+    pub z_order: i32,
+    pub is_active: bool,
 }
 
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]

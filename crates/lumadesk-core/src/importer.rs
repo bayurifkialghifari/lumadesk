@@ -9,9 +9,11 @@ use sha2::{Digest, Sha256};
 
 use crate::{
     ApiError, AppSettings, CoreError, CreatorChanges, CreatorChangesInput, DeleteReport,
-    EditRecipe, EditRecipePatch, FrameBatch, FrameBatchRequest, ImportFailure, ImportOutcome,
-    ImportReport, LibraryQuery, MediaId, MediaItem, MediaPage, MediaVariant, NewOverlay, OverlayId,
-    OverlayInstance, OverlayPatch, SpriteSequence, SpriteSequenceInput, VariantKind,
+    DesktopScene, DesktopSceneId, DesktopSceneItem, DesktopSceneSummary, EditRecipe,
+    EditRecipePatch, FrameBatch, FrameBatchRequest, ImportFailure, ImportOutcome, ImportReport,
+    LibraryQuery, MediaId, MediaItem, MediaPage, MediaVariant, NewOverlay, OverlayBatchPatch,
+    OverlayId, OverlayInstance, OverlayPatch, OverlayReplacement, SpriteSequence,
+    SpriteSequenceInput, VariantKind,
     database::Database,
     domain::{NewMediaItem, display_name},
     frame_cache::FrameCache,
@@ -381,6 +383,17 @@ impl Library {
         self.database.update_overlay(id, patch)
     }
 
+    /// Applies one patch to every persisted overlay in a single database statement.
+    ///
+    /// # Errors
+    /// Returns an error when overlay records cannot be updated or decoded.
+    pub fn patch_all_overlays(
+        &mut self,
+        patch: &OverlayBatchPatch,
+    ) -> Result<Vec<OverlayInstance>, CoreError> {
+        self.database.patch_all_overlays(patch)
+    }
+
     /// Copies an overlay's controls to a new persisted instance at another position.
     ///
     /// # Errors
@@ -400,6 +413,99 @@ impl Library {
     /// Returns an error when the overlay is missing or cannot be deleted.
     pub fn remove_overlay(&mut self, id: OverlayId) -> Result<(), CoreError> {
         self.database.remove_overlay(id)
+    }
+
+    /// Replaces the entire persisted desktop layout atomically.
+    ///
+    /// # Errors
+    /// Returns an error when any replacement is invalid, references missing media, or cannot be saved.
+    pub fn replace_overlays(
+        &mut self,
+        replacements: &[OverlayReplacement],
+    ) -> Result<Vec<OverlayInstance>, CoreError> {
+        self.database.replace_overlays(replacements)
+    }
+
+    /// Restores exact persisted overlay rows after a failed native synchronization.
+    ///
+    /// # Errors
+    /// Returns an error when the previous layout cannot be restored.
+    pub fn restore_overlays(
+        &mut self,
+        overlays: &[OverlayInstance],
+    ) -> Result<Vec<OverlayInstance>, CoreError> {
+        self.database.restore_overlays(overlays)
+    }
+
+    /// Lists saved desktop scene summaries.
+    ///
+    /// # Errors
+    /// Returns an error when scene metadata cannot be read.
+    pub fn list_desktop_scenes(&self) -> Result<Vec<DesktopSceneSummary>, CoreError> {
+        self.database.list_desktop_scenes()
+    }
+
+    /// Returns one saved desktop scene and all of its snapshot items.
+    ///
+    /// # Errors
+    /// Returns an error when the scene is missing or invalid.
+    pub fn desktop_scene(&self, id: DesktopSceneId) -> Result<DesktopScene, CoreError> {
+        self.database.desktop_scene(id)
+    }
+
+    /// Creates a named scene from an explicit snapshot.
+    ///
+    /// # Errors
+    /// Returns an error for an invalid or duplicate name, invalid items, or failed persistence.
+    pub fn create_desktop_scene(
+        &mut self,
+        name: &str,
+        items: &[DesktopSceneItem],
+    ) -> Result<DesktopScene, CoreError> {
+        self.database.create_desktop_scene(name, items)
+    }
+
+    /// Replaces a scene snapshot without changing its name.
+    ///
+    /// # Errors
+    /// Returns an error for a missing scene, invalid items, or failed persistence.
+    pub fn update_desktop_scene(
+        &mut self,
+        id: DesktopSceneId,
+        items: &[DesktopSceneItem],
+    ) -> Result<DesktopScene, CoreError> {
+        self.database.update_desktop_scene(id, items)
+    }
+
+    /// Renames a scene while preserving its snapshot.
+    ///
+    /// # Errors
+    /// Returns an error for a missing scene, invalid or duplicate name, or failed persistence.
+    pub fn rename_desktop_scene(
+        &mut self,
+        id: DesktopSceneId,
+        name: &str,
+    ) -> Result<DesktopScene, CoreError> {
+        self.database.rename_desktop_scene(id, name)
+    }
+
+    /// Duplicates a scene with a generated unique name.
+    ///
+    /// # Errors
+    /// Returns an error when the source is missing or the copy cannot be saved.
+    pub fn duplicate_desktop_scene(
+        &mut self,
+        id: DesktopSceneId,
+    ) -> Result<DesktopScene, CoreError> {
+        self.database.duplicate_desktop_scene(id)
+    }
+
+    /// Deletes one saved scene.
+    ///
+    /// # Errors
+    /// Returns an error when the scene is missing or cannot be deleted.
+    pub fn delete_desktop_scene(&mut self, id: DesktopSceneId) -> Result<(), CoreError> {
+        self.database.delete_desktop_scene(id)
     }
 
     /// Reads typed application settings, falling back to explicit defaults.
