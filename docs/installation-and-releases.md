@@ -22,6 +22,6 @@ Manual GitHub Actions builds are downloaded as ZIP archives because GitHub wraps
 
 Installed builds check the latest GitHub Release when the management window starts. When a newer version supports the current system and architecture, **Update vX.Y.Z** appears beside the window controls. Pressing it downloads the package, verifies its updater signature, installs it, and relaunches LumaDesk. See [Application updates](application-updates.md) for behavior and recovery details.
 
-The release workflow publishes separate signed updater archives for Windows x64 and ARM64, macOS Apple Silicon and Intel, and Linux x86-64 and ARM64. These archives support the in-app updater and sit beside the normal installer files. `latest.json` maps each installed platform to its matching archive and signature.
+The release workflow signs the Windows NSIS installers and every Linux AppImage, Debian, and RPM package used by the in-app updater. macOS receives separate signed application bundle archives for Apple Silicon and Intel. `latest.json` maps each installed platform and package type to its matching payload and signature.
 
 Updater signatures protect the in-app download path. Windows Authenticode signing and macOS signing and notarization are separate operating-system trust layers and will activate when the required certificates and repository secrets are configured.

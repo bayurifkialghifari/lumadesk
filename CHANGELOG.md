@@ -4,13 +4,18 @@ All notable changes to LumaDesk are documented here. The project follows Semanti
 
 ## [Unreleased]
 
+### Fixed
+
+- Release feeds now map Windows NSIS, Linux AppImage, Debian, RPM, and macOS application packages to their matching signed native payloads.
+- macOS release builds now create uniquely named updater bundles for Apple Silicon and Intel.
+
 ## [0.6.0] - 2026-10-31
 
 ### Added
 
 - Added startup update checks and a title-bar action that downloads, verifies, installs, and relaunches into a newer release.
 - Added determinate download progress, quiet offline behavior, retryable installation errors, and responsive update states.
-- Added signed updater archives and a generated `latest.json` feed for Windows x64 and ARM64, macOS Apple Silicon and Intel, and Linux x86-64 and ARM64.
+- Added signed native updater payloads and a generated `latest.json` feed for Windows x64 and ARM64, macOS Apple Silicon and Intel, and Linux x86-64 and ARM64.
 - Added an application-update guide covering package verification, installation behavior, release targets, and recovery.
 
 ### Changed

@@ -19,12 +19,16 @@ describe("updater manifest generator", () => {
     const artifacts = join(root, "artifacts");
     const output = join(root, "release", "latest.json");
     const fixtures = [
-      ["linux-x86_64", "LumaDesk_0.6.0_amd64.AppImage.tar.gz"],
-      ["linux-aarch64", "LumaDesk_0.6.0_arm64.AppImage.tar.gz"],
+      ["linux-x86_64", "LumaDesk_0.6.1_amd64.AppImage"],
+      ["linux-x86_64", "LumaDesk_0.6.1_amd64.deb"],
+      ["linux-x86_64", "LumaDesk-0.6.1-1.x86_64.rpm"],
+      ["linux-aarch64", "LumaDesk_0.6.1_arm64.AppImage"],
+      ["linux-aarch64", "LumaDesk_0.6.1_arm64.deb"],
+      ["linux-aarch64", "LumaDesk-0.6.1-1.aarch64.rpm"],
       ["macos-aarch64", "LumaDesk_aarch64.app.tar.gz"],
-      ["macos-x86_64", "LumaDesk_x64.app.tar.gz"],
-      ["windows-x86_64", "LumaDesk_x64-setup.nsis.zip"],
-      ["windows-aarch64", "LumaDesk_arm64-setup.nsis.zip"],
+      ["macos-x86_64", "LumaDesk_x86_64.app.tar.gz"],
+      ["windows-x86_64", "LumaDesk_0.6.1_x64-setup.exe"],
+      ["windows-aarch64", "LumaDesk_0.6.1_arm64-setup.exe"],
     ] as const;
 
     for (const [directory, filename] of fixtures) {
@@ -46,9 +50,9 @@ describe("updater manifest generator", () => {
         "--repository",
         "bayurifkialghifari/lumadesk",
         "--tag",
-        "v0.6.0",
+        "v0.6.1",
         "--version",
-        "0.6.0",
+        "0.6.1",
         "--pub-date",
         "2026-10-31T00:00:00.000Z",
       ],
@@ -57,19 +61,23 @@ describe("updater manifest generator", () => {
 
     const manifest = JSON.parse(readFileSync(output, "utf8"));
     expect(manifest).toMatchObject({
-      version: "0.6.0",
+      version: "0.6.1",
       pub_date: "2026-10-31T00:00:00.000Z",
       platforms: {
-        "linux-x86_64": { signature: "signature-linux-x86_64" },
-        "linux-aarch64": { signature: "signature-linux-aarch64" },
-        "darwin-aarch64": { signature: "signature-macos-aarch64" },
-        "darwin-x86_64": { signature: "signature-macos-x86_64" },
-        "windows-x86_64": { signature: "signature-windows-x86_64" },
-        "windows-aarch64": { signature: "signature-windows-aarch64" },
+        "linux-x86_64-appimage": { signature: "signature-linux-x86_64" },
+        "linux-x86_64-deb": { signature: "signature-linux-x86_64" },
+        "linux-x86_64-rpm": { signature: "signature-linux-x86_64" },
+        "linux-aarch64-appimage": { signature: "signature-linux-aarch64" },
+        "linux-aarch64-deb": { signature: "signature-linux-aarch64" },
+        "linux-aarch64-rpm": { signature: "signature-linux-aarch64" },
+        "darwin-aarch64-app": { signature: "signature-macos-aarch64" },
+        "darwin-x86_64-app": { signature: "signature-macos-x86_64" },
+        "windows-x86_64-nsis": { signature: "signature-windows-x86_64" },
+        "windows-aarch64-nsis": { signature: "signature-windows-aarch64" },
       },
     });
-    expect(manifest.platforms["windows-aarch64"].url).toBe(
-      "https://github.com/bayurifkialghifari/lumadesk/releases/download/v0.6.0/LumaDesk_arm64-setup.nsis.zip",
+    expect(manifest.platforms["windows-aarch64-nsis"].url).toBe(
+      "https://github.com/bayurifkialghifari/lumadesk/releases/download/v0.6.1/LumaDesk_0.6.1_arm64-setup.exe",
     );
   });
 });

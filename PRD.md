@@ -118,7 +118,7 @@ LumaDesk is a desktop animation library and editor. It organizes local media, ap
 - Windows x86-64 and ARM64: separate NSIS `.exe` installers.
 - macOS Apple Silicon and Intel: separate `.dmg` packages.
 - Linux x86-64 and ARM64: `.AppImage`, `.deb`, and `.rpm` packages.
-- Every tagged release includes signed updater payloads and a static update manifest for all six supported platform and architecture combinations.
+- Every tagged release includes signed native updater payloads and a static update manifest that distinguishes each platform, architecture, and Linux installer type.
 - Core library, editing, playback, and edge removal do not require an account or network connection.
 - Network access is limited to update checks, user-initiated external discovery, optional model downloads, and downloading an update after user confirmation.
 - Signing and notarization activate when repository secrets are configured.

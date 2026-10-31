@@ -3,12 +3,16 @@ import { basename, dirname, join, resolve } from "node:path";
 import { pathToFileURL } from "node:url";
 
 const targets = [
-  { directory: "linux-x86_64", platform: "linux-x86_64", suffix: ".AppImage.tar.gz" },
-  { directory: "linux-aarch64", platform: "linux-aarch64", suffix: ".AppImage.tar.gz" },
-  { directory: "macos-aarch64", platform: "darwin-aarch64", suffix: ".app.tar.gz" },
-  { directory: "macos-x86_64", platform: "darwin-x86_64", suffix: ".app.tar.gz" },
-  { directory: "windows-x86_64", platform: "windows-x86_64", suffix: ".nsis.zip" },
-  { directory: "windows-aarch64", platform: "windows-aarch64", suffix: ".nsis.zip" },
+  { directory: "linux-x86_64", platform: "linux-x86_64-appimage", suffix: ".AppImage" },
+  { directory: "linux-x86_64", platform: "linux-x86_64-deb", suffix: ".deb" },
+  { directory: "linux-x86_64", platform: "linux-x86_64-rpm", suffix: ".rpm" },
+  { directory: "linux-aarch64", platform: "linux-aarch64-appimage", suffix: ".AppImage" },
+  { directory: "linux-aarch64", platform: "linux-aarch64-deb", suffix: ".deb" },
+  { directory: "linux-aarch64", platform: "linux-aarch64-rpm", suffix: ".rpm" },
+  { directory: "macos-aarch64", platform: "darwin-aarch64-app", suffix: ".app.tar.gz" },
+  { directory: "macos-x86_64", platform: "darwin-x86_64-app", suffix: ".app.tar.gz" },
+  { directory: "windows-x86_64", platform: "windows-x86_64-nsis", suffix: ".exe" },
+  { directory: "windows-aarch64", platform: "windows-aarch64-nsis", suffix: ".exe" },
 ];
 
 async function listFiles(directory) {

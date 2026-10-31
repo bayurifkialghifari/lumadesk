@@ -80,44 +80,44 @@ jobs:
             tauri_args: --target x86_64-unknown-linux-gnu --bundles appimage,deb,rpm
             artifact_paths: |
               target/x86_64-unknown-linux-gnu/release/bundle/appimage/*.AppImage*
-              target/x86_64-unknown-linux-gnu/release/bundle/deb/*.deb
-              target/x86_64-unknown-linux-gnu/release/bundle/rpm/*.rpm
+              target/x86_64-unknown-linux-gnu/release/bundle/deb/*.deb*
+              target/x86_64-unknown-linux-gnu/release/bundle/rpm/*.rpm*
           - platform: ubuntu-22.04-arm
             artifact_name: linux-aarch64
             rust_targets: aarch64-unknown-linux-gnu
             tauri_args: --target aarch64-unknown-linux-gnu --bundles appimage,deb,rpm
             artifact_paths: |
               target/aarch64-unknown-linux-gnu/release/bundle/appimage/*.AppImage*
-              target/aarch64-unknown-linux-gnu/release/bundle/deb/*.deb
-              target/aarch64-unknown-linux-gnu/release/bundle/rpm/*.rpm
+              target/aarch64-unknown-linux-gnu/release/bundle/deb/*.deb*
+              target/aarch64-unknown-linux-gnu/release/bundle/rpm/*.rpm*
           - platform: macos-latest
             artifact_name: macos-aarch64
             rust_targets: aarch64-apple-darwin
-            tauri_args: --target aarch64-apple-darwin --bundles dmg
+            tauri_args: --target aarch64-apple-darwin --bundles app,dmg
+            updater_archive_name: LumaDesk_aarch64.app.tar.gz
             artifact_paths: |
               target/aarch64-apple-darwin/release/bundle/dmg/*.dmg
-              target/aarch64-apple-darwin/release/bundle/macos/*.app.tar.gz*
+              target/aarch64-apple-darwin/release/bundle/macos/LumaDesk_aarch64.app.tar.gz*
           - platform: macos-latest
             artifact_name: macos-x86_64
             rust_targets: x86_64-apple-darwin
-            tauri_args: --target x86_64-apple-darwin --bundles dmg
+            tauri_args: --target x86_64-apple-darwin --bundles app,dmg
+            updater_archive_name: LumaDesk_x86_64.app.tar.gz
             artifact_paths: |
               target/x86_64-apple-darwin/release/bundle/dmg/*.dmg
-              target/x86_64-apple-darwin/release/bundle/macos/*.app.tar.gz*
+              target/x86_64-apple-darwin/release/bundle/macos/LumaDesk_x86_64.app.tar.gz*
           - platform: windows-latest
             artifact_name: windows-x86_64
             rust_targets: x86_64-pc-windows-msvc
             tauri_args: --target x86_64-pc-windows-msvc --bundles nsis
             artifact_paths: |
-              target/x86_64-pc-windows-msvc/release/bundle/nsis/*.exe
-              target/x86_64-pc-windows-msvc/release/bundle/nsis/*.nsis.zip*
+              target/x86_64-pc-windows-msvc/release/bundle/nsis/*.exe*
           - platform: windows-latest
             artifact_name: windows-aarch64
             rust_targets: aarch64-pc-windows-msvc
             tauri_args: --target aarch64-pc-windows-msvc --bundles nsis
             artifact_paths: |
-              target/aarch64-pc-windows-msvc/release/bundle/nsis/*.exe
-              target/aarch64-pc-windows-msvc/release/bundle/nsis/*.nsis.zip*
+              target/aarch64-pc-windows-msvc/release/bundle/nsis/*.exe*
 
     steps:
       - name: Check out repository
@@ -171,6 +171,30 @@ jobs:
           TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
         with:
           args: ${{ matrix.tauri_args }}
+
+      - name: Name macOS updater archive
+        if: runner.os == 'macOS'
+        shell: bash
+        env:
+          RUST_TARGET: ${{ matrix.rust_targets }}
+          UPDATER_ARCHIVE_NAME: ${{ matrix.updater_archive_name }}
+        run: |
+          set -euo pipefail
+          bundle_directory="target/$RUST_TARGET/release/bundle/macos"
+          archive_count="$(find "$bundle_directory" -maxdepth 1 -type f -name '*.app.tar.gz' | wc -l | tr -d ' ')"
+          if [[ "$archive_count" -ne 1 ]]; then
+            echo "Expected exactly one macOS updater archive, found $archive_count." >&2
+            exit 1
+          fi
+
+          archive="$(find "$bundle_directory" -maxdepth 1 -type f -name '*.app.tar.gz' -print)"
+          if [[ ! -f "$archive.sig" ]]; then
+            echo "Missing updater signature for $archive." >&2
+            exit 1
+          fi
+
+          mv "$archive" "$bundle_directory/$UPDATER_ARCHIVE_NAME"
+          mv "$archive.sig" "$bundle_directory/$UPDATER_ARCHIVE_NAME.sig"
 
       - name: Store desktop bundle
         uses: actions/upload-artifact@v7
