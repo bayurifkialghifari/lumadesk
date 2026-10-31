@@ -676,7 +676,7 @@ fn infer_mask(
     let values = outputs
         .first()
         .ok_or_else(|| AiError::Inference("the model returned no output".into()))?
-        .to_array_view::<f32>()
+        .to_plain_array_view::<f32>()
         .map_err(|error| AiError::Inference(error.to_string()))?;
     let (minimum, maximum) = values.iter().fold(
         (f32::INFINITY, f32::NEG_INFINITY),
