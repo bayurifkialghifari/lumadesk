@@ -696,8 +696,11 @@ fn write_atomic(path: &Path, bytes: &[u8]) -> Result<(), GalleryError> {
 fn cache_is_fresh(path: &Path) -> bool {
     path.metadata()
         .and_then(|metadata| metadata.modified())
-        .and_then(|modified| modified.elapsed())
-        .is_ok_and(|age| age <= CATALOG_CACHE_MAX_AGE)
+        .is_ok_and(|modified| {
+            modified
+                .elapsed()
+                .is_ok_and(|age| age <= CATALOG_CACHE_MAX_AGE)
+        })
 }
 
 fn hash_bytes(bytes: &[u8]) -> String {
