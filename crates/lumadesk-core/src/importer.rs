@@ -225,7 +225,9 @@ impl Library {
         &mut self,
         sequence: &SpriteSequenceInput,
     ) -> Result<SpriteSequence, CoreError> {
-        self.database.set_sprite_sequence(sequence)
+        let saved = self.database.set_sprite_sequence(sequence)?;
+        self.frame_cache.remove(sequence.media_id)?;
+        Ok(saved)
     }
 
     /// Removes sprite-sheet playback metadata and restores still-image behavior.
@@ -233,7 +235,8 @@ impl Library {
     /// # Errors
     /// Returns an error when the asset is missing or persistence fails.
     pub fn clear_sprite_sequence(&mut self, id: MediaId) -> Result<(), CoreError> {
-        self.database.clear_sprite_sequence(id)
+        self.database.clear_sprite_sequence(id)?;
+        self.frame_cache.remove(id)
     }
 
     /// Lists generated derivatives while keeping the imported source immutable.
@@ -264,7 +267,9 @@ impl Library {
     ) -> Result<FrameBatch, CoreError> {
         let item = self.database.media_by_id(id)?;
         let source = self.resolve_managed_path(&item.managed_path)?;
-        self.frame_cache.batch(&item, &source, request)
+        let sequence = self.database.sprite_sequence(id)?;
+        self.frame_cache
+            .batch(&item, &source, sequence.as_ref(), request)
     }
 
     /// Lists every persisted desktop overlay.

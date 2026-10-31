@@ -7,7 +7,8 @@ use std::{
 use scopeguard::{ScopeGuard, guard};
 
 use crate::{
-    CoreError, FrameAsset, FrameBatch, FrameBatchRequest, MediaId, MediaItem, frame_decoder,
+    CoreError, FrameAsset, FrameBatch, FrameBatchRequest, MediaId, MediaItem, SpriteSequence,
+    frame_decoder,
     frame_manifest::{FrameManifest, frame_path},
 };
 
@@ -33,11 +34,12 @@ impl FrameCache {
         &mut self,
         item: &MediaItem,
         source: &Path,
+        sequence: Option<&SpriteSequence>,
         request: FrameBatchRequest,
     ) -> Result<FrameBatch, CoreError> {
         validate_request(request)?;
         if !self.manifests.contains_key(&item.id) {
-            let manifest = self.load_or_build(item, source)?;
+            let manifest = self.load_or_build(item, source, sequence)?;
             self.manifests.insert(item.id, manifest);
         }
         let manifest = self
@@ -56,23 +58,31 @@ impl FrameCache {
         Ok(())
     }
 
-    fn load_or_build(&self, item: &MediaItem, source: &Path) -> Result<FrameManifest, CoreError> {
+    fn load_or_build(
+        &self,
+        item: &MediaItem,
+        source: &Path,
+        sequence: Option<&SpriteSequence>,
+    ) -> Result<FrameManifest, CoreError> {
         let cache_dir = self.root.join(item.id.to_string());
+        let configuration = frame_configuration(sequence);
         if let Some(manifest) = FrameManifest::read(&cache_dir)?
-            && manifest.is_valid_for(&cache_dir, item)?
+            && manifest.is_valid_for(&cache_dir, item, &configuration)?
         {
             return Ok(manifest);
         }
         if cache_dir.exists() {
             fs::remove_dir_all(&cache_dir)?;
         }
-        self.build(item, source, &cache_dir)
+        self.build(item, source, sequence, configuration, &cache_dir)
     }
 
     fn build(
         &self,
         item: &MediaItem,
         source: &Path,
+        sequence: Option<&SpriteSequence>,
+        configuration: String,
         cache_dir: &Path,
     ) -> Result<FrameManifest, CoreError> {
         let temporary = self
@@ -80,13 +90,38 @@ impl FrameCache {
             .join(format!(".frames-{}-{}", item.id, uuid::Uuid::new_v4()));
         fs::create_dir(&temporary)?;
         let cleanup = guard(temporary, |path| drop(fs::remove_dir_all(path)));
-        let decoded = frame_decoder::decode_to(source, item.media_format, &cleanup)?;
-        let manifest = FrameManifest::from_durations(item, decoded.durations_ms)?;
+        let decoded = sequence.map_or_else(
+            || frame_decoder::decode_to(source, item.media_format, &cleanup),
+            |value| frame_decoder::decode_sprite_sheet_to(source, value, &cleanup),
+        )?;
+        let manifest = FrameManifest::from_decoded(
+            item,
+            configuration,
+            decoded.width,
+            decoded.height,
+            decoded.durations_ms,
+        )?;
         manifest.write(&cleanup)?;
         fs::rename(&*cleanup, cache_dir)?;
         drop(ScopeGuard::into_inner(cleanup));
         Ok(manifest)
     }
+}
+
+fn frame_configuration(sequence: Option<&SpriteSequence>) -> String {
+    sequence.map_or_else(
+        || "source".into(),
+        |value| {
+            format!(
+                "sprite:{}:{}:{}:{}:{}",
+                value.columns,
+                value.rows,
+                value.frame_count,
+                value.frame_duration_ms,
+                value.playback_mode.as_str()
+            )
+        },
+    )
 }
 
 fn validate_request(request: FrameBatchRequest) -> Result<(), CoreError> {

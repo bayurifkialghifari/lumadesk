@@ -4,7 +4,9 @@ use image::{
     Delay, Frame, Rgba, RgbaImage,
     codecs::gif::{GifEncoder, Repeat},
 };
-use lumadesk_core::{FrameBatchRequest, ImportOutcome, Library, MediaItem};
+use lumadesk_core::{
+    FrameBatchRequest, ImportOutcome, Library, MediaItem, SpritePlaybackMode, SpriteSequenceInput,
+};
 use tempfile::TempDir;
 
 fn write_gif(path: &Path) -> Result<(), Box<dyn Error>> {
@@ -30,6 +32,20 @@ fn imported(outcome: ImportOutcome) -> Result<MediaItem, io::Error> {
             "the first fixture must not be detected as a duplicate",
         )),
     }
+}
+
+fn write_sprite_sheet(path: &Path) -> Result<(), image::ImageError> {
+    let mut image = RgbaImage::new(4, 2);
+    for (x, y, color) in [
+        (0, 0, Rgba([255, 0, 0, 255])),
+        (2, 0, Rgba([0, 255, 0, 255])),
+        (0, 1, Rgba([0, 0, 255, 255])),
+        (2, 1, Rgba([255, 255, 0, 255])),
+    ] {
+        image.put_pixel(x, y, color);
+        image.put_pixel(x + 1, y, color);
+    }
+    image.save(path)
 }
 
 #[test]
@@ -123,5 +139,49 @@ fn rejects_unbounded_frame_batch_requests() -> Result<(), Box<dyn Error>> {
     );
 
     assert!(result.is_err());
+    Ok(())
+}
+
+#[test]
+fn extracts_sprite_sheet_cells_in_reading_order() -> Result<(), Box<dyn Error>> {
+    let temp = TempDir::new()?;
+    let source = temp.path().join("sprite.png");
+    write_sprite_sheet(&source)?;
+    let mut library = Library::open(temp.path().join("data"))?;
+    let item = imported(library.import_file(&source)?)?;
+    library.set_sprite_sequence(&SpriteSequenceInput {
+        media_id: item.id,
+        columns: 2,
+        rows: 2,
+        frame_count: 4,
+        frame_duration_ms: 75,
+        playback_mode: SpritePlaybackMode::PingPong,
+    })?;
+
+    let batch = library.frame_batch(
+        item.id,
+        FrameBatchRequest {
+            offset: 0,
+            limit: 4,
+        },
+    )?;
+
+    assert_eq!((batch.width, batch.height), (2, 1));
+    assert_eq!(batch.total_frames, 4);
+    assert_eq!(batch.total_duration_ms, 300);
+    let colors = batch
+        .frames
+        .iter()
+        .map(|frame| Ok(*image::open(&frame.path)?.to_rgba8().get_pixel(0, 0)))
+        .collect::<Result<Vec<_>, image::ImageError>>()?;
+    assert_eq!(
+        colors,
+        vec![
+            Rgba([255, 0, 0, 255]),
+            Rgba([0, 255, 0, 255]),
+            Rgba([0, 0, 255, 255]),
+            Rgba([255, 255, 0, 255]),
+        ]
+    );
     Ok(())
 }

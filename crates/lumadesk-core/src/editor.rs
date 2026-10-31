@@ -177,6 +177,11 @@ impl Database {
                 "Sprite frames must fit inside a non-empty grid.".into(),
             ));
         }
+        if sequence.columns > item.width || sequence.rows > item.height {
+            return Err(CoreError::InvalidInput(
+                "The sprite grid cannot exceed the source dimensions.".into(),
+            ));
+        }
         let duration_ms = u64::from(sequence.frame_count)
             .checked_mul(u64::from(sequence.frame_duration_ms))
             .ok_or_else(|| CoreError::InvalidInput("The sprite duration is too long.".into()))?;

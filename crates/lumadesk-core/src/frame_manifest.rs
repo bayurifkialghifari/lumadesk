@@ -8,13 +8,14 @@ use serde::{Deserialize, Serialize};
 
 use crate::{CoreError, MediaItem};
 
-const CACHE_VERSION: u32 = 1;
+const CACHE_VERSION: u32 = 2;
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub(super) struct FrameManifest {
     version: u32,
     content_hash: String,
+    configuration: String,
     pub(super) width: u32,
     pub(super) height: u32,
     pub(super) total_duration_ms: u64,
@@ -22,8 +23,11 @@ pub(super) struct FrameManifest {
 }
 
 impl FrameManifest {
-    pub(super) fn from_durations(
+    pub(super) fn from_decoded(
         item: &MediaItem,
+        configuration: String,
+        width: u32,
+        height: u32,
         durations_ms: Vec<u64>,
     ) -> Result<Self, CoreError> {
         let total_duration_ms = durations_ms.iter().try_fold(0_u64, |total, value| {
@@ -34,12 +38,13 @@ impl FrameManifest {
         let manifest = Self {
             version: CACHE_VERSION,
             content_hash: item.content_hash.clone(),
-            width: item.width,
-            height: item.height,
+            configuration,
+            width,
+            height,
             total_duration_ms,
             durations_ms,
         };
-        if !manifest.matches_item(item)? {
+        if !manifest.matches_item(item, &manifest.configuration)? {
             return Err(CoreError::InvalidData(
                 "Decoded frames do not match the media metadata.".into(),
             ));
@@ -71,8 +76,9 @@ impl FrameManifest {
         &self,
         cache_dir: &Path,
         item: &MediaItem,
+        configuration: &str,
     ) -> Result<bool, CoreError> {
-        if !self.matches_item(item)? {
+        if !self.matches_item(item, configuration)? {
             return Ok(false);
         }
         for index in 0..item.frame_count {
@@ -83,13 +89,14 @@ impl FrameManifest {
         Ok(true)
     }
 
-    fn matches_item(&self, item: &MediaItem) -> Result<bool, CoreError> {
+    fn matches_item(&self, item: &MediaItem, configuration: &str) -> Result<bool, CoreError> {
         let frame_count = u32::try_from(self.durations_ms.len())
             .map_err(|_| CoreError::InvalidData("The cached frame count is invalid.".into()))?;
         Ok(self.version == CACHE_VERSION
             && self.content_hash == item.content_hash
-            && self.width == item.width
-            && self.height == item.height
+            && self.configuration == configuration
+            && self.width > 0
+            && self.height > 0
             && self.total_duration_ms == item.duration_ms
             && frame_count == item.frame_count)
     }
